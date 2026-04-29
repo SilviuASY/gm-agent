@@ -66,12 +66,16 @@ export default function TransactionModal({
           </Button>
         )
       default:
-        return null
+        return (
+          <Button colorScheme="gray" onClick={onClose} borderRadius="full" px={8} variant="outline">
+            Cancel
+          </Button>
+        )
     }
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered closeOnOverlayClick={status !== "pending"}>
       <ModalOverlay backdropFilter="blur(8px)" />
 
       <ModalContent 

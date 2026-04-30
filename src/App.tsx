@@ -2702,7 +2702,7 @@ const handleAction = async (type: "register" | "gm") => {
         <Center pt={12} pb={6}>
           <VStack spacing={2}>
             <Text color="gray.600" fontSize="sm" fontFamily="mono">
-              © 2026 PulseVault • Agent GM Protocol • ERC-8004 Standard
+              © 2026 • Agent GM Protocol • ERC-8004 Standard
             </Text>
             <HStack spacing={4} opacity={0.5}>
               <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />

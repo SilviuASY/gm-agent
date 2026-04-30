@@ -2180,7 +2180,11 @@ const handleAction = async (type: "register" | "gm") => {
           </VStack>
 
           <Box animation={`${slideInRight} 0.6s ease-out`} transform={{ base: "scale(0.95)", md: "scale(1)" }} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
-            <ConnectButton chainStatus="icon" accountStatus="avatar" showBalance={false} />
+            <ConnectButton 
+              chainStatus="full"
+              accountStatus="full"
+              showBalance={false}
+            />
           </Box>
         </Flex>
 

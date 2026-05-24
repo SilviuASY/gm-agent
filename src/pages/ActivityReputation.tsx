@@ -974,7 +974,7 @@ export default function ActivityReputation() {
                 <Heading fontSize={{ base: "xl", md: "3xl", lg: "4xl" }} fontWeight="800" bgGradient="linear(135deg, #c084fc 0%, #ec4899 40%, #3b82f6 100%)" bgClip="text" letterSpacing="tight">Activity Reputation</Heading>
                 <Badge bgGradient="linear(135deg, #8b5cf6, #ec4899)" px={4} py={1.5} rounded="full" fontSize="xs" color="white" boxShadow="0 0 12px rgba(139,92,246,0.6)" fontFamily="mono">✨ Soneium</Badge>
               </HStack>
-              <Text color="gray.500" fontSize="sm" letterSpacing="wider" fontFamily="mono">Track your on-chain legacy across GM, Votes, Check-Ins & Deployments</Text>
+              <Text color="gray.500" fontSize="sm" letterSpacing="wider" fontFamily="mono">Track your on-chain legacy across GM, Votes, Check-Ins, Deployments & Partner Actions</Text>
             </VStack>
           </HStack>
           <Box animation={`${slideInRight} 0.6s ease-out`} _hover={{ transform: "scale(1.02)" }} transition="transform 0.3s">

@@ -60,7 +60,7 @@ export const unichainChain = {
 // Configurația principală pentru RainbowKit și Wagmi
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',
-  projectId: '6aa7072f821f3b0218542737006796a7',
+  projectId: 'f46144873867897ce8bde287cdf40e46',
   chains: [soneiumChain, inkChain, optimismChain, baseChain, unichainChain],
   transports: {
     [soneiumChain.id]: http(),

@@ -85,13 +85,16 @@ const API_URL = "/api";
 
 // ================= PARTNER ACTIONS =================
 const PARTNER_ACTIONS = [
-  { id: 0, name: "DOD Daily Checkin", logo: "/dod.png", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#22c55e", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 1, name: "AXD Daily Checkin", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#8b5cf6", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 2, name: "Rubyscore Vote", logo: "/ruby.png", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#ec4899", hasReferral: false, externalFee: 5000000000000, isPayable: true },
-  { id: 3, name: "Lootcoin Checkin", logo: "/loot.png", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#3b82f6", hasReferral: true, externalFee: 0, isPayable: false },
-  { id: 4, name: "PRESA", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#fbbf24", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 5, name: "OnChain GM", logo: "/onchaingm.png", target: "0x8ADA1808cc5ed8493836e6A79080ea0ea2f008eC", selector: "0x84a3bb6b", functionName: "onChainGM", points: 1, color: "#c084fc", hasReferral: true, externalFee: 29000000000000, isPayable: true },
-  { id: 6, name: "Captain CheckIn", logo: "/captain.png", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f97316", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 0, name: "DOD Daily Checkin", logo: "/dod.png", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#d32a14", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 1, name: "AXD Daily Checkin", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 2, name: "Rubyscore Vote", logo: "/ruby.png", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#c6f1f1", hasReferral: false, externalFee: 5000000000000, isPayable: true },
+  { id: 3, name: "Lootcoin Checkin", logo: "/loot.png", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#e2f818", hasReferral: true, externalFee: 0, isPayable: false },
+  { id: 4, name: "PRESSA", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#55e412", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 5, name: "OnChain GM", logo: "/onchaingm.png", target: "0x8ADA1808cc5ed8493836e6A79080ea0ea2f008eC", selector: "0x84a3bb6b", functionName: "onChainGM", points: 1, color: "#0fa1e4", hasReferral: true, externalFee: 29000000000000, isPayable: true },
+  { id: 6, name: "Captain CheckIn", logo: "/captain.png", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f1ee0f", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 7, name: "Arkada CheckIn", logo: "/arkada.png", target: "0x98826e728977B25279ad7629134FD0e96bd5A7b2", selector: "0x919840ad", functionName: "check", points: 1, color: "#e9660e", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 8, name: "Owlto CheckIn", logo: "/owlto.png", target: "0xF40448F38d99A2Db70de37416B22B4338A1c2Ad7", selector: "0xf516f88e", functionName: "checkIn", points: 1, color: "#e9b60e", hasReferral: false, externalFee: 55000000000000, isPayable: true },
+  { id: 9, name: "NekoKat GMeow", logo: "/neko.png", target: "0xfF3aC835a193Cc08543256e24508b42248A63A26", selector: "0x95b2fd73", functionName: "signGMeow", points: 1, color: "#ecf0b4", hasReferral: false, externalFee: 0, isPayable: false },
 ];
 
 // ================= ABI-uri pentru contractele partenere =================
@@ -101,7 +104,10 @@ const rubyscoreABI = [{ inputs: [], name: "vote", outputs: [], stateMutability: 
 const lootcoinABI = [{ inputs: [{ internalType: "address", name: "referrer", type: "address" }], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const presaABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const onchainGMABI = [{ inputs: [{ internalType: "address", name: "referrer", type: "address" }], name: "onChainGM", outputs: [], stateMutability: "payable", type: "function" }] as const;
+const owltoABI = [{ inputs: [{ internalType: "uint256", name: "date", type: "uint256" }, { internalType: "uint256", name: "timestamp", type: "uint256" }], name: "checkIn", outputs: [],stateMutability: "payable", type: "function"}] as const;
 const captainABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+const arkadaABI = [{ inputs: [], name: "check", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+const nekoABI = [{inputs:[{internalType:"string",name:"message",type:"string"},{internalType:"uint256",name:"dayNumber",type:"uint256"},{internalType:"uint256",name:"currentStreak",type:"uint256"}],name:"signGMeow",outputs:[],stateMutability:"nonpayable",type:"function"}] as const;
 
 // ================= NEXT-GEN ANIMATIONS 2026 =================
 const float = keyframes`
@@ -880,6 +886,43 @@ export default function ActivityReputation() {
             functionName: "checkIn",
           });
           break;
+        case 7: // Arkada CheckIn
+          hash = await writeContractAsync({
+            address: toHexAddress(action.target),
+            abi: arkadaABI,
+            functionName: "check",
+          });
+          break;
+        case 8: // Owlto CheckIn
+          const todayDate = new Date();
+          const currentDate = BigInt(
+            parseInt(
+              todayDate.getFullYear().toString() +
+              (todayDate.getMonth() + 1).toString().padStart(2, '0') +
+              todayDate.getDate().toString().padStart(2, '0')
+            )
+          );
+          const owltoFee = BigInt(action.externalFee);
+          hash = await writeContractAsync({
+            address: toHexAddress(action.target),
+            abi: owltoABI,
+            functionName: "checkIn",
+            args: [currentDate, owltoFee],
+            value: owltoFee,
+          });
+          break;
+        case 9: // Neko GMeow
+          const startDate = new Date(2026, 4, 1);
+          const dayNum = BigInt(Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+          const streak = BigInt(1);
+  
+          hash = await writeContractAsync({
+            address: toHexAddress(action.target),
+            abi: nekoABI,
+            functionName: "signGMeow",
+            args: ["GMeow", dayNum, streak],
+          });
+          break;
         default:
           throw new Error("Unknown action");
       }
@@ -1553,7 +1596,7 @@ export default function ActivityReputation() {
                         <HStack spacing={2} mb={6}>
                           <Box w="4px" h="4px" borderRadius="full" bg="#fbbf24" animation={`${pulseGlow} 2s infinite`} />
                           <Heading size="md" color="gray.300" fontWeight="600">🤝 Partner Actions</Heading>
-                          <Badge bg="#fbbf24" color="black" ml={2}>6 Actions Available</Badge>
+                          <Badge bg="#fbbf24" color="black" ml={2}>9 Actions Available</Badge>
                         </HStack>
 
                         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>

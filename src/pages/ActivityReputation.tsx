@@ -85,16 +85,18 @@ const API_URL = "/api";
 
 // ================= PARTNER ACTIONS =================
 const PARTNER_ACTIONS = [
-  { id: 0, name: "DOD Daily Checkin", logo: "/dod.png", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#d32a14", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 1, name: "AXD Daily Checkin", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 0, name: "Dice Or Die Check In", logo: "/dod.png", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#d32a14", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 1, name: "AXD Daily Check In", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
   { id: 2, name: "Rubyscore Vote", logo: "/ruby.png", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#c6f1f1", hasReferral: false, externalFee: 5000000000000, isPayable: true },
-  { id: 3, name: "Lootcoin Checkin", logo: "/loot.png", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#e2f818", hasReferral: true, externalFee: 0, isPayable: false },
-  { id: 4, name: "PRESSA", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#55e412", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 3, name: "Lootcoin Check In", logo: "/loot.png", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#e2f818", hasReferral: true, externalFee: 0, isPayable: false },
+  { id: 4, name: "PressA Daily", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#55e412", hasReferral: false, externalFee: 0, isPayable: false },
   { id: 5, name: "OnChain GM", logo: "/onchaingm.png", target: "0x8ADA1808cc5ed8493836e6A79080ea0ea2f008eC", selector: "0x84a3bb6b", functionName: "onChainGM", points: 1, color: "#0fa1e4", hasReferral: true, externalFee: 29000000000000, isPayable: true },
-  { id: 6, name: "Captain CheckIn", logo: "/captain.png", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f1ee0f", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 7, name: "Arkada CheckIn", logo: "/arkada.png", target: "0x98826e728977B25279ad7629134FD0e96bd5A7b2", selector: "0x919840ad", functionName: "check", points: 1, color: "#e9660e", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 8, name: "Owlto CheckIn", logo: "/owlto.png", target: "0xF40448F38d99A2Db70de37416B22B4338A1c2Ad7", selector: "0xf516f88e", functionName: "checkIn", points: 1, color: "#e9b60e", hasReferral: false, externalFee: 55000000000000, isPayable: true },
+  { id: 6, name: "Captain Check In", logo: "/captain.png", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f1ee0f", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 7, name: "Arkada Check In", logo: "/arkada.png", target: "0x98826e728977B25279ad7629134FD0e96bd5A7b2", selector: "0x919840ad", functionName: "check", points: 1, color: "#e9660e", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 8, name: "Owlto Check In", logo: "/owlto.png", target: "0xF40448F38d99A2Db70de37416B22B4338A1c2Ad7", selector: "0xf516f88e", functionName: "checkIn", points: 1, color: "#e9b60e", hasReferral: false, externalFee: 55000000000000, isPayable: true },
   { id: 9, name: "NekoKat GMeow", logo: "/neko.png", target: "0xfF3aC835a193Cc08543256e24508b42248A63A26", selector: "0x95b2fd73", functionName: "signGMeow", points: 1, color: "#ecf0b4", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 10, name: "SurfLayer GM", logo: "/surf.png", target: "0x3d97B802fFD7F36d50CE1498e8Ca5318C5c8e9EC", selector: "0x498c249a", functionName: "dailyGM", points: 1, color: "#22c23d", hasReferral: false, externalFee: 40000000000000, isPayable: true },
+  { id: 11, name: "WheelX GM", logo: "/wheels.png", target: "0x62f79aab09B60A27cd3607aCaE55281Efd7294Bb", selector: "0xc0129d43", functionName: "gm", points: 1, color: "#8413c5", hasReferral: false, externalFee: 20000000000000, isPayable: true },
 ];
 
 // ================= ABI-uri pentru contractele partenere =================
@@ -108,8 +110,10 @@ const owltoABI = [{ inputs: [{ internalType: "uint256", name: "date", type: "uin
 const captainABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const arkadaABI = [{ inputs: [], name: "check", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const nekoABI = [{inputs:[{internalType:"string",name:"message",type:"string"},{internalType:"uint256",name:"dayNumber",type:"uint256"},{internalType:"uint256",name:"currentStreak",type:"uint256"}],name:"signGMeow",outputs:[],stateMutability:"nonpayable",type:"function"}] as const;
+const surfABI = [{ inputs: [], name: "dailyGM", outputs: [], stateMutability: "payable", type: "function" }] as const;
+const wheelABI = [{ inputs: [], name: "gm", outputs: [], stateMutability: "payable", type: "function" }] as const;
 
-// ================= NEXT-GEN ANIMATIONS 2026 =================
+// ================= ANIMATIONS =================
 const float = keyframes`
   0% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-25px) rotate(3deg); }
@@ -149,7 +153,6 @@ const slideInRight = keyframes`
   to { opacity: 1; transform: translateX(0); filter: blur(0); }
 `;
 
-
 // Helper functions
 const truncateAddress = (address: string) => {
   if (!address) return "";
@@ -169,7 +172,7 @@ const formatFee = (fee: bigint) => {
 
 const toHexAddress = (addr: string): `0x${string}` => addr as `0x${string}`;
 
-// Get user rank badge with enhanced styling
+// Get user rank badge
 const getUserBadge = (score: number) => {
   if (score >= 1000) return { label: "LEGEND", icon: "👑", color: "#ffd700", glow: "#ffd70080", bg: "linear(135deg, #ffd70020, #ffd70005)" };
   if (score >= 500) return { label: "ELITE", icon: "⚡", color: "#c0c0c0", glow: "#c0c0c080", bg: "linear(135deg, #c0c0c020, #c0c0c005)" };
@@ -181,82 +184,24 @@ const getUserBadge = (score: number) => {
 
 // Campaign ABI
 const campaignABI = [
-  {
-    inputs: [],
-    name: "campaignStartTime",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "campaignActive",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "campaignScheduled",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
+  { inputs: [], name: "campaignStartTime", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "campaignActive", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "campaignScheduled", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
 ] as const;
 
 // AgentGateway ABI
 const agentGatewayABI = [
-  {
-    inputs: [{ internalType: "uint256", name: "actionId", type: "uint256" }],
-    name: "payAndApprove",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "defaultFee",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "", type: "address" }, { internalType: "uint256", name: "", type: "uint256" }],
-    name: "userActionCount",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "user", type: "address" }, { internalType: "uint256", name: "actionId", type: "uint256" }],
-    name: "hasPaidForAction",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
+  { inputs: [{ internalType: "uint256", name: "actionId", type: "uint256" }], name: "payAndApprove", outputs: [], stateMutability: "payable", type: "function" },
+  { inputs: [], name: "defaultFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [{ internalType: "address", name: "", type: "address" }, { internalType: "uint256", name: "", type: "uint256" }], name: "userActionCount", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [{ internalType: "address", name: "user", type: "address" }, { internalType: "uint256", name: "actionId", type: "uint256" }], name: "hasPaidForAction", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
 ] as const;
 
 // Agent ABI
-const agentABI = [
-  {
-    inputs: [{ internalType: "address", name: "wallet", type: "address" }],
-    name: "isAgent",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
+const agentABI = [{ inputs: [{ internalType: "address", name: "wallet", type: "address" }], name: "isAgent", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" }] as const;
 
 // AgentGM ABI
-const agentGMABI = [
-  {
-    inputs: [{ internalType: "address", name: "user", type: "address" }],
-    name: "totalUserGM",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
+const agentGMABI = [{ inputs: [{ internalType: "address", name: "user", type: "address" }], name: "totalUserGM", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" }] as const;
 
 // Badge ABI
 const badgeABI = [
@@ -289,6 +234,10 @@ export default function ActivityReputation() {
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
   
+  // ================= RESETARE PLATĂ - FLAG PENTRU FIECARE ACȚIUNE =================
+  // Acest flag permite resetarea după fiecare execuție
+  const [actionPendingPayment, setActionPendingPayment] = useState<{ [key: number]: boolean }>({});
+
   // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<typeof PARTNER_ACTIONS[0] | null>(null);
@@ -307,7 +256,7 @@ export default function ActivityReputation() {
 
   const isCorrectChain = chainId === SONEIUM_CHAIN_ID;
 
-  // ================= READ CAMPAIGN INFO FROM GM CONTRACT =================
+  // ================= READ CAMPAIGN INFO =================
   const { data: campaignStartTimeData = 0n } = useReadContract({
     address: toHexAddress(GM_CONTRACT),
     abi: campaignABI,
@@ -330,14 +279,12 @@ export default function ActivityReputation() {
   });
 
   useEffect(() => {
-    if (campaignStartTimeData) {
-      setCampaignStartTime(Number(campaignStartTimeData));
-    }
+    if (campaignStartTimeData) setCampaignStartTime(Number(campaignStartTimeData));
     setCampaignActive(campaignActiveData);
     setCampaignScheduled(campaignScheduledData);
   }, [campaignStartTimeData, campaignActiveData, campaignScheduledData]);
 
-  // ================= READ DEFAULT FEE FROM AGENT GATEWAY =================
+  // ================= READ DEFAULT FEE =================
   const { data: defaultFee = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -353,7 +300,6 @@ export default function ActivityReputation() {
     args: address ? [address, 0n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction1Count = 0n, refetch: refetchAction1 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -361,7 +307,6 @@ export default function ActivityReputation() {
     args: address ? [address, 1n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction2Count = 0n, refetch: refetchAction2 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -369,7 +314,6 @@ export default function ActivityReputation() {
     args: address ? [address, 2n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction3Count = 0n, refetch: refetchAction3 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -377,7 +321,6 @@ export default function ActivityReputation() {
     args: address ? [address, 3n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction4Count = 0n, refetch: refetchAction4 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -385,7 +328,6 @@ export default function ActivityReputation() {
     args: address ? [address, 4n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction5Count = 0n, refetch: refetchAction5 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -393,15 +335,13 @@ export default function ActivityReputation() {
     args: address ? [address, 5n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction6Count = 0n, refetch: refetchAction6 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
     functionName: "userActionCount",
     args: address ? [address, 6n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
-  }); 
-
+  });
   const { data: userAction7Count = 0n, refetch: refetchAction7 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -409,7 +349,6 @@ export default function ActivityReputation() {
     args: address ? [address, 7n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction8Count = 0n, refetch: refetchAction8 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -417,7 +356,6 @@ export default function ActivityReputation() {
     args: address ? [address, 8n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userAction9Count = 0n, refetch: refetchAction9 } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -425,8 +363,22 @@ export default function ActivityReputation() {
     args: address ? [address, 9n] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
+  const { data: userAction10Count = 0n, refetch: refetchAction10 } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "userActionCount",
+    args: address ? [address, 10n] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+  const { data: userAction11Count = 0n, refetch: refetchAction11 } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "userActionCount",
+    args: address ? [address, 11n] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
 
-  const userPartnerTotal = Number(userAction0Count) + Number(userAction1Count) + Number(userAction2Count) + Number(userAction3Count) + Number(userAction4Count) + Number(userAction5Count) + Number(userAction6Count) + Number(userAction7Count) + Number(userAction8Count) + Number(userAction9Count);
+  const userPartnerTotal = Number(userAction0Count) + Number(userAction1Count) + Number(userAction2Count) + Number(userAction3Count) + Number(userAction4Count) + Number(userAction5Count) + Number(userAction6Count) + Number(userAction7Count) + Number(userAction8Count) + Number(userAction9Count) + Number(userAction10Count) + Number(userAction11Count);
 
   // ================= COUNTDOWN TIMER =================
   useEffect(() => {
@@ -434,23 +386,15 @@ export default function ActivityReputation() {
       const updateTimer = () => {
         const now = Math.floor(Date.now() / 1000);
         const diff = campaignStartTime - now;
-        
-        if (diff <= 0) {
-          setTimeRemaining(null);
-          return;
-        }
-        
+        if (diff <= 0) { setTimeRemaining(null); return; }
         const days = Math.floor(diff / 86400);
         const hours = Math.floor((diff % 86400) / 3600);
         const minutes = Math.floor((diff % 3600) / 60);
         const seconds = diff % 60;
-        
         setTimeRemaining({ days, hours, minutes, seconds });
       };
-      
       updateTimer();
       const interval = setInterval(updateTimer, 1000);
-      
       return () => clearInterval(interval);
     } else {
       setTimeRemaining(null);
@@ -458,15 +402,12 @@ export default function ActivityReputation() {
   }, [campaignStartTime]);
 
   // ================= READ CONTRACT DATA =================
-  
-  // GM Contract Reads
   const { data: gmFee = 0n } = useReadContract({
     address: toHexAddress(GM_CONTRACT),
     abi: gmABI,
     functionName: "gmFee",
     query: { enabled: true },
   });
-
   const { data: nextTokenId = 0n } = useReadContract({
     address: toHexAddress(GM_CONTRACT),
     abi: gmABI,
@@ -474,7 +415,6 @@ export default function ActivityReputation() {
     query: { enabled: true },
   });
   const totalGMCount = Number(nextTokenId) - 1;
-
   const { data: userGmCount = 0n, refetch: refetchUserGmCount } = useReadContract({
     address: toHexAddress(GM_CONTRACT),
     abi: gmABI,
@@ -483,21 +423,18 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // Vote Contract Reads
   const { data: voteFee = 0n } = useReadContract({
     address: toHexAddress(VOTE_CONTRACT),
     abi: VoteABI,
     functionName: "voteFee",
     query: { enabled: true },
   });
-
   const { data: totalVotes = 0n } = useReadContract({
     address: toHexAddress(VOTE_CONTRACT),
     abi: VoteABI,
     functionName: "totalVotes",
     query: { enabled: true },
   });
-
   const { data: userVoteCount = 0n, refetch: refetchUserVoteCount } = useReadContract({
     address: toHexAddress(VOTE_CONTRACT),
     abi: VoteABI,
@@ -506,21 +443,18 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // CheckIn Contract Reads
   const { data: checkInFee = 0n } = useReadContract({
     address: toHexAddress(CHECKIN_CONTRACT),
     abi: checkInABI,
     functionName: "checkInFee",
     query: { enabled: true },
   });
-
   const { data: totalCheckIns = 0n } = useReadContract({
     address: toHexAddress(CHECKIN_CONTRACT),
     abi: checkInABI,
     functionName: "totalCheckIns",
     query: { enabled: true },
   });
-
   const { data: userCheckInCount = 0n, refetch: refetchUserCheckInCount } = useReadContract({
     address: toHexAddress(CHECKIN_CONTRACT),
     abi: checkInABI,
@@ -529,21 +463,18 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // Deploy Contract Reads
   const { data: deployFee = 0n } = useReadContract({
     address: toHexAddress(DEPLOY_CONTRACT),
     abi: DeployABI,
     functionName: "gmFee",
     query: { enabled: true },
   });
-
   const { data: totalDeployments = 0n } = useReadContract({
     address: toHexAddress(DEPLOY_CONTRACT),
     abi: DeployABI,
     functionName: "totalDeployments",
     query: { enabled: true },
   });
-
   const { data: userDeployCount = 0n, refetch: refetchUserDeployCount } = useReadContract({
     address: toHexAddress(DEPLOY_CONTRACT),
     abi: DeployABI,
@@ -552,7 +483,6 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // === AGENT STATUS ===
   const { data: userIsAgent = false } = useReadContract({
     address: toHexAddress(AGENT_CONTRACT),
     abi: agentABI,
@@ -561,7 +491,6 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // === AGENT GM READ ===
   const { data: userAgentGmCount = 0n, refetch: refetchAgentGmCount } = useReadContract({
     address: toHexAddress(AGENT_GM_CONTRACT),
     abi: agentGMABI,
@@ -578,7 +507,6 @@ export default function ActivityReputation() {
     query: { enabled: true },
   });
   const minReputationScore = Number(minReputationScoreData);
-
   const { data: userBadgeBalance = 0n, refetch: refetchBadgeBalance } = useReadContract({
     address: toHexAddress(BADGE_CONTRACT),
     abi: badgeABI,
@@ -586,7 +514,6 @@ export default function ActivityReputation() {
     args: address ? [address] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
-
   const { data: userNonce = 0n } = useReadContract({
     address: toHexAddress(BADGE_CONTRACT),
     abi: badgeABI,
@@ -603,7 +530,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserVoteCount = 0n } = useReadContract({
     address: toHexAddress(VOTE_CONTRACT),
     abi: VoteABI,
@@ -611,7 +537,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserCheckInCount = 0n } = useReadContract({
     address: toHexAddress(CHECKIN_CONTRACT),
     abi: checkInABI,
@@ -619,7 +544,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserDeployCount = 0n } = useReadContract({
     address: toHexAddress(DEPLOY_CONTRACT),
     abi: DeployABI,
@@ -627,7 +551,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserIsSBT = false } = useReadContract({
     address: toHexAddress(CHECKIN_CONTRACT),
     abi: checkInABI,
@@ -635,7 +558,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserIsAgent = false } = useReadContract({
     address: toHexAddress(AGENT_CONTRACT),
     abi: agentABI,
@@ -643,7 +565,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAgentGmCount = 0n } = useReadContract({
     address: toHexAddress(AGENT_GM_CONTRACT),
     abi: agentGMABI,
@@ -651,7 +572,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAction0Count = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -659,7 +579,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 0n] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAction1Count = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -667,7 +586,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 1n] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAction2Count = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -675,7 +593,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 2n] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAction3Count = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -683,7 +600,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 3n] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAction4Count = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -691,7 +607,6 @@ export default function ActivityReputation() {
     args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 4n] : undefined,
     query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
   });
-
   const { data: searchedUserAction5Count = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
@@ -710,55 +625,34 @@ export default function ActivityReputation() {
   // ================= MINT BADGE HANDLER =================
   const handleMintBadge = async () => {
     if (!address || !isCorrectChain || userBadgeBalance > 0n) return;
-
     const score = userTotalScore;
     if (score < minReputationScore) {
-      toast({
-        title: "Insufficient Score",
-        description: `You need at least ${minReputationScore} points (you have ${score})`,
-        status: "warning",
-        duration: 4000,
-      });
+      toast({ title: "Insufficient Score", description: `You need at least ${minReputationScore} points (you have ${score})`, status: "warning", duration: 4000 });
       return;
     }
-
     setIsTxPending(true);
     setTxOpen(true);
     setTxStatus("wallet");
     setTxTitle("🏅 Mint Reputation Badge");
     setTxDesc("Generating signature...");
-
     try {
       const response = await fetch(`${API_URL}/generate-mint-signature`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userAddress: address, 
-          score, 
-          nonce: userNonce.toString() 
-        }),
+        body: JSON.stringify({ userAddress: address, score, nonce: userNonce.toString() }),
       });
-
       const data = await response.json();
-
-      if (!response.ok || !data.signature) {
-        throw new Error(data.error || 'Error generating signature');
-      }
-
+      if (!response.ok || !data.signature) throw new Error(data.error || 'Error generating signature');
       setTxDesc("Confirm mint on Soneium...");
-
       const hash = await writeContractAsync({
         address: toHexAddress(BADGE_CONTRACT),
         abi: badgeABI,
         functionName: "mint",
         args: [BigInt(score), data.signature],
       });
-
       setTxStatus("pending");
       setTxDesc("Waiting for blockchain confirmation...");
-
       const receipt = await publicClient!.waitForTransactionReceipt({ hash });
-
       if (receipt.status === "success") {
         setTxStatus("success");
         setTxTitle("🏅 Badge Minted!");
@@ -776,7 +670,8 @@ export default function ActivityReputation() {
     }
   };
 
-  // ================= PARTNER ACTION HANDLER =================
+  // ================= PARTNER ACTION HANDLERS =================
+  
   // Pasul 1: Plătește fee-ul în AgentGateway
   const handlePayAndApprove = async (action: typeof PARTNER_ACTIONS[0]) => {
     if (isTxPending) return;
@@ -821,7 +716,12 @@ export default function ActivityReputation() {
           refetchAction7(),
           refetchAction8(),
           refetchAction9(),
+          refetchAction10(),
+          refetchAction11(),
         ]);
+        
+        // ===== CHEIA: SETEAZĂ FLAG-UL CĂ A PLĂTIT =====
+        setActionPendingPayment(prev => ({ ...prev, [action.id]: true }));
         
         setTxOpen(false);
         setShowSuccessModal(true);
@@ -829,7 +729,7 @@ export default function ActivityReputation() {
         
         toast({ 
           title: `✅ Payment Successful!`, 
-          description: `Click "Execute Action" to complete ${action.name}.`, 
+          description: `Click "${action.name.split(" ")[0]}" to complete the action and earn points.`, 
           status: "success", 
           duration: 5000, 
           isClosable: true, 
@@ -860,98 +760,49 @@ export default function ActivityReputation() {
       const zeroAddress = "0x0000000000000000000000000000000000000000";
       
       switch(action.id) {
-        case 0: // DOD
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: dodABI,
-            functionName: "checkIn",
-          });
+        case 0:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: dodABI, functionName: "checkIn" });
           break;
-        case 1: // AXD
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: axdABI,
-            functionName: "claim",
-          });
+        case 1:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: axdABI, functionName: "claim" });
           break;
-        case 2: // Rubyscore
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: rubyscoreABI,
-            functionName: "vote",
-            value: BigInt(action.externalFee),
-          });
+        case 2:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: rubyscoreABI, functionName: "vote", value: BigInt(action.externalFee) });
           break;
-        case 3: // Lootcoin
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: lootcoinABI,
-            functionName: "checkIn",
-            args: [zeroAddress],
-          });
+        case 3:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: lootcoinABI, functionName: "checkIn", args: [zeroAddress] });
           break;
-        case 4: // PRESA
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: presaABI,
-            functionName: "checkIn",
-          });
+        case 4:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: presaABI, functionName: "checkIn" });
           break;
-        case 5: // OnChain GM
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: onchainGMABI,
-            functionName: "onChainGM",
-            args: [zeroAddress],
-            value: BigInt(action.externalFee),
-          });
+        case 5:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: onchainGMABI, functionName: "onChainGM", args: [zeroAddress], value: BigInt(action.externalFee) });
           break;
-        case 6: // Captain CheckIn
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: captainABI,
-            functionName: "checkIn",
-          });
+        case 6:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: captainABI, functionName: "checkIn" });
           break;
-        case 7: // Arkada CheckIn
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: arkadaABI,
-            functionName: "check",
-          });
+        case 7:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: arkadaABI, functionName: "check" });
           break;
-        case 8: // Owlto CheckIn
+        case 8:
           const todayDate = new Date();
-          const currentDate = BigInt(
-            parseInt(
-              todayDate.getFullYear().toString() +
-              (todayDate.getMonth() + 1).toString().padStart(2, '0') +
-              todayDate.getDate().toString().padStart(2, '0')
-            )
-          );
+          const currentDate = BigInt(parseInt(todayDate.getFullYear().toString() + (todayDate.getMonth() + 1).toString().padStart(2, '0') + todayDate.getDate().toString().padStart(2, '0')));
           const owltoFee = BigInt(action.externalFee);
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: owltoABI,
-            functionName: "checkIn",
-            args: [currentDate, owltoFee],
-            value: owltoFee,
-          });
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: owltoABI, functionName: "checkIn", args: [currentDate, owltoFee], value: owltoFee });
           break;
-        case 9: // Neko GMeow
+        case 9:
           const startDate = new Date(2026, 4, 1);
           const dayNum = BigInt(Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
           const streak = BigInt(1);
-  
-          hash = await writeContractAsync({
-            address: toHexAddress(action.target),
-            abi: nekoABI,
-            functionName: "signGMeow",
-            args: ["GMeow", dayNum, streak],
-          });
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: nekoABI, functionName: "signGMeow", args: ["GMeow", dayNum, streak] });
           break;
-        default:
-          throw new Error("Unknown action");
+          case 10:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: surfABI, functionName: "dailyGM", value: BigInt(action.externalFee) });
+          break;
+          case 11:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: wheelABI, functionName: "gm", value: BigInt(action.externalFee) });
+          break;
+        default: throw new Error("Unknown action");
       }
       
       setTxStatus("pending");
@@ -966,6 +817,7 @@ export default function ActivityReputation() {
         setTxDesc(`You earned +${action.points} reputation point!`);
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
         
+        // Reîncarcă toate datele
         await Promise.all([
           refetchUserGmCount(),
           refetchUserVoteCount(),
@@ -982,11 +834,19 @@ export default function ActivityReputation() {
           refetchAction7(),
           refetchAction8(),
           refetchAction9(),
+          refetchAction10(),
+          refetchAction11(),
         ]);
+        
+        // ===== CHEIA: RESETEAZĂ FLAG-UL PENTRU CA UTILIZATORUL SĂ PLĂTEASCĂ DIN NOU =====
+        setActionPendingPayment(prev => ({ ...prev, [action.id]: false }));
+        
+        setShowSuccessModal(false);
+        setPendingAction(null);
         
         toast({ 
           title: `🎉 +${action.points} Point!`, 
-          description: `${action.name} completed successfully!`, 
+          description: `${action.name} completed! Pay fee again to earn more points.`, 
           status: "success", 
           duration: 5000, 
           isClosable: true, 
@@ -1000,8 +860,6 @@ export default function ActivityReputation() {
       setTxDesc(rejected ? "You cancelled the transaction." : err?.message || "Something went wrong.");
     } finally { 
       setIsTxPending(false);
-      setShowSuccessModal(false);
-      setPendingAction(null);
     }
   };
 
@@ -1013,140 +871,52 @@ export default function ActivityReputation() {
       try {
         const currentBlock = await publicClient.getBlockNumber();
         const fromBlock = currentBlock > BigInt(10000) ? currentBlock - BigInt(10000) : BigInt(0);
-        
         const gmEvents = await publicClient.getLogs({
           address: toHexAddress(GM_CONTRACT),
-          event: {
-            type: 'event',
-            name: 'Transfer',
-            inputs: [
-              { type: 'address', indexed: true, name: 'from' },
-              { type: 'address', indexed: true, name: 'to' },
-              { type: 'uint256', indexed: true, name: 'tokenId' },
-            ],
-          },
+          event: { type: 'event', name: 'Transfer', inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: true, name: 'tokenId' }] },
           fromBlock: fromBlock,
           toBlock: 'latest',
         });
-
         const usersMap = new Map<string, any>();
         const uniqueAddresses = new Set<string>();
-        
         for (const log of gmEvents.slice(-50)) {
           const userAddress = (log as any).args?.to;
-          if (userAddress && userAddress !== '0x0000000000000000000000000000000000000000') {
-            uniqueAddresses.add(userAddress);
-          }
+          if (userAddress && userAddress !== '0x0000000000000000000000000000000000000000') uniqueAddresses.add(userAddress);
         }
-        
         const userPromises = Array.from(uniqueAddresses).slice(0, 30).map(async (userAddress) => {
           try {
             const [gmCount, voteCount, checkInCount, deployCount, agentGmCount, action0, action1, action2, action3, action4, action5] = await Promise.all([
-              publicClient.readContract({
-                address: toHexAddress(GM_CONTRACT as `0x${string}`),
-                abi: gmABI,
-                functionName: 'balanceOf',
-                args: [userAddress as `0x${string}`],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(VOTE_CONTRACT as `0x${string}`),
-                abi: VoteABI,
-                functionName: 'getUserVotes',
-                args: [userAddress as `0x${string}`],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(CHECKIN_CONTRACT as `0x${string}`),
-                abi: checkInABI,
-                functionName: 'getUserCheckIns',
-                args: [userAddress as `0x${string}`],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(DEPLOY_CONTRACT as `0x${string}`),
-                abi: DeployABI,
-                functionName: 'getUserDeploymentCount',
-                args: [userAddress as `0x${string}`],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GM_CONTRACT as `0x${string}`),
-                abi: agentGMABI,
-                functionName: 'totalUserGM',
-                args: [userAddress as `0x${string}`],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`),
-                abi: agentGatewayABI,
-                functionName: 'userActionCount',
-                args: [userAddress as `0x${string}`, 0n],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`),
-                abi: agentGatewayABI,
-                functionName: 'userActionCount',
-                args: [userAddress as `0x${string}`, 1n],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`),
-                abi: agentGatewayABI,
-                functionName: 'userActionCount',
-                args: [userAddress as `0x${string}`, 2n],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`),
-                abi: agentGatewayABI,
-                functionName: 'userActionCount',
-                args: [userAddress as `0x${string}`, 3n],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`),
-                abi: agentGatewayABI,
-                functionName: 'userActionCount',
-                args: [userAddress as `0x${string}`, 4n],
-              }),
-              publicClient.readContract({
-                address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`),
-                abi: agentGatewayABI,
-                functionName: 'userActionCount',
-                args: [userAddress as `0x${string}`, 5n],
-              }),
+              publicClient.readContract({ address: toHexAddress(GM_CONTRACT as `0x${string}`), abi: gmABI, functionName: 'balanceOf', args: [userAddress as `0x${string}`] }),
+              publicClient.readContract({ address: toHexAddress(VOTE_CONTRACT as `0x${string}`), abi: VoteABI, functionName: 'getUserVotes', args: [userAddress as `0x${string}`] }),
+              publicClient.readContract({ address: toHexAddress(CHECKIN_CONTRACT as `0x${string}`), abi: checkInABI, functionName: 'getUserCheckIns', args: [userAddress as `0x${string}`] }),
+              publicClient.readContract({ address: toHexAddress(DEPLOY_CONTRACT as `0x${string}`), abi: DeployABI, functionName: 'getUserDeploymentCount', args: [userAddress as `0x${string}`] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GM_CONTRACT as `0x${string}`), abi: agentGMABI, functionName: 'totalUserGM', args: [userAddress as `0x${string}`] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 0n] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 1n] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 2n] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 3n] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 4n] }),
+              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 5n] }),
             ]);
-
             const partnerTotal = Number(action0) + Number(action1) + Number(action2) + Number(action3) + Number(action4) + Number(action5);
             const totalScore = Number(gmCount) + Number(voteCount) + Number(checkInCount) + Number(deployCount) + Number(agentGmCount) + partnerTotal;
-
-            return {
-              address: userAddress,
-              gmCount: Number(gmCount),
-              voteCount: Number(voteCount),
-              checkInCount: Number(checkInCount),
-              deployCount: Number(deployCount),
-              agentGmCount: Number(agentGmCount),
-              partnerTotal,
-              totalScore,
-            };
-          } catch {
-            return null;
-          }
+            return { address: userAddress, gmCount: Number(gmCount), voteCount: Number(voteCount), checkInCount: Number(checkInCount), deployCount: Number(deployCount), agentGmCount: Number(agentGmCount), partnerTotal, totalScore };
+          } catch { return null; }
         });
-        
         const results = await Promise.all(userPromises);
-        for (const result of results) {
-          if (result && result.totalScore > 0) usersMap.set(result.address, result);
-        }
-        
+        for (const result of results) { if (result && result.totalScore > 0) usersMap.set(result.address, result); }
         const usersArray = Array.from(usersMap.values());
         usersArray.sort((a, b) => b.totalScore - a.totalScore);
         setLeaderboardData(usersArray.slice(0, 20));
-      } catch (err) { console.error("Error fetching leaderboard:", err); } 
-      finally { setIsLoadingLeaderboard(false); }
+      } catch (err) { console.error("Error fetching leaderboard:", err); } finally { setIsLoadingLeaderboard(false); }
     };
     if (publicClient && isCorrectChain) fetchLeaderboard();
   }, [publicClient, isCorrectChain]);
 
-  // ================= TRANSACTION HANDLERS =================
+  // ================= QUICK ACTIONS HANDLER =================
   const handleAction = async (type: "gm" | "vote" | "checkIn" | "deploy") => {
     if (isTxPending) return;
     if (!isCorrectChain) { switchChain?.({ chainId: SONEIUM_CHAIN_ID }); return; }
-
     let contractAddress: `0x${string}`;
     let abi: any;
     let functionName: string;
@@ -1154,7 +924,6 @@ export default function ActivityReputation() {
     let successTitle: string;
     let successDesc: string;
     let actionTitle: string;
-
     switch (type) {
       case "gm":
         contractAddress = toHexAddress(GM_CONTRACT);
@@ -1193,15 +962,12 @@ export default function ActivityReputation() {
         successDesc = "Your contract deployment has been submitted!";
         break;
     }
-
     const value = fee > 0 ? fee : undefined;
-
     setIsTxPending(true);
     setTxOpen(true);
     setTxStatus("wallet");
     setTxTitle(`⚡ Confirm ${actionTitle}`);
     setTxDesc(`Confirm ${actionTitle} transaction on Soneium...`);
-
     try {
       const hash = await writeContractAsync({ address: contractAddress, abi, functionName, value });
       setTxStatus("pending");
@@ -1213,23 +979,7 @@ export default function ActivityReputation() {
         setTxTitle(successTitle);
         setTxDesc(successDesc);
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 }, startVelocity: 30, colors: ['#8b5cf6', '#ec4899', '#3b82f6', '#22c55e', '#fbbf24'] });
-        await Promise.all([
-          refetchUserGmCount(), 
-          refetchUserVoteCount(), 
-          refetchUserCheckInCount(), 
-          refetchUserDeployCount(),
-          refetchAgentGmCount(),
-          refetchAction0(),
-          refetchAction1(),
-          refetchAction2(),
-          refetchAction3(),
-          refetchAction4(),
-          refetchAction5(),
-          refetchAction6(),
-          refetchAction7(),
-          refetchAction8(),
-          refetchAction9(),
-        ]);
+        await Promise.all([refetchUserGmCount(), refetchUserVoteCount(), refetchUserCheckInCount(), refetchUserDeployCount(), refetchAgentGmCount(), refetchAction0(), refetchAction1(), refetchAction2(), refetchAction3(), refetchAction4(), refetchAction5(), refetchAction6(), refetchAction7(), refetchAction8(), refetchAction9(), refetchAction10(), refetchAction11()]);
         toast({ title: successTitle, description: successDesc, status: "success", duration: 5000, isClosable: true, position: "top-right" });
       } else throw new Error("Transaction reverted on chain");
     } catch (err: any) {
@@ -1277,37 +1027,12 @@ export default function ActivityReputation() {
         {/* Header */}
         <Flex justify="space-between" align="center" mb={8} direction={{ base: "column", md: "row" }} gap={4}>
           <HStack spacing={4} animation={`${slideInLeft} 0.6s ease-out`}>
-            <IconButton 
-              aria-label="Go back" 
-              icon={<ChevronLeftIcon boxSize={6} />} 
-              variant="solid" 
-              bg="rgba(139,92,246,0.2)" 
-              color="white" 
-              size="lg" 
-              onClick={() => window.history.back()} 
-              _hover={{ bg: "rgba(139,92,246,0.4)", transform: "scale(1.05)", boxShadow: "0 0 20px rgba(139,92,246,0.4)" }} 
-              transition="all 0.2s" 
-              borderRadius="full" 
-              border="1px solid rgba(139,92,246,0.5)" 
-            />
+            <IconButton aria-label="Go back" icon={<ChevronLeftIcon boxSize={6} />} variant="solid" bg="rgba(139,92,246,0.2)" color="white" size="lg" onClick={() => window.history.back()} _hover={{ bg: "rgba(139,92,246,0.4)", transform: "scale(1.05)", boxShadow: "0 0 20px rgba(139,92,246,0.4)" }} transition="all 0.2s" borderRadius="full" border="1px solid rgba(139,92,246,0.5)" />
             <VStack align="start" spacing={1}>
               <HStack spacing={3}>
                 <Box w="10px" h="10px" borderRadius="full" bg="#4ade80" animation={`${pulseGlow} 2s ease-in-out infinite`} />
-                <Heading fontSize={{ base: "xl", md: "3xl", lg: "4xl" }} fontWeight="800" bgGradient="linear(135deg, #c084fc 0%, #ec4899 40%, #3b82f6 100%)" bgClip="text" letterSpacing="tight">
-                  Activity Reputation
-                </Heading>
-                <Badge 
-                  bgGradient="linear(135deg, #8b5cf6, #ec4899)" 
-                  px={4} 
-                  py={1.5} 
-                  rounded="full" 
-                  fontSize="xs" 
-                  color="white" 
-                  boxShadow="0 0 12px rgba(139,92,246,0.6)"
-                  fontFamily="mono"
-                >
-                  ✨ Soneium
-                </Badge>
+                <Heading fontSize={{ base: "xl", md: "3xl", lg: "4xl" }} fontWeight="800" bgGradient="linear(135deg, #c084fc 0%, #ec4899 40%, #3b82f6 100%)" bgClip="text" letterSpacing="tight">Activity Reputation</Heading>
+                <Badge bgGradient="linear(135deg, #8b5cf6, #ec4899)" px={4} py={1.5} rounded="full" fontSize="xs" color="white" boxShadow="0 0 12px rgba(139,92,246,0.6)" fontFamily="mono">✨ Soneium</Badge>
               </HStack>
               <Text color="gray.500" fontSize="sm" letterSpacing="wider" fontFamily="mono">Track your on-chain legacy across GM, Votes, Check-Ins & Deployments</Text>
             </VStack>
@@ -1319,44 +1044,19 @@ export default function ActivityReputation() {
 
         {/* Network Warning */}
         {!isCorrectChain && isConnected && (
-          <Alert 
-            status="warning" 
-            borderRadius="2xl" 
-            mb={6} 
-            bg="rgba(236,72,153,0.12)" 
-            border="1px solid rgba(236,72,153,0.5)"
-            backdropFilter="blur(8px)"
-          >
+          <Alert status="warning" borderRadius="2xl" mb={6} bg="rgba(236,72,153,0.12)" border="1px solid rgba(236,72,153,0.5)" backdropFilter="blur(8px)">
             <AlertIcon color="#fbbf24" />
             <Box flex="1">
               <Text fontWeight="bold" color="#fbbf24" fontFamily="mono">⚠️ Network Mismatch</Text>
               <Text fontSize="sm" color="#d1d5db">Switch to Soneium Mainnet to unlock full functionality</Text>
             </Box>
-            <Button 
-              size="sm" 
-              onClick={() => switchChain?.({ chainId: SONEIUM_CHAIN_ID })} 
-              bgGradient="linear(135deg, #8b5cf6, #ec4899)" 
-              _hover={{ opacity: 0.9, transform: "scale(1.02)" }}
-              color="white"
-              borderRadius="full"
-              fontSize="xs"
-            >
-              Switch Network
-            </Button>
+            <Button size="sm" onClick={() => switchChain?.({ chainId: SONEIUM_CHAIN_ID })} bgGradient="linear(135deg, #8b5cf6, #ec4899)" _hover={{ opacity: 0.9, transform: "scale(1.02)" }} color="white" borderRadius="full" fontSize="xs">Switch Network</Button>
           </Alert>
         )}
 
         {/* Campaign Status Banner */}
         {isConnected && isCorrectChain && campaignStartTimeData !== undefined && (
-          <Alert 
-            status="info" 
-            borderRadius="xl" 
-            mb={6}
-            bg={campaignActive ? "rgba(34,197,94,0.1)" : campaignScheduled ? "rgba(139,92,246,0.1)" : "rgba(156,163,175,0.1)"}
-            border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#c084fc" : "#6b7280"}40`}
-            backdropFilter="blur(8px)"
-            py={3}
-          >
+          <Alert status="info" borderRadius="xl" mb={6} bg={campaignActive ? "rgba(34,197,94,0.1)" : campaignScheduled ? "rgba(139,92,246,0.1)" : "rgba(156,163,175,0.1)"} border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#c084fc" : "#6b7280"}40`} backdropFilter="blur(8px)" py={3}>
             <AlertIcon color={campaignActive ? "#22c55e" : campaignScheduled ? "#c084fc" : "#9ca3af"} />
             <Box flex="1">
               <HStack spacing={4} wrap="wrap" justify="space-between">
@@ -1364,38 +1064,23 @@ export default function ActivityReputation() {
                   <Text fontWeight="bold" color={campaignActive ? "#22c55e" : campaignScheduled ? "#c084fc" : "#9ca3af"} fontFamily="mono">
                     {campaignActive ? "🎯 Campaign Active" : campaignScheduled ? "⏳ Campaign Scheduled" : "⏸️ Campaign Stopped"}
                   </Text>
-                  
                   {campaignScheduled && timeRemaining && (timeRemaining.days + timeRemaining.hours + timeRemaining.minutes + timeRemaining.seconds > 0) && (
                     <HStack spacing={2}>
                       <Text fontSize="sm" color="gray.400">Starts in:</Text>
-                      <Text fontSize="lg" fontWeight="800" color="#c084fc">{timeRemaining.hours.toString().padStart(2, '0')}</Text>
-                      <Text fontSize="xs" color="gray.500">h</Text>
+                      <Text fontSize="lg" fontWeight="800" color="#c084fc">{timeRemaining.hours.toString().padStart(2, '0')}</Text><Text fontSize="xs" color="gray.500">h</Text>
                       <Text fontSize="lg" fontWeight="800" color="#c084fc">:</Text>
-                      <Text fontSize="lg" fontWeight="800" color="#c084fc">{timeRemaining.minutes.toString().padStart(2, '0')}</Text>
-                      <Text fontSize="xs" color="gray.500">m</Text>
+                      <Text fontSize="lg" fontWeight="800" color="#c084fc">{timeRemaining.minutes.toString().padStart(2, '0')}</Text><Text fontSize="xs" color="gray.500">m</Text>
                       <Text fontSize="lg" fontWeight="800" color="#c084fc">:</Text>
-                      <Text fontSize="lg" fontWeight="800" color="#c084fc">{timeRemaining.seconds.toString().padStart(2, '0')}</Text>
-                      <Text fontSize="xs" color="gray.500">s</Text>
+                      <Text fontSize="lg" fontWeight="800" color="#c084fc">{timeRemaining.seconds.toString().padStart(2, '0')}</Text><Text fontSize="xs" color="gray.500">s</Text>
                     </HStack>
                   )}
-                  
-                  {campaignActive && (
-                    <Text fontSize="sm" color="#22c55e">✓ Active now</Text>
-                  )}
+                  {campaignActive && (<Text fontSize="sm" color="#22c55e">✓ Active now</Text>)}
                 </HStack>
-                
                 {campaignStartTime > 0 && (campaignActive || campaignScheduled) && (
-                  <Text fontSize="xs" color="gray.500">
-                    {new Date(campaignStartTime * 1000).toLocaleDateString()} {new Date(campaignStartTime * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
+                  <Text fontSize="xs" color="gray.500">{new Date(campaignStartTime * 1000).toLocaleDateString()} {new Date(campaignStartTime * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                 )}
               </HStack>
             </Box>
-            <Tooltip label={campaignActive ? "Activities are now being tracked" : campaignScheduled ? "Campaign will start at this time" : "Campaign is currently stopped"}>
-              <Box w="20px" h="20px" borderRadius="full" bg="rgba(139,92,246,0.2)" display="flex" alignItems="center" justifyContent="center" cursor="help">
-                <Text fontSize="10px" color="#c084fc">i</Text>
-              </Box>
-            </Tooltip>
           </Alert>
         )}
 
@@ -1479,7 +1164,6 @@ export default function ActivityReputation() {
                 </Box>
               ) : (
                 <VStack spacing={8} align="stretch">
-                  {/* Grid cu 2 coloane */}
                   <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={8}>
                     {/* Profile Card */}
                     <GridItem>
@@ -1621,7 +1305,7 @@ export default function ActivityReputation() {
                     </GridItem>
                   </Grid>
 
-                  {/* Partner Actions */}
+                  {/* Partner Actions - Professional Cards with Reset */}
                   <Box>
                     <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" overflow="hidden" transition="all 0.4s" _hover={{ borderColor: "rgba(139,92,246,0.6)", transform: "translateY(-5px)" }}>
                       <Box h="4px" bgGradient="linear(90deg, #fbbf24, #ec4899, #8b5cf6, #fbbf24)" backgroundSize="300% 100%" animation={`${shimmer} 4s ease infinite`} />
@@ -1634,55 +1318,86 @@ export default function ActivityReputation() {
 
                         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                           {PARTNER_ACTIONS.map((action) => {
-                            let actionCount = 0;
+                            // Determină dacă utilizatorul a plătit pentru această sesiune
+                            const hasPaidForThisSession = actionPendingPayment[action.id] === true;
+                            
+                            // Obține numărul total de execuții (din contract)
+                            let totalExecutedCount = 0;
                             switch(action.id) {
-                              case 0: actionCount = Number(userAction0Count); break;
-                              case 1: actionCount = Number(userAction1Count); break;
-                              case 2: actionCount = Number(userAction2Count); break;
-                              case 3: actionCount = Number(userAction3Count); break;
-                              case 4: actionCount = Number(userAction4Count); break;
-                              case 5: actionCount = Number(userAction5Count); break;
-                              case 6: actionCount = Number(userAction6Count); break;
-                              case 7: actionCount = Number(userAction7Count); break;
-                              case 8: actionCount = Number(userAction8Count); break;
-                              case 9: actionCount = Number(userAction9Count); break;
-                              default: actionCount = 0;
+                              case 0: totalExecutedCount = Number(userAction0Count); break;
+                              case 1: totalExecutedCount = Number(userAction1Count); break;
+                              case 2: totalExecutedCount = Number(userAction2Count); break;
+                              case 3: totalExecutedCount = Number(userAction3Count); break;
+                              case 4: totalExecutedCount = Number(userAction4Count); break;
+                              case 5: totalExecutedCount = Number(userAction5Count); break;
+                              case 6: totalExecutedCount = Number(userAction6Count); break;
+                              case 7: totalExecutedCount = Number(userAction7Count); break;
+                              case 8: totalExecutedCount = Number(userAction8Count); break;
+                              case 9: totalExecutedCount = Number(userAction9Count); break;
+                              case 10: totalExecutedCount = Number(userAction10Count); break;
+                              case 11: totalExecutedCount = Number(userAction11Count); break;
+                              default: totalExecutedCount = 0;
                             }
-                            const hasPaid = actionCount > 0;
+                            
+                            // Pentru afișarea butonului: poate executa DOAR dacă a plătit în această sesiune
+                            const canExecute = hasPaidForThisSession;
                             
                             return (
-                              <Box key={action.id} bg="rgba(0,0,0,0.4)" borderRadius="xl" border={`1px solid ${action.color}30`} p={5} transition="all 0.3s" _hover={{ borderColor: action.color, transform: "translateY(-5px)", boxShadow: `0 0 20px ${action.color}20` }}>
+                              <Box key={action.id} bg="rgba(0,0,0,0.4)" borderRadius="2xl" border={`1.5px solid ${action.color}30`} p={5} transition="all 0.3s ease-in-out" _hover={{ borderColor: action.color, transform: "translateY(-6px)", boxShadow: `0 10px 30px ${action.color}20`, bg: "rgba(0,0,0,0.6)" }}>
                                 <VStack spacing={3}>
                                   <HStack w="full" justify="space-between">
-                                    <HStack spacing={2}>
-                                      <Image src={action.logo} boxSize="32px" borderRadius="full" fallbackSrc="https://via.placeholder.com/32" />
-                                      <Text fontWeight="700" color="white">{action.name}</Text>
+                                    <HStack spacing={3}>
+                                      <Box w="40px" h="40px" bg="rgba(255,255,255,0.05)" borderRadius="xl" display="flex" alignItems="center" justifyContent="center">
+                                        <Image src={action.logo} boxSize="28px" borderRadius="full" fallbackSrc="https://via.placeholder.com/28" />
+                                      </Box>
+                                      <Text fontWeight="700" color="white" fontSize="md">{action.name}</Text>
                                     </HStack>
-                                    <Badge bg={`${action.color}20`} color={action.color} fontSize="xs" px={2} py={1} borderRadius="full">+{action.points} point</Badge>
+                                    <Badge bg={`${action.color}20`} color={action.color} fontSize="xs" px={2.5} py={1} borderRadius="full" fontWeight="600">+{action.points} pt</Badge>
                                   </HStack>
+                                  
                                   <HStack w="full" justify="space-between">
-                                    <Text fontSize="xs" color="gray.500">Status:</Text>
-                                    <Badge bg={hasPaid ? "#22c55e20" : "#fbbf2420"} color={hasPaid ? "#22c55e" : "#fbbf24"} fontSize="xs" px={2} py={1} borderRadius="full">
-                                      {hasPaid ? "✓ Ready" : "⏳ Pay First"}
+                                    <Text fontSize="xs" color="gray.400" fontWeight="500">Status:</Text>
+                                    <Badge bg={canExecute ? "#22c55e20" : "#fbbf2420"} color={canExecute ? "#22c55e" : "#fbbf24"} fontSize="xs" px={2.5} py={1} borderRadius="full" fontWeight="600">
+                                      {canExecute ? "✓ Ready" : "⏳ Pay First"}
                                     </Badge>
                                   </HStack>
-                                  <HStack w="full" justify="space-between">
-                                    <Text fontSize="xs" color="gray.500">Completed:</Text>
-                                    <Text fontSize="sm" fontWeight="700" color={action.color}>{actionCount}x</Text>
-                                  </HStack>
-                                  <Text fontSize="xs" color="gray.500" textAlign="center">Protocol Fee: {formatFee(defaultFee)} ETH</Text>
-                                  {action.externalFee > 0 && (
-                                    <Text fontSize="xs" color="gray.500" textAlign="center">External Fee: {formatFee(BigInt(action.externalFee))} ETH</Text>
-                                  )}
                                   
-                                  {!hasPaid ? (
-                                    <Button size="sm" w="full" bgGradient={`linear(135deg, ${action.color}, ${action.color}cc)`} color="white" isLoading={isTxPending} _hover={{ opacity: 0.9, transform: "scale(1.02)" }} borderRadius="full" fontSize="xs" fontWeight="600" onClick={() => handlePayAndApprove(action)}>
-                                      💰 Pay & Approve ({formatFee(defaultFee)} ETH)
-                                    </Button>
-                                  ) : (
-                                    <Button size="sm" w="full" bgGradient={`linear(135deg, ${action.color}, ${action.color}cc)`} color="white" isLoading={isTxPending} _hover={{ opacity: 0.9, transform: "scale(1.02)" }} borderRadius="full" fontSize="xs" fontWeight="600" onClick={() => handleExecutePartnerAction(action)}>
-                                      {action.name.split(" ")[0]}
-                                    </Button>
+                                  <HStack w="full" justify="space-between">
+                                    <Text fontSize="xs" color="gray.400" fontWeight="500">Total Completed:</Text>
+                                    <Text fontSize="md" fontWeight="700" color={action.color}>{totalExecutedCount}x</Text>
+                                  </HStack>
+                                  
+                                  <Divider borderColor="rgba(255,255,255,0.1)" my={1} />
+                                  
+                                  <VStack spacing={1} w="full">
+                                    <Text fontSize="xs" color="gray.400" fontWeight="500">Protocol Fee: <Text as="span" color="#fbbf24" fontWeight="700">{formatFee(defaultFee)} ETH</Text></Text>
+                                    <Text fontSize="xs" color="gray.400" fontWeight="500">
+                                      External Fee: {action.externalFee > 0 ? (
+                                        <Text as="span" color="#22c55e" fontWeight="700">{formatFee(BigInt(action.externalFee))} ETH</Text>
+                                      ) : (
+                                        <Text as="span" color="#fbbf24" fontWeight="700">FREE</Text>
+                                      )}
+                                    </Text>
+                                  </VStack>
+                                  
+                                  <Button 
+                                    size="md" 
+                                    w="full" 
+                                    bg={!canExecute ? `linear-gradient(135deg, ${action.color}, ${action.color}cc)` : `linear-gradient(135deg, ${action.color}, ${action.color}cc)`}
+                                    color="white" 
+                                    fontWeight="bold"
+                                    fontSize="sm"
+                                    py={2.5}
+                                    isLoading={isTxPending} 
+                                    _hover={{ opacity: 0.9, transform: "scale(1.02)", boxShadow: `0 0 15px ${action.color}80` }} 
+                                    borderRadius="full"
+                                    onClick={() => !canExecute ? handlePayAndApprove(action) : handleExecutePartnerAction(action)}
+                                  >
+                                    {!canExecute ? `💰 Pay & Approve (${formatFee(defaultFee)} ETH)` : `✨ ${action.name.split(" ")[0]} ✨`}
+                                  </Button>
+                                  
+                                  {totalExecutedCount > 0 && !canExecute && (
+                                    <Text fontSize="xs" color="gray.500" textAlign="center" mt={1}>💡 Pay fee again to earn more points!</Text>
                                   )}
                                 </VStack>
                               </Box>
@@ -1731,7 +1446,7 @@ export default function ActivityReputation() {
 
             {/* Explorer Panel */}
             <TabPanel px={0} pt={2}>
-              <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8} transition="all 0.3s" _hover={{ borderColor: "rgba(139,92,246,0.5)" }}>
+              <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
                 <InputGroup size="lg" mb={8}>
                   <InputLeftElement pointerEvents="none"><SearchIcon color="#8b5cf6" /></InputLeftElement>
                   <Input placeholder="Search wallet address (0x...)" value={searchAddress} onChange={(e) => setSearchAddress(e.target.value)} bg="rgba(0,0,0,0.4)" borderColor="rgba(139,92,246,0.4)" color="white" _hover={{ borderColor: "#8b5cf6" }} _focus={{ borderColor: "#c084fc", boxShadow: "0 0 0 2px #c084fc", bg: "rgba(0,0,0,0.6)" }} fontFamily="mono" borderRadius="2xl" fontSize="sm" />
@@ -1837,13 +1552,13 @@ export default function ActivityReputation() {
             {/* Info Panel */}
             <TabPanel px={0} pt={2}>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
-                <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8} transition="all 0.3s" _hover={{ borderColor: "rgba(139,92,246,0.5)" }}>
+                <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
                   <Heading size="md" mb={6} color="#c084fc" fontWeight="700">📘 How It Works</Heading>
                   <VStack spacing={5} align="stretch">
                     {[{ step: "01", title: "Connect Wallet", desc: "Connect your Web3 wallet to start building reputation", color: "#8b5cf6" }, { step: "02", title: "Perform Actions", desc: "Send GM, Vote, Check-In, or Deploy contracts", color: "#ec4899" }, { step: "03", title: "Pay Small Fees", desc: "Each action has a small ETH fee to prevent spam", color: "#3b82f6" }, { step: "04", title: "Build Score", desc: "Your total score increases with every action", color: "#22c55e" }].map((item) => (<HStack key={item.step} spacing={4}><Badge fontSize="lg" px={4} py={2.5} borderRadius="full" bgGradient={`linear(135deg, ${item.color}, #a855f7)`} color="white" fontWeight="800">{item.step}</Badge><Box><Text fontWeight="700" color="white">{item.title}</Text><Text fontSize="sm" color="gray.500">{item.desc}</Text></Box></HStack>))}
                   </VStack>
                 </Box>
-                <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8} transition="all 0.3s" _hover={{ borderColor: "rgba(139,92,246,0.5)" }}>
+                <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
                   <Heading size="md" mb={6} color="#c084fc" fontWeight="700">🔗 Contract Information</Heading>
                   <VStack spacing={4} align="stretch">
                     <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">GM CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(GM_CONTRACT)}</Text></Box>

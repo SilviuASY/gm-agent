@@ -18,7 +18,7 @@ const BADGE_CONTRACT = '0x141224Bcdd1AE69E510c74928eD8d5B41dCe0D66';
 
 // Test route
 app.get('/api/', (req, res) => {
-  res.send('<h1>✅ Signature API ONLINE</h1><p>CORS enabled for Netlify</p>');
+  res.send('<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>');
 });
 
 app.post('/api/generate-mint-signature', async (req, res) => {

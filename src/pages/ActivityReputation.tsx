@@ -402,7 +402,31 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   }); 
 
-  const userPartnerTotal = Number(userAction0Count) + Number(userAction1Count) + Number(userAction2Count) + Number(userAction3Count) + Number(userAction4Count) + Number(userAction5Count) + Number(userAction6Count);
+  const { data: userAction7Count = 0n, refetch: refetchAction7 } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "userActionCount",
+    args: address ? [address, 7n] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+
+  const { data: userAction8Count = 0n, refetch: refetchAction8 } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "userActionCount",
+    args: address ? [address, 8n] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+
+  const { data: userAction9Count = 0n, refetch: refetchAction9 } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "userActionCount",
+    args: address ? [address, 9n] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+
+  const userPartnerTotal = Number(userAction0Count) + Number(userAction1Count) + Number(userAction2Count) + Number(userAction3Count) + Number(userAction4Count) + Number(userAction5Count) + Number(userAction6Count) + Number(userAction7Count) + Number(userAction8Count) + Number(userAction9Count);
 
   // ================= COUNTDOWN TIMER =================
   useEffect(() => {
@@ -794,6 +818,9 @@ export default function ActivityReputation() {
           refetchAction4(),
           refetchAction5(),
           refetchAction6(),
+          refetchAction7(),
+          refetchAction8(),
+          refetchAction9(),
         ]);
         
         setTxOpen(false);
@@ -952,6 +979,9 @@ export default function ActivityReputation() {
           refetchAction4(),
           refetchAction5(),
           refetchAction6(),
+          refetchAction7(),
+          refetchAction8(),
+          refetchAction9(),
         ]);
         
         toast({ 
@@ -1196,6 +1226,9 @@ export default function ActivityReputation() {
           refetchAction4(),
           refetchAction5(),
           refetchAction6(),
+          refetchAction7(),
+          refetchAction8(),
+          refetchAction9(),
         ]);
         toast({ title: successTitle, description: successDesc, status: "success", duration: 5000, isClosable: true, position: "top-right" });
       } else throw new Error("Transaction reverted on chain");
@@ -1610,6 +1643,10 @@ export default function ActivityReputation() {
                               case 4: actionCount = Number(userAction4Count); break;
                               case 5: actionCount = Number(userAction5Count); break;
                               case 6: actionCount = Number(userAction6Count); break;
+                              case 7: actionCount = Number(userAction7Count); break;
+                              case 8: actionCount = Number(userAction8Count); break;
+                              case 9: actionCount = Number(userAction9Count); break;
+                              default: actionCount = 0;
                             }
                             const hasPaid = actionCount > 0;
                             

@@ -1,7 +1,16 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
+# Redirecționează cererile /api/* către funcția serverless
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# Pentru SPA (Single Page Application)
 [[redirects]]
   from = "/*"
   to = "/index.html"

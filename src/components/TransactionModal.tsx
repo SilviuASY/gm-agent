@@ -7,104 +7,154 @@ import {
   Text,
   Spinner,
   Icon,
-  Button
-} from "@chakra-ui/react"
+  Button,
+} from "@chakra-ui/react";
 
-import { FiCheckCircle, FiXCircle, FiAlertCircle } from "react-icons/fi"
+import { FiCheckCircle, FiXCircle, FiAlertCircle } from "react-icons/fi";
+
+type ModalStatus = "idle" | "wallet" | "pending" | "success" | "rejected" | "failed";
 
 interface TransactionModalProps {
-  isOpen: boolean
-  status: 'idle' | 'wallet' | 'pending' | 'success' | 'rejected' | 'failed'
-  title: string
-  description: string
-  onClose: () => void
+  isOpen: boolean;
+  status: ModalStatus;
+  title: string;
+  description: string;
+  onClose: () => void;
+  onRetry?: () => void;
 }
+
+const statusConfig: Record<ModalStatus, {
+  icon: React.ReactNode;
+  buttonText: string;
+  buttonScheme: string;
+  buttonVariant?: "solid" | "outline";
+  buttonColor?: string;
+}> = {
+  idle: {
+    icon: <Spinner size="xl" color="purple.400" thickness="3px" />,
+    buttonText: "Cancel",
+    buttonScheme: "gray",
+    buttonVariant: "outline",
+    buttonColor: "gray.400",
+  },
+  wallet: {
+    icon: <Spinner size="xl" color="purple.400" thickness="3px" />,
+    buttonText: "Cancel",
+    buttonScheme: "gray",
+    buttonVariant: "outline",
+    buttonColor: "gray.400",
+  },
+  pending: {
+    icon: <Spinner size="xl" color="purple.400" thickness="3px" />,
+    buttonText: "Cancel",
+    buttonScheme: "gray",
+    buttonVariant: "outline",
+    buttonColor: "gray.400",
+  },
+  success: {
+    icon: <Icon as={FiCheckCircle} boxSize={14} color="green.400" />,
+    buttonText: "Continue",
+    buttonScheme: "purple",
+  },
+  rejected: {
+    icon: <Icon as={FiXCircle} boxSize={14} color="red.400" />,
+    buttonText: "Close",
+    buttonScheme: "red",
+  },
+  failed: {
+    icon: <Icon as={FiAlertCircle} boxSize={14} color="orange.400" />,
+    buttonText: "Try Again",
+    buttonScheme: "orange",
+  },
+};
 
 export default function TransactionModal({
   isOpen,
   status,
   title,
   description,
-  onClose
+  onClose,
+  onRetry,
 }: TransactionModalProps) {
+  const config = statusConfig[status];
 
-  const getIcon = () => {
-    switch (status) {
-      case "wallet":
-        return <Spinner size="xl" color="purple.400" thickness="3px" />
-      case "pending":
-        return <Spinner size="xl" color="purple.400" thickness="3px" />
-      case "success":
-        return <Icon as={FiCheckCircle} boxSize={14} color="green.400" />
-      case "rejected":
-        return <Icon as={FiXCircle} boxSize={14} color="red.400" />
-      case "failed":
-        return <Icon as={FiAlertCircle} boxSize={14} color="orange.400" />
-      default:
-        return <Spinner size="xl" color="purple.400" thickness="3px" />
+  const handleButtonClick = () => {
+    if (status === "failed" && onRetry) {
+      onRetry();
+    } else {
+      onClose();
     }
-  }
-
-  const getButton = () => {
-    switch (status) {
-      case "success":
-        return (
-          <Button colorScheme="purple" onClick={onClose} borderRadius="full" px={8}>
-            Continue
-          </Button>
-        )
-      case "rejected":
-        return (
-          <Button colorScheme="red" onClick={onClose} borderRadius="full" px={8}>
-            Close
-          </Button>
-        )
-      case "failed":
-        return (
-          <Button colorScheme="orange" onClick={onClose} borderRadius="full" px={8}>
-            Try Again
-          </Button>
-        )
-      default:
-        return null
-    }
-  }
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay backdropFilter="blur(8px)" />
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      isCentered
+      closeOnOverlayClick={status !== "pending" && status !== "wallet"}
+      closeOnEsc={status !== "pending" && status !== "wallet"}
+    >
+      <ModalOverlay backdropFilter="blur(10px)" />
 
-      <ModalContent 
-        bg="linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(15, 15, 30, 0.95))"
+      <ModalContent
+        bg="linear-gradient(135deg, #1A1A2E 0%, #0F0F1E 100%)"
         backdropFilter="blur(20px)"
-        color="white" 
-        p={6} 
-        borderRadius="2xl"
-        border="1px solid rgba(139, 92, 246, 0.3)"
-        boxShadow="0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(139,92,246,0.2)"
+        border="1px solid rgba(139, 92, 246, 0.25)"
+        boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(139, 92, 246, 0.15)"
+        borderRadius="3xl"
+        p={8}
+        maxW="md"
       >
+        <ModalBody p={0}>
+          <VStack spacing={6} textAlign="center">
+            {/* Icon / Spinner */}
+            <div>{config.icon}</div>
 
-        <ModalBody>
-
-          <VStack spacing={5}>
-
-            {getIcon()}
-
-            <Text fontSize="lg" fontWeight="bold" bgGradient="linear(135deg, #c084fc, #ec4899)" bgClip="text">
+            {/* Titlu */}
+            <Text
+              fontSize="2xl"
+              fontWeight="700"
+              bgGradient="linear(90deg, #C084FC, #EC4899)"
+              bgClip="text"
+              letterSpacing="tight"
+            >
               {title}
             </Text>
 
-            <Text textAlign="center" color="gray.300">
+            {/* Descriere */}
+            <Text color="gray.300" fontSize="md" lineHeight="1.6" px={4}>
               {description}
             </Text>
 
-            {getButton()}
-
+            {/* Buton */}
+            <Button
+              colorScheme={config.buttonScheme}
+              variant={config.buttonVariant ?? "solid"}
+              size="lg"
+              width="full"
+              borderRadius="full"
+              py={6}
+              fontWeight="600"
+              onClick={handleButtonClick}
+              mt={2}
+              {...(config.buttonVariant === "outline" && {
+                color: config.buttonColor,
+                borderColor: config.buttonColor,
+                _hover: {
+                  bg: "whiteAlpha.100",
+                  borderColor: "gray.300",
+                  color: "white",
+                },
+                _active: {
+                  bg: "whiteAlpha.200",
+                },
+              })}
+            >
+              {config.buttonText}
+            </Button>
           </VStack>
-
         </ModalBody>
-
       </ModalContent>
     </Modal>
-  )
+  );
 }

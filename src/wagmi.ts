@@ -7,8 +7,8 @@ export const soneiumChain = {
   name: 'Soneium',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://soneium.drpc.org'] },
-    public: { http: ['https://soneium.drpc.org'] },
+    default: { http: ['https://soneium-mainnet.rpc.sentio.xyz'] },
+    public: { http: ['https://soneium-mainnet.rpc.sentio.xyz'] },
   },
   iconUrl: '/soneium.png',
 } as const
@@ -46,17 +46,6 @@ export const baseChain = {
   iconUrl: '/base.png',
 } as const
 
-export const arbitrumChain = {
-  id: 42161,
-  name: 'Arbitrum',
-  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://arbitrum-one-public.nodies.app'] },
-    public: { http: ['https://arbitrum-one-public.nodies.app'] },
-  },
-  iconUrl: '/arbitrum.png',
-} as const
-
 export const unichainChain = {
   id: 130,
   name: 'Unichain',
@@ -72,13 +61,12 @@ export const unichainChain = {
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',
   projectId: '6aa7072f821f3b0218542737006796a7',
-  chains: [soneiumChain, inkChain, optimismChain, baseChain, arbitrumChain, unichainChain],
+  chains: [soneiumChain, inkChain, optimismChain, baseChain, unichainChain],
   transports: {
     [soneiumChain.id]: http(),
     [inkChain.id]: http(),
     [optimismChain.id]: http(),
     [baseChain.id]: http(),
-    [arbitrumChain.id]: http(),
     [unichainChain.id]: http(),
   },
 })

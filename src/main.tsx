@@ -6,7 +6,12 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
 import { config } from './wagmi'
 import App from './App'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import '@rainbow-me/rainbowkit/styles.css'
+import ActivityReputation from "./pages/ActivityReputation";
+
+ // Pages
+
 
 const queryClient = new QueryClient()
 
@@ -16,7 +21,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
           <ChakraProvider>
-            <App />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<App />} />
+                <Route path="/activity-reputation/*" element={<ActivityReputation />} />
+              </Routes>
+            </BrowserRouter>
           </ChakraProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

@@ -1,0 +1,55 @@
+import express from 'express';
+import serverless from 'serverless-http';
+import cors from 'cors';
+import { ethers } from 'ethers';
+
+const app = express();
+
+app.use(cors({
+  origin: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+app.use(express.json());
+
+const BADGE_CONTRACT = '0x141224Bcdd1AE69E510c74928eD8d5B41dCe0D66';
+
+// Test route
+app.get('/api/', (req, res) => {
+  res.send('<h1>✅ Signature API ONLINE</h1><p>CORS enabled for Netlify</p>');
+});
+
+app.post('/api/generate-mint-signature', async (req, res) => {
+  const { userAddress, score, nonce } = req.body;
+
+  if (!userAddress?.startsWith('0x') || typeof score !== 'number' || nonce === undefined) {
+    return res.status(400).json({ error: 'Invalid parameters' });
+  }
+
+  const signerPk = process.env.SIGNER_PRIVATE_KEY;
+  if (!signerPk) {
+    return res.status(500).json({ error: 'Missing SIGNER_PRIVATE_KEY in environment variables' });
+  }
+
+  try {
+    const wallet = new ethers.Wallet(signerPk);
+
+    const rawMessageHash = ethers.solidityPackedKeccak256(
+      ['address', 'uint256', 'uint256', 'address'],
+      [userAddress, BigInt(score), BigInt(nonce), BADGE_CONTRACT]
+    );
+
+    const signature = await wallet.signMessage(ethers.getBytes(rawMessageHash));
+
+    console.log(`✅ Signature generated for ${userAddress}`);
+    return res.status(200).json({ signature });
+  } catch (error) {
+    console.error("❌ Error generating signature:", error);
+    return res.status(500).json({ error: 'Error generating signature' });
+  }
+});
+
+// Export pentru Netlify Functions
+export const handler = serverless(app);

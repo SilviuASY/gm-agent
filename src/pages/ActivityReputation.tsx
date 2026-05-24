@@ -89,7 +89,7 @@ const PARTNER_ACTIONS = [
   { id: 1, name: "AXD Daily Checkin", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#8b5cf6", hasReferral: false, externalFee: 0, isPayable: false },
   { id: 2, name: "Rubyscore Vote", logo: "/ruby.png", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#ec4899", hasReferral: false, externalFee: 5000000000000, isPayable: true },
   { id: 3, name: "Lootcoin Checkin", logo: "/loot.png", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#3b82f6", hasReferral: true, externalFee: 0, isPayable: false },
-  { id: 4, name: "PRESA", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#fbbf24", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 4, name: "PRESSA", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#fbbf24", hasReferral: false, externalFee: 0, isPayable: false },
   { id: 5, name: "OnChain GM", logo: "/onchaingm.png", target: "0x8ADA1808cc5ed8493836e6A79080ea0ea2f008eC", selector: "0x84a3bb6b", functionName: "onChainGM", points: 1, color: "#c084fc", hasReferral: true, externalFee: 29000000000000, isPayable: true },
   { id: 6, name: "Captain CheckIn", logo: "/captain.png", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f97316", hasReferral: false, externalFee: 0, isPayable: false },
 ];

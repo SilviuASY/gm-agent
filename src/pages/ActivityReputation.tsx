@@ -17,21 +17,10 @@ import {
   TabPanels,
   Tab,
   TabPanel,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
   Avatar,
   useToast,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Spinner,
   Alert,
   AlertIcon,
-  Tooltip,
   IconButton,
   Divider,
   Grid,
@@ -59,7 +48,7 @@ import {
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { keyframes } from "@emotion/react";
-import { ChevronLeftIcon, SearchIcon, StarIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon } from "@chakra-ui/icons";
 import { LiFiWidget, WidgetSkeleton } from '@lifi/widget';
 
 import TransactionModal from "../components/TransactionModal";
@@ -170,6 +159,16 @@ const formatFee = (fee: bigint) => {
   return (Number(fee) / 1e18).toFixed(6);
 };
 
+const formatTimeRemaining = (seconds: number) => {
+  if (seconds <= 0) return "Ready!";
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${secs}s`;
+  return `${secs}s`;
+};
+
 const toHexAddress = (addr: string): `0x${string}` => addr as `0x${string}`;
 
 // Get user rank badge
@@ -189,12 +188,15 @@ const campaignABI = [
   { inputs: [], name: "campaignScheduled", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
 ] as const;
 
-// AgentGateway ABI
+// AgentGateway ABI complet
 const agentGatewayABI = [
   { inputs: [{ internalType: "uint256", name: "actionId", type: "uint256" }], name: "payAndApprove", outputs: [], stateMutability: "payable", type: "function" },
   { inputs: [], name: "defaultFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "cooldownSeconds", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "address", name: "", type: "address" }, { internalType: "uint256", name: "", type: "uint256" }], name: "userActionCount", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "address", name: "user", type: "address" }, { internalType: "uint256", name: "actionId", type: "uint256" }], name: "hasPaidForAction", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
+  { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "getUserLastActionTime", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "getUserTotalActions", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
 ] as const;
 
 // Agent ABI
@@ -230,12 +232,8 @@ export default function ActivityReputation() {
 
   // UI State
   const [isTxPending, setIsTxPending] = useState(false);
-  const [searchAddress, setSearchAddress] = useState("");
-  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
-  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
   
-  // ================= RESETARE PLATĂ - FLAG PENTRU FIECARE ACȚIUNE =================
-  // Acest flag permite resetarea după fiecare execuție
+  // Resetare plată - flag pentru fiecare acțiune
   const [actionPendingPayment, setActionPendingPayment] = useState<{ [key: number]: boolean }>({});
 
   // Success Modal State
@@ -255,6 +253,47 @@ export default function ActivityReputation() {
   const [txDesc, setTxDesc] = useState("");
 
   const isCorrectChain = chainId === SONEIUM_CHAIN_ID;
+
+  // ================= FRONTEND COOLDOWN STORAGE (localStorage) =================
+  const getCooldownKey = (actionId: number) => `cooldown_${address}_${actionId}`;
+  
+  const getRemainingCooldown = (actionId: number): number => {
+    if (!address) return 0;
+    const key = getCooldownKey(actionId);
+    const stored = localStorage.getItem(key);
+    if (!stored) return 0;
+    const endTime = parseInt(stored, 10);
+    const remaining = endTime - Date.now();
+    return remaining > 0 ? Math.floor(remaining / 1000) : 0;
+  };
+  
+  const setCooldown = (actionId: number) => {
+    if (!address) return;
+    const key = getCooldownKey(actionId);
+    const endTime = Date.now() + (24 * 60 * 60 * 1000);
+    localStorage.setItem(key, endTime.toString());
+  };
+  
+  const [cooldownRemaining, setCooldownRemaining] = useState<{ [key: number]: number }>({});
+  
+  useEffect(() => {
+    if (!address) return;
+    
+    const updateCooldowns = () => {
+      const newRemaining: { [key: number]: number } = {};
+      PARTNER_ACTIONS.forEach(action => {
+        const remaining = getRemainingCooldown(action.id);
+        if (remaining > 0) {
+          newRemaining[action.id] = remaining;
+        }
+      });
+      setCooldownRemaining(newRemaining);
+    };
+    
+    updateCooldowns();
+    const interval = setInterval(updateCooldowns, 1000);
+    return () => clearInterval(interval);
+  }, [address]);
 
   // ================= READ CAMPAIGN INFO =================
   const { data: campaignStartTimeData = 0n } = useReadContract({
@@ -284,12 +323,37 @@ export default function ActivityReputation() {
     setCampaignScheduled(campaignScheduledData);
   }, [campaignStartTimeData, campaignActiveData, campaignScheduledData]);
 
-  // ================= READ DEFAULT FEE =================
+  // ================= READ DEFAULT FEE & COOLDOWN =================
   const { data: defaultFee = 0n } = useReadContract({
     address: toHexAddress(AGENT_GATEWAY_CONTRACT),
     abi: agentGatewayABI,
     functionName: "defaultFee",
     query: { enabled: true },
+  });
+
+  const { data: cooldownSeconds = 0n } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "cooldownSeconds",
+    query: { enabled: true },
+  });
+
+  // ================= READ USER LAST ACTION TIME =================
+  const { data: userLastActionTime = 0n, refetch: refetchLastActionTime } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "getUserLastActionTime",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+
+  // ================= READ USER TOTAL ACTIONS =================
+  const { data: userTotalActionsContract = 0n, refetch: refetchTotalActions } = useReadContract({
+    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
+    abi: agentGatewayABI,
+    functionName: "getUserTotalActions",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
   // ================= READ PARTNER ACTION COUNTS =================
@@ -379,6 +443,26 @@ export default function ActivityReputation() {
   });
 
   const userPartnerTotal = Number(userAction0Count) + Number(userAction1Count) + Number(userAction2Count) + Number(userAction3Count) + Number(userAction4Count) + Number(userAction5Count) + Number(userAction6Count) + Number(userAction7Count) + Number(userAction8Count) + Number(userAction9Count) + Number(userAction10Count) + Number(userAction11Count);
+
+  // Contract cooldown remaining (doar pentru afișare)
+  const [contractCooldownRemaining, setContractCooldownRemaining] = useState<number>(0);
+  
+  useEffect(() => {
+    if (userLastActionTime > 0n && cooldownSeconds > 0n) {
+      const now = Math.floor(Date.now() / 1000);
+      const lastAction = Number(userLastActionTime);
+      const cooldown = Number(cooldownSeconds);
+      const remaining = Math.max(0, (lastAction + cooldown) - now);
+      setContractCooldownRemaining(remaining);
+      
+      if (remaining > 0) {
+        const interval = setInterval(() => {
+          setContractCooldownRemaining(prev => Math.max(0, prev - 1));
+        }, 1000);
+        return () => clearInterval(interval);
+      }
+    }
+  }, [userLastActionTime, cooldownSeconds]);
 
   // ================= COUNTDOWN TIMER =================
   useEffect(() => {
@@ -522,105 +606,20 @@ export default function ActivityReputation() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // Searched User Data
-  const { data: searchedUserGmCount = 0n } = useReadContract({
-    address: toHexAddress(GM_CONTRACT),
-    abi: gmABI,
-    functionName: "balanceOf",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserVoteCount = 0n } = useReadContract({
-    address: toHexAddress(VOTE_CONTRACT),
-    abi: VoteABI,
-    functionName: "getUserVotes",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserCheckInCount = 0n } = useReadContract({
-    address: toHexAddress(CHECKIN_CONTRACT),
-    abi: checkInABI,
-    functionName: "getUserCheckIns",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserDeployCount = 0n } = useReadContract({
-    address: toHexAddress(DEPLOY_CONTRACT),
-    abi: DeployABI,
-    functionName: "getUserDeploymentCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserIsSBT = false } = useReadContract({
-    address: toHexAddress(CHECKIN_CONTRACT),
-    abi: checkInABI,
-    functionName: "isSBTTokenHolder",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserIsAgent = false } = useReadContract({
-    address: toHexAddress(AGENT_CONTRACT),
-    abi: agentABI,
-    functionName: "isAgent",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAgentGmCount = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GM_CONTRACT),
-    abi: agentGMABI,
-    functionName: "totalUserGM",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress)] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAction0Count = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
-    abi: agentGatewayABI,
-    functionName: "userActionCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 0n] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAction1Count = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
-    abi: agentGatewayABI,
-    functionName: "userActionCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 1n] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAction2Count = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
-    abi: agentGatewayABI,
-    functionName: "userActionCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 2n] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAction3Count = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
-    abi: agentGatewayABI,
-    functionName: "userActionCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 3n] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAction4Count = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
-    abi: agentGatewayABI,
-    functionName: "userActionCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 4n] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-  const { data: searchedUserAction5Count = 0n } = useReadContract({
-    address: toHexAddress(AGENT_GATEWAY_CONTRACT),
-    abi: agentGatewayABI,
-    functionName: "userActionCount",
-    args: searchAddress && searchAddress.length === 42 ? [toHexAddress(searchAddress), 5n] : undefined,
-    query: { enabled: !!searchAddress && searchAddress.length === 42 && isCorrectChain },
-  });
-
-  const searchedUserPartnerTotal = Number(searchedUserAction0Count) + Number(searchedUserAction1Count) + Number(searchedUserAction2Count) + Number(searchedUserAction3Count) + Number(searchedUserAction4Count) + Number(searchedUserAction5Count);
-
   const userTotalScore = Number(userGmCount) + Number(userVoteCount) + Number(userCheckInCount) + Number(userDeployCount) + Number(userAgentGmCount) + userPartnerTotal;
-  const searchedUserTotalScore = Number(searchedUserGmCount) + Number(searchedUserVoteCount) + Number(searchedUserCheckInCount) + Number(searchedUserDeployCount) + Number(searchedUserAgentGmCount) + searchedUserPartnerTotal;
   const userBadge = getUserBadge(userTotalScore);
-  const searchedUserBadge = getUserBadge(searchedUserTotalScore);
+
+  // Next tier target
+  const getNextTierTarget = (score: number) => {
+    if (score < 50) return 50;
+    if (score < 100) return 100;
+    if (score < 250) return 250;
+    if (score < 500) return 500;
+    if (score < 1000) return 1000;
+    return 1000;
+  };
+  const nextTierTarget = getNextTierTarget(userTotalScore);
+  const reputationProgress = Math.min(100, (userTotalScore / nextTierTarget) * 100);
 
   // ================= MINT BADGE HANDLER =================
   const handleMintBadge = async () => {
@@ -672,15 +671,20 @@ export default function ActivityReputation() {
 
   // ================= PARTNER ACTION HANDLERS =================
   
-  // Pasul 1: Plătește fee-ul în AgentGateway
   const handlePayAndApprove = async (action: typeof PARTNER_ACTIONS[0]) => {
     if (isTxPending) return;
     if (!isCorrectChain) { switchChain?.({ chainId: SONEIUM_CHAIN_ID }); return; }
     
+    const remaining = getRemainingCooldown(action.id);
+    if (remaining > 0) {
+      toast({ title: "Cooldown Active", description: `You must wait ${formatTimeRemaining(remaining)} before using ${action.name} again.`, status: "warning", duration: 4000 });
+      return;
+    }
+    
     setIsTxPending(true);
     setTxOpen(true);
     setTxStatus("wallet");
-    setTxTitle(`⚡ Pay Fee: ${action.name}`);
+    setTxTitle(`⚡ Pay & Interact: ${action.name}`);
     setTxDesc(`Confirm payment of ${formatFee(defaultFee)} ETH for ${action.name}...`);
 
     try {
@@ -704,25 +708,13 @@ export default function ActivityReputation() {
         setTxDesc(`You can now execute the ${action.name} action.`);
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
         
-        // Reîncarcă contoarele
         await Promise.all([
-          refetchAction0(),
-          refetchAction1(),
-          refetchAction2(),
-          refetchAction3(),
-          refetchAction4(),
-          refetchAction5(),
-          refetchAction6(),
-          refetchAction7(),
-          refetchAction8(),
-          refetchAction9(),
-          refetchAction10(),
-          refetchAction11(),
+          refetchAction0(), refetchAction1(), refetchAction2(), refetchAction3(), refetchAction4(),
+          refetchAction5(), refetchAction6(), refetchAction7(), refetchAction8(), refetchAction9(),
+          refetchAction10(), refetchAction11(), refetchLastActionTime(), refetchTotalActions(),
         ]);
         
-        // ===== CHEIA: SETEAZĂ FLAG-UL CĂ A PLĂTIT =====
         setActionPendingPayment(prev => ({ ...prev, [action.id]: true }));
-        
         setTxOpen(false);
         setShowSuccessModal(true);
         setPendingAction(action);
@@ -744,7 +736,6 @@ export default function ActivityReputation() {
     } finally { setIsTxPending(false); }
   };
 
-  // Pasul 2: Execută acțiunea direct pe contractul partener
   const handleExecutePartnerAction = async (action: typeof PARTNER_ACTIONS[0]) => {
     if (isTxPending) return;
     if (!isCorrectChain) { switchChain?.({ chainId: SONEIUM_CHAIN_ID }); return; }
@@ -796,10 +787,10 @@ export default function ActivityReputation() {
           const streak = BigInt(1);
           hash = await writeContractAsync({ address: toHexAddress(action.target), abi: nekoABI, functionName: "signGMeow", args: ["GMeow", dayNum, streak] });
           break;
-          case 10:
+        case 10:
           hash = await writeContractAsync({ address: toHexAddress(action.target), abi: surfABI, functionName: "dailyGM", value: BigInt(action.externalFee) });
           break;
-          case 11:
+        case 11:
           hash = await writeContractAsync({ address: toHexAddress(action.target), abi: wheelABI, functionName: "gm", value: BigInt(action.externalFee) });
           break;
         default: throw new Error("Unknown action");
@@ -817,36 +808,22 @@ export default function ActivityReputation() {
         setTxDesc(`You earned +${action.points} reputation point!`);
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
         
-        // Reîncarcă toate datele
+        setCooldown(action.id);
+        
         await Promise.all([
-          refetchUserGmCount(),
-          refetchUserVoteCount(),
-          refetchUserCheckInCount(),
-          refetchUserDeployCount(),
-          refetchAgentGmCount(),
-          refetchAction0(),
-          refetchAction1(),
-          refetchAction2(),
-          refetchAction3(),
-          refetchAction4(),
-          refetchAction5(),
-          refetchAction6(),
-          refetchAction7(),
-          refetchAction8(),
-          refetchAction9(),
-          refetchAction10(),
-          refetchAction11(),
+          refetchUserGmCount(), refetchUserVoteCount(), refetchUserCheckInCount(), refetchUserDeployCount(),
+          refetchAgentGmCount(), refetchAction0(), refetchAction1(), refetchAction2(), refetchAction3(),
+          refetchAction4(), refetchAction5(), refetchAction6(), refetchAction7(), refetchAction8(),
+          refetchAction9(), refetchAction10(), refetchAction11(), refetchLastActionTime(), refetchTotalActions(),
         ]);
         
-        // ===== CHEIA: RESETEAZĂ FLAG-UL PENTRU CA UTILIZATORUL SĂ PLĂTEASCĂ DIN NOU =====
         setActionPendingPayment(prev => ({ ...prev, [action.id]: false }));
-        
         setShowSuccessModal(false);
         setPendingAction(null);
         
         toast({ 
           title: `🎉 +${action.points} Point!`, 
-          description: `${action.name} completed! Pay fee again to earn more points.`, 
+          description: `${action.name} completed! Come back in 24 hours to earn more points.`, 
           status: "success", 
           duration: 5000, 
           isClosable: true, 
@@ -862,56 +839,6 @@ export default function ActivityReputation() {
       setIsTxPending(false);
     }
   };
-
-  // ================= LEADERBOARD =================
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      if (!publicClient || !isCorrectChain) return;
-      setIsLoadingLeaderboard(true);
-      try {
-        const currentBlock = await publicClient.getBlockNumber();
-        const fromBlock = currentBlock > BigInt(10000) ? currentBlock - BigInt(10000) : BigInt(0);
-        const gmEvents = await publicClient.getLogs({
-          address: toHexAddress(GM_CONTRACT),
-          event: { type: 'event', name: 'Transfer', inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: true, name: 'tokenId' }] },
-          fromBlock: fromBlock,
-          toBlock: 'latest',
-        });
-        const usersMap = new Map<string, any>();
-        const uniqueAddresses = new Set<string>();
-        for (const log of gmEvents.slice(-50)) {
-          const userAddress = (log as any).args?.to;
-          if (userAddress && userAddress !== '0x0000000000000000000000000000000000000000') uniqueAddresses.add(userAddress);
-        }
-        const userPromises = Array.from(uniqueAddresses).slice(0, 30).map(async (userAddress) => {
-          try {
-            const [gmCount, voteCount, checkInCount, deployCount, agentGmCount, action0, action1, action2, action3, action4, action5] = await Promise.all([
-              publicClient.readContract({ address: toHexAddress(GM_CONTRACT as `0x${string}`), abi: gmABI, functionName: 'balanceOf', args: [userAddress as `0x${string}`] }),
-              publicClient.readContract({ address: toHexAddress(VOTE_CONTRACT as `0x${string}`), abi: VoteABI, functionName: 'getUserVotes', args: [userAddress as `0x${string}`] }),
-              publicClient.readContract({ address: toHexAddress(CHECKIN_CONTRACT as `0x${string}`), abi: checkInABI, functionName: 'getUserCheckIns', args: [userAddress as `0x${string}`] }),
-              publicClient.readContract({ address: toHexAddress(DEPLOY_CONTRACT as `0x${string}`), abi: DeployABI, functionName: 'getUserDeploymentCount', args: [userAddress as `0x${string}`] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GM_CONTRACT as `0x${string}`), abi: agentGMABI, functionName: 'totalUserGM', args: [userAddress as `0x${string}`] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 0n] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 1n] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 2n] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 3n] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 4n] }),
-              publicClient.readContract({ address: toHexAddress(AGENT_GATEWAY_CONTRACT as `0x${string}`), abi: agentGatewayABI, functionName: 'userActionCount', args: [userAddress as `0x${string}`, 5n] }),
-            ]);
-            const partnerTotal = Number(action0) + Number(action1) + Number(action2) + Number(action3) + Number(action4) + Number(action5);
-            const totalScore = Number(gmCount) + Number(voteCount) + Number(checkInCount) + Number(deployCount) + Number(agentGmCount) + partnerTotal;
-            return { address: userAddress, gmCount: Number(gmCount), voteCount: Number(voteCount), checkInCount: Number(checkInCount), deployCount: Number(deployCount), agentGmCount: Number(agentGmCount), partnerTotal, totalScore };
-          } catch { return null; }
-        });
-        const results = await Promise.all(userPromises);
-        for (const result of results) { if (result && result.totalScore > 0) usersMap.set(result.address, result); }
-        const usersArray = Array.from(usersMap.values());
-        usersArray.sort((a, b) => b.totalScore - a.totalScore);
-        setLeaderboardData(usersArray.slice(0, 20));
-      } catch (err) { console.error("Error fetching leaderboard:", err); } finally { setIsLoadingLeaderboard(false); }
-    };
-    if (publicClient && isCorrectChain) fetchLeaderboard();
-  }, [publicClient, isCorrectChain]);
 
   // ================= QUICK ACTIONS HANDLER =================
   const handleAction = async (type: "gm" | "vote" | "checkIn" | "deploy") => {
@@ -979,7 +906,7 @@ export default function ActivityReputation() {
         setTxTitle(successTitle);
         setTxDesc(successDesc);
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 }, startVelocity: 30, colors: ['#8b5cf6', '#ec4899', '#3b82f6', '#22c55e', '#fbbf24'] });
-        await Promise.all([refetchUserGmCount(), refetchUserVoteCount(), refetchUserCheckInCount(), refetchUserDeployCount(), refetchAgentGmCount(), refetchAction0(), refetchAction1(), refetchAction2(), refetchAction3(), refetchAction4(), refetchAction5(), refetchAction6(), refetchAction7(), refetchAction8(), refetchAction9(), refetchAction10(), refetchAction11()]);
+        await Promise.all([refetchUserGmCount(), refetchUserVoteCount(), refetchUserCheckInCount(), refetchUserDeployCount(), refetchAgentGmCount(), refetchAction0(), refetchAction1(), refetchAction2(), refetchAction3(), refetchAction4(), refetchAction5(), refetchAction6(), refetchAction7(), refetchAction8(), refetchAction9(), refetchAction10(), refetchAction11(), refetchLastActionTime(), refetchTotalActions()]);
         toast({ title: successTitle, description: successDesc, status: "success", duration: 5000, isClosable: true, position: "top-right" });
       } else throw new Error("Transaction reverted on chain");
     } catch (err: any) {
@@ -1027,7 +954,20 @@ export default function ActivityReputation() {
         {/* Header */}
         <Flex justify="space-between" align="center" mb={8} direction={{ base: "column", md: "row" }} gap={4}>
           <HStack spacing={4} animation={`${slideInLeft} 0.6s ease-out`}>
-            <IconButton aria-label="Go back" icon={<ChevronLeftIcon boxSize={6} />} variant="solid" bg="rgba(139,92,246,0.2)" color="white" size="lg" onClick={() => window.history.back()} _hover={{ bg: "rgba(139,92,246,0.4)", transform: "scale(1.05)", boxShadow: "0 0 20px rgba(139,92,246,0.4)" }} transition="all 0.2s" borderRadius="full" border="1px solid rgba(139,92,246,0.5)" />
+            <IconButton 
+              aria-label="Back" 
+              icon={<ChevronLeftIcon boxSize={6} />} 
+              variant="solid" 
+              bg="rgba(139,92,246,0.2)" 
+              color="white" 
+              size="lg" 
+              onClick={() => window.history.back()} 
+              _hover={{ bg: "rgba(139,92,246,0.4)", transform: "scale(1.05)", boxShadow: "0 0 20px rgba(139,92,246,0.4)" }} 
+              transition="all 0.2s" 
+              borderRadius="full" 
+              border="1px solid rgba(139,92,246,0.5)" 
+            />
+            <Text fontSize="md" fontWeight="500" color="gray.400" _hover={{ color: "white" }} cursor="pointer" onClick={() => window.history.back()}>Back</Text>
             <VStack align="start" spacing={1}>
               <HStack spacing={3}>
                 <Box w="10px" h="10px" borderRadius="full" bg="#4ade80" animation={`${pulseGlow} 2s ease-in-out infinite`} />
@@ -1128,29 +1068,18 @@ export default function ActivityReputation() {
           </SimpleGrid>
         </Box>
 
-        {/* Tabs */}
+        {/* Tabs - DOAR 3 TAB-URI: Dashboard, Bridge, Info */}
         <Tabs variant="unstyled" defaultIndex={0}>
           <Box position="relative" mb={8}>
-            <TabList display="flex" gap={1} bg="rgba(8,8,20,0.6)" backdropFilter="blur(12px)" borderRadius="2xl" p={1.5} border="1px solid rgba(139,92,246,0.2)">
-              {[
-                { id: "dashboard", label: "📊 Dashboard", shortLabel: "Dashboard" },
-                { id: "explorer", label: "🔍 Explorer", shortLabel: "Explorer" },
-                { id: "leaderboard", label: "🏆 Leaderboard", shortLabel: "Leaderboard" },
-                { id: "bridge", label: "🌉 Bridge", shortLabel: "Bridge" },
-                { id: "info", label: "ℹ️ Info", shortLabel: "Info" },
-              ].map((tab) => (
-                <Tab key={tab.id} flex="1" py={3} px={4} borderRadius="xl" fontWeight="600" fontSize="sm" transition="all 0.2s ease" color="gray.500" _selected={{ color: "white", bg: "rgba(139,92,246,0.2)", borderBottom: "none", boxShadow: "0 0 15px rgba(139,92,246,0.3)" }} _hover={{ color: "#c084fc", bg: "rgba(139,92,246,0.08)" }}>
-                  <HStack spacing={2} justify="center">
-                    <Text fontSize="lg">{tab.label.split(" ")[0]}</Text>
-                    <Text display={{ base: "none", md: "block" }} fontWeight="500">{tab.shortLabel}</Text>
-                  </HStack>
-                </Tab>
-              ))}
+            <TabList display="flex" gap={1} bg="rgba(8,8,20,0.6)" backdropFilter="blur(12px)" borderRadius="2xl" p={1.5} border="1px solid rgba(139,92,246,0.2)" flexWrap="wrap">
+              <Tab flex="1" py={3} px={4} borderRadius="xl" fontWeight="600" fontSize="sm" transition="all 0.2s ease" color="gray.500" _selected={{ color: "white", bg: "rgba(139,92,246,0.2)", boxShadow: "0 0 15px rgba(139,92,246,0.3)" }} _hover={{ color: "#c084fc", bg: "rgba(139,92,246,0.08)" }}>📊 Dashboard</Tab>
+              <Tab flex="1" py={3} px={4} borderRadius="xl" fontWeight="600" fontSize="sm" transition="all 0.2s ease" color="gray.500" _selected={{ color: "white", bg: "rgba(139,92,246,0.2)", boxShadow: "0 0 15px rgba(139,92,246,0.3)" }} _hover={{ color: "#c084fc", bg: "rgba(139,92,246,0.08)" }}>🌉 Bridge</Tab>
+              <Tab flex="1" py={3} px={4} borderRadius="xl" fontWeight="600" fontSize="sm" transition="all 0.2s ease" color="gray.500" _selected={{ color: "white", bg: "rgba(139,92,246,0.2)", boxShadow: "0 0 15px rgba(139,92,246,0.3)" }} _hover={{ color: "#c084fc", bg: "rgba(139,92,246,0.08)" }}>ℹ️ Info</Tab>
             </TabList>
           </Box>
 
           <TabPanels>
-            {/* Dashboard Panel */}
+            {/* ================= TAB 1: DASHBOARD ================= */}
             <TabPanel px={0} pt={2}>
               {!isConnected ? (
                 <Box textAlign="center" py={20} bg="rgba(8,8,20,0.6)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.2)">
@@ -1186,13 +1115,43 @@ export default function ActivityReputation() {
                                 <Button size="sm" variant="outline" bg="rgba(139,92,246,0.1)" borderColor="#c084fc" color="#c084fc" _hover={{ bg: "rgba(139,92,246,0.2)", transform: "scale(1.02)", boxShadow: "0 0 15px #c084fc" }} onClick={() => window.location.href = "/"} borderRadius="full" fontSize="xs" fontWeight="600">Register as Agent</Button>
                               )}
                             </HStack>
+                            
+                            {/* Reputation Score with animated progress bar */}
                             <Box w="full" mt={2}>
-                              <Flex justify="space-between" mb={3}>
+                              <Flex justify="space-between" mb={2}>
                                 <Text fontSize="sm" color="gray.500" fontFamily="mono">Reputation Score</Text>
-                                <Text fontWeight="800" color="#c084fc" fontSize="lg">{userTotalScore}</Text>
+                                <Text fontWeight="800" color="#c084fc" fontSize="lg">{userTotalScore} / {nextTierTarget}</Text>
                               </Flex>
-                              <Progress value={Math.min(100, (userTotalScore / 1000) * 100)} size="lg" borderRadius="full" bg="rgba(139,92,246,0.15)" sx={{ "& > div": { bgGradient: "linear(90deg, #8b5cf6, #ec4899)" } }} />
-                              <Text fontSize="xs" color="gray.500" textAlign="center" mt={2}>Next tier: {userTotalScore < 50 ? "50 points" : userTotalScore < 100 ? "100 points" : userTotalScore < 250 ? "250 points" : userTotalScore < 500 ? "500 points" : "1000 points"}</Text>
+                              <Progress value={reputationProgress} size="lg" borderRadius="full" bg="rgba(139,92,246,0.15)" sx={{ "& > div": { bgGradient: "linear(90deg, #8b5cf6, #ec4899)" } }} />
+                              <Flex justify="space-between" mt={1}>
+                                <Text fontSize="xs" color="gray.500">{userTotalScore} points</Text>
+                                <Text fontSize="xs" color="gray.500">{nextTierTarget - userTotalScore} points to next tier</Text>
+                              </Flex>
+                            </Box>
+
+                            {/* Cooldown Status */}
+                            {contractCooldownRemaining > 0 && (
+                              <Box w="full" mt={2} p={2} bg="rgba(251,191,36,0.1)" borderRadius="lg" border="1px solid rgba(251,191,36,0.3)">
+                                <Flex justify="space-between" align="center">
+                                  <HStack spacing={2}>
+                                    <Text fontSize="sm">⏳</Text>
+                                    <Text fontSize="xs" color="#fbbf24" fontWeight="500">Cooldown Active</Text>
+                                  </HStack>
+                                  <Text fontSize="sm" fontWeight="700" color="#fbbf24">{formatTimeRemaining(contractCooldownRemaining)}</Text>
+                                </Flex>
+                              </Box>
+                            )}
+
+                            {/* Total Actions from Contract */}
+                            <Box w="full" mt={2} p={3} bg="rgba(0,0,0,0.3)" borderRadius="xl">
+                              <Flex justify="space-between" align="center">
+                                <HStack spacing={2}>
+                                  <Text fontSize="sm" color="gray.400">🔄 Total On-Chain Actions</Text>
+                                </HStack>
+                                <Text fontSize="xl" fontWeight="800" color="#c084fc">{Number(userTotalActionsContract)}</Text>
+                              </Flex>
+                              <Progress value={Math.min(100, (Number(userTotalActionsContract) / 100) * 100)} size="sm" mt={2} borderRadius="full" bg="rgba(139,92,246,0.2)" sx={{ "& > div": { bg: "#c084fc" } }} />
+                              <Text fontSize="xs" color="gray.500" textAlign="center" mt={1}>Actions tracked by Agent Gateway</Text>
                             </Box>
 
                             {/* MINT BADGE SECTION */}
@@ -1305,7 +1264,7 @@ export default function ActivityReputation() {
                     </GridItem>
                   </Grid>
 
-                  {/* Partner Actions - Professional Cards with Reset */}
+                  {/* Partner Actions - Professional Cards */}
                   <Box>
                     <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" overflow="hidden" transition="all 0.4s" _hover={{ borderColor: "rgba(139,92,246,0.6)", transform: "translateY(-5px)" }}>
                       <Box h="4px" bgGradient="linear(90deg, #fbbf24, #ec4899, #8b5cf6, #fbbf24)" backgroundSize="300% 100%" animation={`${shimmer} 4s ease infinite`} />
@@ -1313,15 +1272,13 @@ export default function ActivityReputation() {
                         <HStack spacing={2} mb={6}>
                           <Box w="4px" h="4px" borderRadius="full" bg="#fbbf24" animation={`${pulseGlow} 2s infinite`} />
                           <Heading size="md" color="gray.300" fontWeight="600">🤝 Partner Actions</Heading>
-                          <Badge bg="#fbbf24" color="black" ml={2}>9 Actions Available</Badge>
+                          <Badge bg="#fbbf24" color="black" ml={2}>12 Actions Available</Badge>
                         </HStack>
 
                         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                           {PARTNER_ACTIONS.map((action) => {
-                            // Determină dacă utilizatorul a plătit pentru această sesiune
                             const hasPaidForThisSession = actionPendingPayment[action.id] === true;
                             
-                            // Obține numărul total de execuții (din contract)
                             let totalExecutedCount = 0;
                             switch(action.id) {
                               case 0: totalExecutedCount = Number(userAction0Count); break;
@@ -1339,8 +1296,9 @@ export default function ActivityReputation() {
                               default: totalExecutedCount = 0;
                             }
                             
-                            // Pentru afișarea butonului: poate executa DOAR dacă a plătit în această sesiune
                             const canExecute = hasPaidForThisSession;
+                            const frontendCooldown = cooldownRemaining[action.id] || 0;
+                            const isOnCooldown = frontendCooldown > 0;
                             
                             return (
                               <Box key={action.id} bg="rgba(0,0,0,0.4)" borderRadius="2xl" border={`1.5px solid ${action.color}30`} p={5} transition="all 0.3s ease-in-out" _hover={{ borderColor: action.color, transform: "translateY(-6px)", boxShadow: `0 10px 30px ${action.color}20`, bg: "rgba(0,0,0,0.6)" }}>
@@ -1352,19 +1310,31 @@ export default function ActivityReputation() {
                                       </Box>
                                       <Text fontWeight="700" color="white" fontSize="md">{action.name}</Text>
                                     </HStack>
-                                    <Badge bg={`${action.color}20`} color={action.color} fontSize="xs" px={2.5} py={1} borderRadius="full" fontWeight="600">+{action.points} pt</Badge>
+                                    <Badge bg={`${action.color}20`} color={action.color} fontSize="xs" px={2.5} py={1} borderRadius="full" fontWeight="600">
+                                      <HStack spacing={1}>
+                                        <Text>⭐</Text>
+                                        <Text>+{action.points}</Text>
+                                      </HStack>
+                                    </Badge>
                                   </HStack>
                                   
                                   <HStack w="full" justify="space-between">
                                     <Text fontSize="xs" color="gray.400" fontWeight="500">Status:</Text>
-                                    <Badge bg={canExecute ? "#22c55e20" : "#fbbf2420"} color={canExecute ? "#22c55e" : "#fbbf24"} fontSize="xs" px={2.5} py={1} borderRadius="full" fontWeight="600">
-                                      {canExecute ? "✓ Ready" : "⏳ Pay First"}
+                                    <Badge bg={canExecute ? "#22c55e20" : isOnCooldown ? "#fbbf2420" : "#fbbf2420"} color={canExecute ? "#22c55e" : isOnCooldown ? "#fbbf24" : "#fbbf24"} fontSize="xs" px={2.5} py={1} borderRadius="full" fontWeight="600">
+                                      {canExecute ? "✓ Ready" : isOnCooldown ? "⏳ Cooldown" : "⏳ Pay First"}
                                     </Badge>
                                   </HStack>
                                   
                                   <HStack w="full" justify="space-between">
                                     <Text fontSize="xs" color="gray.400" fontWeight="500">Total Completed:</Text>
                                     <Text fontSize="md" fontWeight="700" color={action.color}>{totalExecutedCount}x</Text>
+                                  </HStack>
+                                  
+                                  <HStack w="full" justify="space-between">
+                                    <Text fontSize="xs" color="gray.400" fontWeight="500">Next available:</Text>
+                                    <Text fontSize="sm" fontWeight="700" color={totalExecutedCount === 0 ? "#22c55e" : (frontendCooldown === 0 ? "#22c55e" : "#fbbf24")}>
+                                      {totalExecutedCount === 0 ? "✓ Ready" : (frontendCooldown === 0 ? "✓ Ready" : formatTimeRemaining(frontendCooldown))}
+                                    </Text>
                                   </HStack>
                                   
                                   <Divider borderColor="rgba(255,255,255,0.1)" my={1} />
@@ -1389,15 +1359,21 @@ export default function ActivityReputation() {
                                     fontSize="sm"
                                     py={2.5}
                                     isLoading={isTxPending} 
+                                    isDisabled={!canExecute && isOnCooldown}
                                     _hover={{ opacity: 0.9, transform: "scale(1.02)", boxShadow: `0 0 15px ${action.color}80` }} 
                                     borderRadius="full"
                                     onClick={() => !canExecute ? handlePayAndApprove(action) : handleExecutePartnerAction(action)}
                                   >
-                                    {!canExecute ? `💰 Pay & Approve (${formatFee(defaultFee)} ETH)` : `✨ ${action.name.split(" ")[0]} ✨`}
+                                    {!canExecute ? (isOnCooldown ? `⏳ Cooldown (${formatTimeRemaining(frontendCooldown)})` : `💰 Pay & Interact (${formatFee(defaultFee)} ETH)`) : `✨ ${action.name.split(" ")[0]} ✨`}
                                   </Button>
                                   
-                                  {totalExecutedCount > 0 && !canExecute && (
-                                    <Text fontSize="xs" color="gray.500" textAlign="center" mt={1}>💡 Pay fee again to earn more points!</Text>
+                                  {!canExecute && !isOnCooldown && (
+                                    <Text fontSize="xs" color="gray.500" textAlign="center" mt={1}>
+                                      💡 {totalExecutedCount === 0 ? "Pay & Interact to earn points!" : "Pay & Interact again to earn more points!"}
+                                    </Text>
+                                  )}
+                                  {isOnCooldown && (
+                                    <Text fontSize="xs" color="gray.500" textAlign="center" mt={1}>⏰ Come back in {formatTimeRemaining(frontendCooldown)} to do this action again</Text>
                                   )}
                                 </VStack>
                               </Box>
@@ -1411,7 +1387,61 @@ export default function ActivityReputation() {
               )}
             </TabPanel>
 
-            {/* Success Modal */}
+
+  {/* ================= TAB 2: BRIDGE ================= */}
+  <TabPanel px={0} pt={2}>
+    <Box bg="rgba(8,8,25,0.95)" backdropFilter="blur(32px)" borderRadius="3xl" border="2px solid rgba(139,92,246,0.5)" p={8} position="relative" boxShadow="0 0 80px rgba(139,92,246,0.2)" transition="all 0.4s" _hover={{ borderColor: "rgba(139,92,246,0.8)", boxShadow: "0 0 100px rgba(139,92,246,0.3)" }}>
+      <Box position="absolute" top={0} left={0} right={0} h="3px" bgGradient="linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)" backgroundSize="300% 100%" animation={`${shimmer} 8s linear infinite`} borderRadius="full" />
+      <VStack spacing={6} align="stretch">
+        <HStack justify="space-between" align="center" wrap="wrap" gap={4}>
+          <HStack spacing={4}><Box fontSize="56px" animation={`${float} 4s ease-in-out infinite`}>🌉</Box><Box><Heading size="xl" bgGradient="linear(135deg, #c084fc, #a855f7, #60a5fa)" bgClip="text" letterSpacing="tight" fontWeight="800">Cross-Chain Exchange</Heading><Text color="gray.500" fontSize="sm" fontFamily="mono">Bridge & Swap • Powered by LI.FI</Text></Box></HStack>
+          <Badge px={5} py={2.5} bgGradient="linear(135deg, #22c55e, #86efac)" color="black" fontWeight="800" borderRadius="full" boxShadow="0 0 25px rgba(74,222,128,0.4)" fontSize="xs">5 NETWORKS SUPPORTED</Badge>
+        </HStack>
+        <Box bg="#07070F" borderRadius="2xl" border="1px solid rgba(139,92,246,0.3)" p={4} minH="640px">
+          {isWidgetReady ? (<LiFiWidget integrator="PulseVault" config={{ apiKey: '7b415723-cfa7-4d4e-b58d-4dea6e36b71a.be9467a8-914e-4511-8d07-01987626c5ed', appearance: colorMode, fromChain: chainId, toChain: 1868, chains: { allow: [1868, 8453, 10, 57073, 130] }, theme: { shape: { borderRadius: 16 }, typography: { fontFamily: "'Inter', 'Rubik', sans-serif", fontSize: 14 }, palette: { mode: colorMode, primary: { main: colorMode === 'dark' ? '#a855f7' : '#7c3aed' }, secondary: { main: '#60a5fa' }, background: { default: colorMode === 'dark' ? '#07070F' : '#F8FAFC', paper: colorMode === 'dark' ? '#0F0F1A' : '#FFFFFF' }, text: { primary: colorMode === 'dark' ? '#F1F5F9' : '#0F172A', secondary: colorMode === 'dark' ? '#94A3B8' : '#475569' }, action: { hover: colorMode === 'dark' ? 'rgba(165,85,247,0.15)' : 'rgba(124,58,237,0.1)' }, divider: colorMode === 'dark' ? 'rgba(148,163,184,0.08)' : 'rgba(0,0,0,0.06)' }, container: { boxShadow: 'none' } } }} />) : (<WidgetSkeleton config={{ appearance: colorMode }} />)}
+        </Box>
+        <HStack justify="center" spacing={8} color="gray.600" fontSize="xs" fontFamily="mono"><Text>⚡ Instant Cross-Chain</Text><Text>🔒 Secure & Audited</Text><Text>Soneium • Base • Optimism • Ink • Unichain</Text></HStack>
+      </VStack>
+    </Box>
+  </TabPanel>
+
+  {/* ================= TAB 3: INFO ================= */}
+  <TabPanel px={0} pt={2}>
+    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
+      <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8} transition="all 0.3s" _hover={{ borderColor: "rgba(139,92,246,0.5)" }}>
+        <Heading size="md" mb={6} color="#c084fc" fontWeight="700">📘 How It Works</Heading>
+        <VStack spacing={5} align="stretch">
+          {[{ step: "01", title: "Connect Wallet", desc: "Connect your Web3 wallet to start building reputation", color: "#8b5cf6" }, { step: "02", title: "Perform Actions", desc: "Send GM, Vote, Check-In, or Deploy contracts", color: "#ec4899" }, { step: "03", title: "Pay Small Fees", desc: "Each action has a small ETH fee to prevent spam", color: "#3b82f6" }, { step: "04", title: "Build Score", desc: "Your total score increases with every action", color: "#22c55e" }].map((item) => (<HStack key={item.step} spacing={4}><Badge fontSize="lg" px={4} py={2.5} borderRadius="full" bgGradient={`linear(135deg, ${item.color}, #a855f7)`} color="white" fontWeight="800">{item.step}</Badge><Box><Text fontWeight="700" color="white">{item.title}</Text><Text fontSize="sm" color="gray.500">{item.desc}</Text></Box></HStack>))}
+        </VStack>
+      </Box>
+      <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8} transition="all 0.3s" _hover={{ borderColor: "rgba(139,92,246,0.5)" }}>
+        <Heading size="md" mb={6} color="#c084fc" fontWeight="700">🔗 Contract Information</Heading>
+        <VStack spacing={4} align="stretch">
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">GM CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(GM_CONTRACT)}</Text></Box>
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">VOTE CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(VOTE_CONTRACT)}</Text></Box>
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">CHECK-IN CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(CHECKIN_CONTRACT)}</Text></Box>
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">DEPLOY CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(DEPLOY_CONTRACT)}</Text></Box>
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">AGENT CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(AGENT_CONTRACT)}</Text></Box>
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">AGENT GM CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(AGENT_GM_CONTRACT)}</Text></Box>
+          <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">AGENT GATEWAY</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(AGENT_GATEWAY_CONTRACT)}</Text></Box>
+        </VStack>
+        <Divider my={6} borderColor="rgba(139,92,246,0.15)" />
+        <Heading size="md" mb={5} color="#c084fc" fontWeight="700">🏅 Badge System</Heading>
+        <SimpleGrid columns={{ base: 2, md: 3 }} spacing={3}>
+          <Badge bg="rgba(255,215,0,0.12)" color="#ffd700" py={2.5} textAlign="center" borderRadius="full" border="1px solid #ffd70040">👑 LEGEND (1000+)</Badge>
+          <Badge bg="rgba(192,192,192,0.12)" color="#c0c0c0" py={2.5} textAlign="center" borderRadius="full" border="1px solid #c0c0c040">⚡ ELITE (500-999)</Badge>
+          <Badge bg="rgba(255,107,53,0.12)" color="#ff6b35" py={2.5} textAlign="center" borderRadius="full" border="1px solid #ff6b3540">🔥 ACTIVE (250-499)</Badge>
+          <Badge bg="rgba(192,132,252,0.12)" color="#c084fc" py={2.5} textAlign="center" borderRadius="full" border="1px solid #c084fc40">⭐ RISING (100-249)</Badge>
+          <Badge bg="rgba(74,222,128,0.12)" color="#4ade80" py={2.5} textAlign="center" borderRadius="full" border="1px solid #4ade8040">🌿 BEGINNER (50-99)</Badge>
+          <Badge bg="rgba(156,163,175,0.12)" color="#9ca3af" py={2.5} textAlign="center" borderRadius="full" border="1px solid #9ca3af40">✨ NEW (0-49)</Badge>
+        </SimpleGrid>
+      </Box>
+    </SimpleGrid>
+  </TabPanel>
+</TabPanels>
+        </Tabs>
+
+        {/* Success Modal */}
             <Modal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} isCentered>
               <ModalOverlay backdropFilter="blur(10px)" />
               <ModalContent bg="rgba(8,8,20,0.95)" border="1px solid rgba(139,92,246,0.3)" borderRadius="2xl">
@@ -1442,148 +1472,7 @@ export default function ActivityReputation() {
                   </Button>
                 </ModalFooter>
               </ModalContent>
-            </Modal>
-
-            {/* Explorer Panel */}
-            <TabPanel px={0} pt={2}>
-              <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
-                <InputGroup size="lg" mb={8}>
-                  <InputLeftElement pointerEvents="none"><SearchIcon color="#8b5cf6" /></InputLeftElement>
-                  <Input placeholder="Search wallet address (0x...)" value={searchAddress} onChange={(e) => setSearchAddress(e.target.value)} bg="rgba(0,0,0,0.4)" borderColor="rgba(139,92,246,0.4)" color="white" _hover={{ borderColor: "#8b5cf6" }} _focus={{ borderColor: "#c084fc", boxShadow: "0 0 0 2px #c084fc", bg: "rgba(0,0,0,0.6)" }} fontFamily="mono" borderRadius="2xl" fontSize="sm" />
-                </InputGroup>
-                {searchAddress && searchAddress.length === 42 && (
-                  <VStack spacing={6} align="stretch">
-                    <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-                      <HStack spacing={3}><Avatar size="md" bgGradient="linear(135deg, #8b5cf6, #ec4899)" name={truncateAddress(searchAddress)} /><Text fontWeight="700" fontFamily="mono" color="white">{truncateAddress(searchAddress)}</Text></HStack>
-                      <HStack spacing={3}>
-                        {searchedUserIsSBT && (<Tooltip label="Soulbound Token Holder"><Badge bg="#8b5cf6" color="white" fontSize="sm" px={4} py={2} borderRadius="full" boxShadow="0 0 10px #8b5cf6">🔒 SBT Holder</Badge></Tooltip>)}
-                        {searchedUserIsAgent ? (<Badge bgGradient="linear(135deg, #c084fc, #ec4899)" color="white" px={5} py={2} borderRadius="full" fontSize="sm" fontWeight="700" boxShadow="0 0 20px #c084fc" animation={`${pulseGlow} 2s infinite`}>🧬 REGISTERED AGENT ✓</Badge>) : (<Button size="sm" variant="outline" bg="rgba(139,92,246,0.1)" borderColor="#c084fc" color="#c084fc" _hover={{ bg: "rgba(139,92,246,0.2)", transform: "scale(1.02)", boxShadow: "0 0 15px #c084fc" }} onClick={() => window.location.href = "/"} borderRadius="full" fontSize="xs" fontWeight="600">Register as Agent</Button>)}
-                      </HStack>
-                    </Flex>
-                    <SimpleGrid columns={{ base: 2, md: 4 }} spacing={5}>
-                      {[
-                        { label: "GM", value: Number(searchedUserGmCount), icon: "🌅", color: "#22c55e", desc: "Sent" },
-                        { label: "Votes", value: Number(searchedUserVoteCount), icon: "🗳️", color: "#8b5cf6", desc: "Cast" },
-                        { label: "Check-Ins", value: Number(searchedUserCheckInCount), icon: "✅", color: "#3b82f6", desc: "Recorded" },
-                        { label: "Deploys", value: Number(searchedUserDeployCount), icon: "🚀", color: "#ec4899", desc: "Deployed" },
-                        { label: "Agent GM", value: Number(searchedUserAgentGmCount), icon: "🤖", color: "#c084fc", desc: "Agent GM Sent" },
-                        { label: "Partner", value: searchedUserPartnerTotal, icon: "🤝", color: "#fbbf24", desc: "Partner Actions" },
-                      ].map((item) => (
-                        <Box key={item.label} textAlign="center" p={5} bg="rgba(0,0,0,0.3)" borderRadius="xl" border={`1px solid ${item.color}30`}>
-                          <Text fontSize="40px">{item.icon}</Text>
-                          <Text fontSize="sm" color="gray.500">{item.label}</Text>
-                          <Text fontSize="3xl" fontWeight="800" color={item.color}>{item.value}</Text>
-                          <Text fontSize="xs" color="gray.600">{item.desc}</Text>
-                        </Box>
-                      ))}
-                    </SimpleGrid>
-                    <Box textAlign="center" pt={4}>
-                      <Divider borderColor="rgba(139,92,246,0.15)" mb={6} />
-                      <Flex justify="center" align="center" gap={5}>
-                        <Text color="gray.500" fontFamily="mono">Total Score:</Text>
-                        <Text fontSize="2xl" fontWeight="800" color="#c084fc">{searchedUserTotalScore}</Text>
-                        <Badge bg={searchedUserBadge.bg} color={searchedUserBadge.color} px={4} py={2} borderRadius="full" border={`1px solid ${searchedUserBadge.color}`}>{searchedUserBadge.icon} {searchedUserBadge.label}</Badge>
-                      </Flex>
-                    </Box>
-                  </VStack>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Leaderboard Panel */}
-            <TabPanel px={0} pt={2}>
-              <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
-                <HStack spacing={2} mb={6}><Text fontSize="32px">🏆</Text><Heading size="md" color="gray.200" fontWeight="600">Top Users Leaderboard</Heading></HStack>
-                {isLoadingLeaderboard ? (<Flex justify="center" py={16}><Spinner color="#8b5cf6" size="xl" thickness="3px" /></Flex>) : leaderboardData.length === 0 ? (<Text textAlign="center" color="gray.500" py={16} fontFamily="mono">No users found. Be the first to interact!</Text>) : (
-                  <Box overflowX="auto">
-                    <Table variant="unstyled">
-                      <Thead><Tr borderBottom="2px solid rgba(139,92,246,0.2)">
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono">#</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono">Explorer</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">🌅</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">🗳️</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">✅</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">🚀</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">🤖</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">🤝</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">Score</Th>
-                        <Th color="gray.500" fontSize="xs" fontWeight="600" fontFamily="mono" textAlign="center">Badge</Th>
-                      </Tr></Thead>
-                      <Tbody>
-                        {leaderboardData.slice(0, 20).map((user, idx) => {
-                          const badge = getUserBadge(user.totalScore);
-                          return (<Tr key={user.address} borderBottom="1px solid rgba(139,92,246,0.08)" _hover={{ bg: "rgba(139,92,246,0.05)", transition: "all 0.2s" }}>
-                            <Td><HStack spacing={2}>{idx === 0 && <StarIcon color="#fbbf24" boxSize={3} />}{idx === 1 && <StarIcon color="#9ca3af" boxSize={3} />}{idx === 2 && <StarIcon color="#cd7f32" boxSize={3} />}<Text fontWeight="700" color={idx < 3 ? "#fbbf24" : "gray.500"} fontFamily="mono">#{idx + 1}</Text></HStack></Td>
-                            <Td><Tooltip label={user.address}><Text fontFamily="mono" fontSize="sm" color="white" fontWeight="500">{truncateAddress(user.address)}</Text></Tooltip></Td>
-                            <Td textAlign="center" color="#22c55e" fontWeight="700">{user.gmCount}</Td>
-                            <Td textAlign="center" color="#8b5cf6" fontWeight="700">{user.voteCount}</Td>
-                            <Td textAlign="center" color="#3b82f6" fontWeight="700">{user.checkInCount}</Td>
-                            <Td textAlign="center" color="#ec4899" fontWeight="700">{user.deployCount}</Td>
-                            <Td textAlign="center" color="#c084fc" fontWeight="700">{user.agentGmCount || 0}</Td>
-                            <Td textAlign="center" color="#fbbf24" fontWeight="700">{user.partnerTotal || 0}</Td>
-                            <Td textAlign="center"><Badge bg="#8b5cf6" color="white" fontSize="sm" px={3} py={1.5} borderRadius="full">{user.totalScore}</Badge></Td>
-                            <Td textAlign="center"><Badge bg={badge.bg} color={badge.color} fontSize="xs" px={3} py={1.5} borderRadius="full" border={`1px solid ${badge.color}`}>{badge.icon} {badge.label}</Badge></Td>
-                          </Tr>);
-                        })}
-                      </Tbody>
-                    </Table>
-                  </Box>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Bridge Panel */}
-            <TabPanel px={0} pt={2}>
-              <Box bg="rgba(8,8,25,0.95)" backdropFilter="blur(32px)" borderRadius="3xl" border="2px solid rgba(139,92,246,0.5)" p={8} position="relative" boxShadow="0 0 80px rgba(139,92,246,0.2)" transition="all 0.4s" _hover={{ borderColor: "rgba(139,92,246,0.8)", boxShadow: "0 0 100px rgba(139,92,246,0.3)" }}>
-                <Box position="absolute" top={0} left={0} right={0} h="3px" bgGradient="linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)" backgroundSize="300% 100%" animation={`${shimmer} 8s linear infinite`} borderRadius="full" />
-                <VStack spacing={6} align="stretch">
-                  <HStack justify="space-between" align="center" wrap="wrap" gap={4}>
-                    <HStack spacing={4}><Box fontSize="56px" animation={`${float} 4s ease-in-out infinite`}>🌉</Box><Box><Heading size="xl" bgGradient="linear(135deg, #c084fc, #a855f7, #60a5fa)" bgClip="text" letterSpacing="tight" fontWeight="800">Cross-Chain Exchange</Heading><Text color="gray.500" fontSize="sm" fontFamily="mono">Bridge & Swap • Powered by LI.FI</Text></Box></HStack>
-                    <Badge px={5} py={2.5} bgGradient="linear(135deg, #22c55e, #86efac)" color="black" fontWeight="800" borderRadius="full" boxShadow="0 0 25px rgba(74,222,128,0.4)" fontSize="xs">5 NETWORKS SUPPORTED</Badge>
-                  </HStack>
-                  <Box bg="#07070F" borderRadius="2xl" border="1px solid rgba(139,92,246,0.3)" p={4} minH="640px">
-                    {isWidgetReady ? (<LiFiWidget integrator="PulseVault" config={{ apiKey: '7b415723-cfa7-4d4e-b58d-4dea6e36b71a.be9467a8-914e-4511-8d07-01987626c5ed', appearance: colorMode, fromChain: chainId, toChain: 1868, chains: { allow: [1868, 8453, 10, 57073, 130] }, theme: { shape: { borderRadius: 16 }, typography: { fontFamily: "'Inter', 'Rubik', sans-serif", fontSize: 14 }, palette: { mode: colorMode, primary: { main: colorMode === 'dark' ? '#a855f7' : '#7c3aed' }, secondary: { main: '#60a5fa' }, background: { default: colorMode === 'dark' ? '#07070F' : '#F8FAFC', paper: colorMode === 'dark' ? '#0F0F1A' : '#FFFFFF' }, text: { primary: colorMode === 'dark' ? '#F1F5F9' : '#0F172A', secondary: colorMode === 'dark' ? '#94A3B8' : '#475569' }, action: { hover: colorMode === 'dark' ? 'rgba(165,85,247,0.15)' : 'rgba(124,58,237,0.1)' }, divider: colorMode === 'dark' ? 'rgba(148,163,184,0.08)' : 'rgba(0,0,0,0.06)' }, container: { boxShadow: 'none' } } }} />) : (<WidgetSkeleton config={{ appearance: colorMode }} />)}
-                  </Box>
-                  <HStack justify="center" spacing={8} color="gray.600" fontSize="xs" fontFamily="mono"><Text>⚡ Instant Cross-Chain</Text><Text>🔒 Secure & Audited</Text><Text>Soneium • Base • Optimism • Ink • Unichain</Text></HStack>
-                </VStack>
-              </Box>
-            </TabPanel>
-
-            {/* Info Panel */}
-            <TabPanel px={0} pt={2}>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
-                <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
-                  <Heading size="md" mb={6} color="#c084fc" fontWeight="700">📘 How It Works</Heading>
-                  <VStack spacing={5} align="stretch">
-                    {[{ step: "01", title: "Connect Wallet", desc: "Connect your Web3 wallet to start building reputation", color: "#8b5cf6" }, { step: "02", title: "Perform Actions", desc: "Send GM, Vote, Check-In, or Deploy contracts", color: "#ec4899" }, { step: "03", title: "Pay Small Fees", desc: "Each action has a small ETH fee to prevent spam", color: "#3b82f6" }, { step: "04", title: "Build Score", desc: "Your total score increases with every action", color: "#22c55e" }].map((item) => (<HStack key={item.step} spacing={4}><Badge fontSize="lg" px={4} py={2.5} borderRadius="full" bgGradient={`linear(135deg, ${item.color}, #a855f7)`} color="white" fontWeight="800">{item.step}</Badge><Box><Text fontWeight="700" color="white">{item.title}</Text><Text fontSize="sm" color="gray.500">{item.desc}</Text></Box></HStack>))}
-                  </VStack>
-                </Box>
-                <Box bg="rgba(8,8,20,0.8)" backdropFilter="blur(24px)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.3)" p={8}>
-                  <Heading size="md" mb={6} color="#c084fc" fontWeight="700">🔗 Contract Information</Heading>
-                  <VStack spacing={4} align="stretch">
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">GM CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(GM_CONTRACT)}</Text></Box>
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">VOTE CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(VOTE_CONTRACT)}</Text></Box>
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">CHECK-IN CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(CHECKIN_CONTRACT)}</Text></Box>
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">DEPLOY CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(DEPLOY_CONTRACT)}</Text></Box>
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">AGENT CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(AGENT_CONTRACT)}</Text></Box>
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">AGENT GM CONTRACT</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(AGENT_GM_CONTRACT)}</Text></Box>
-                    <Box p={3} bg="rgba(0,0,0,0.4)" borderRadius="xl"><Text fontSize="xs" color="gray.500" fontFamily="mono">AGENT GATEWAY</Text><Text fontSize="sm" fontFamily="mono" color="white">{truncateAddress(AGENT_GATEWAY_CONTRACT)}</Text></Box>
-                  </VStack>
-                  <Divider my={6} borderColor="rgba(139,92,246,0.15)" />
-                  <Heading size="md" mb={5} color="#c084fc" fontWeight="700">🏅 Badge System</Heading>
-                  <SimpleGrid columns={{ base: 2, md: 3 }} spacing={3}>
-                    <Badge bg="rgba(255,215,0,0.12)" color="#ffd700" py={2.5} textAlign="center" borderRadius="full" border="1px solid #ffd70040">👑 LEGEND (1000+)</Badge>
-                    <Badge bg="rgba(192,192,192,0.12)" color="#c0c0c0" py={2.5} textAlign="center" borderRadius="full" border="1px solid #c0c0c040">⚡ ELITE (500-999)</Badge>
-                    <Badge bg="rgba(255,107,53,0.12)" color="#ff6b35" py={2.5} textAlign="center" borderRadius="full" border="1px solid #ff6b3540">🔥 ACTIVE (250-499)</Badge>
-                    <Badge bg="rgba(192,132,252,0.12)" color="#c084fc" py={2.5} textAlign="center" borderRadius="full" border="1px solid #c084fc40">⭐ RISING (100-249)</Badge>
-                    <Badge bg="rgba(74,222,128,0.12)" color="#4ade80" py={2.5} textAlign="center" borderRadius="full" border="1px solid #4ade8040">🌿 BEGINNER (50-99)</Badge>
-                    <Badge bg="rgba(156,163,175,0.12)" color="#9ca3af" py={2.5} textAlign="center" borderRadius="full" border="1px solid #9ca3af40">✨ NEW (0-49)</Badge>
-                  </SimpleGrid>
-                </Box>
-              </SimpleGrid>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+            </Modal>  
 
         {/* Footer */}
         <Box pt={20} pb={10} textAlign="center" bg="black" borderTop="1px solid" borderColor="rgba(139,92,246,0.2)">

@@ -1913,22 +1913,189 @@ export default function ActivityReputation() {
       </Container>
 
       {/* Footer */}
-      <Box pt={6} pb={4} textAlign="center" bg="black" borderTop="1px solid" borderColor="rgba(139,92,246,0.15)">
-        <VStack spacing={2} maxW="container.lg" mx="auto">
-          <Divider opacity={0.3} borderColor="rgba(139,92,246,0.3)" maxW="300px" />
-          <Text fontSize="xs" fontWeight="500" letterSpacing="0.08em" fontFamily="mono" color="gray.400">© 2026 • Activity Reputation • Soneium Mainnet</Text>
-          <HStack spacing={4} justify="center" flexWrap="wrap" align="center">
-            <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">🔗 ON-CHAIN TRACKING</Text>
-            <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />
-            <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">⚡ REAL-TIME</Text>
-            <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />
-            <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">🛡️ SECURE</Text>
-            <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />
-            <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">🌐 DECENTRALIZED</Text>
-          </HStack>
-          <Text fontSize="10px" color="gray.600" fontFamily="mono" letterSpacing="0.1em" fontWeight="400" textTransform="uppercase">ACTIVITY REPUTATION SYSTEM — BUILD YOUR ON-CHAIN LEGACY</Text>
-          <Text fontSize="9px" color="gray.700" fontFamily="mono">© 2026 gm-agent.xyz — All transactions are recorded on the Soneium blockchain</Text>
-        </VStack>
+      <Box pt={6} pb={4} bg="black" borderTop="1px solid" borderColor="rgba(139,92,246,0.15)" position="relative">
+        <Box maxW="container.lg" mx="auto" px={{ base: 4, md: 6 }}>
+          {/* Text centrat */}
+          <VStack spacing={2} w="full">
+            <Divider opacity={0.3} borderColor="rgba(139,92,246,0.3)" maxW="300px" />
+            <Text fontSize="xs" fontWeight="500" letterSpacing="0.08em" fontFamily="mono" color="gray.400" textAlign="center">
+              © 2026 • Activity Reputation • Soneium Mainnet
+            </Text>
+            <HStack spacing={4} justify="center" flexWrap="wrap" align="center">
+              <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">
+                🔗 ON-CHAIN TRACKING
+              </Text>
+              <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />
+              <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">
+                ⚡ REAL-TIME
+              </Text>
+              <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />
+              <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">
+                🛡️ SECURE
+              </Text>
+              <Box w="2px" h="2px" borderRadius="full" bg="gray.600" />
+              <Text fontSize="xs" color="gray.500" fontWeight="500" letterSpacing="0.1em" _hover={{ color: "gray.400" }} transition="color 0.2s">
+                🌐 DECENTRALIZED
+              </Text>
+            </HStack>
+            <Text fontSize="9px" color="gray.500" fontFamily="mono" letterSpacing="0.1em" fontWeight="400" textTransform="uppercase" textAlign="center">
+              ACTIVITY REPUTATION SYSTEM — BUILD YOUR ON-CHAIN LEGACY
+            </Text>
+          </VStack>
+        </Box>
+        
+        {/* Social Icons - poziționate absolut în dreapta */}
+        <HStack 
+          spacing={3} 
+          position="absolute" 
+          right={{ base: "50%", md: "15%" }}
+          bottom={{ base: "auto", md: "50%" }}
+          top={{ base: "auto", md: "50%" }}
+          transform={{ base: "none", md: "translateY(-50%)" }}
+          mt={{ base: 4, md: 0 }}
+          justify="center"
+        >
+          <Text fontSize="9px" color="gray.500" letterSpacing="wider" display={{ base: "none", md: "block" }}>
+            FOLLOW
+          </Text>
+          <Box w="1px" h="16px" bg="rgba(139,92,246,0.3)" display={{ base: "none", md: "block" }} />
+          
+          <Tooltip label="X (Twitter) - @silviu_asy" hasArrow placement="top">
+            <Box
+              as="a"
+              href="https://x.com/silviu_asy"
+              target="_blank"
+              rel="noopener noreferrer"
+              w="28px"
+              h="28px"
+              borderRadius="full"
+              bg="rgba(139,92,246,0.08)"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              transition="all 0.3s ease"
+              _hover={{
+                bg: "rgba(59,130,246,0.3)",
+                transform: "translateY(-2px)",
+              }}
+            >
+              <Box
+                as="svg"
+                width="14px"
+                height="14px"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                color="gray.500"
+                transition="color 0.2s ease"
+                _hover={{ color: "white" }}
+              >
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </Box>
+            </Box>
+          </Tooltip>
+          
+          <Tooltip label="GitHub - SilviuASY" hasArrow placement="top">
+            <Box
+              as="a"
+              href="https://github.com/SilviuASY/gm-agent"
+              target="_blank"
+              rel="noopener noreferrer"
+              w="28px"
+              h="28px"
+              borderRadius="full"
+              bg="rgba(139,92,246,0.08)"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              transition="all 0.3s ease"
+              _hover={{
+                bg: "rgba(59,130,246,0.3)",
+                transform: "translateY(-2px)",
+              }}
+            >
+              <Box
+                as="svg"
+                width="14px"
+                height="14px"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                color="gray.500"
+                transition="color 0.2s ease"
+                _hover={{ color: "white" }}
+              >
+                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.646 0 0 .84-.269 2.75 1.025.8-.223 1.65-.334 2.5-.334.85 0 1.7.111 2.5.334 1.91-1.294 2.75-1.025 2.75-1.025.545 1.376.201 2.393.099 2.646.64.698 1.03 1.591 1.03 2.682 0 3.841-2.337 4.687-4.565 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+              </Box>
+            </Box>
+          </Tooltip>
+          
+          <Tooltip label="Telegram - @silviuasy" hasArrow placement="top">
+            <Box
+              as="a"
+              href="https://t.me/silviuasy"
+              target="_blank"
+              rel="noopener noreferrer"
+              w="28px"
+              h="28px"
+              borderRadius="full"
+              bg="rgba(139,92,246,0.08)"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              transition="all 0.3s ease"
+              _hover={{
+                bg: "rgba(59,130,246,0.3)",
+                transform: "translateY(-2px)",
+              }}
+            >
+              <Box
+                as="svg"
+                width="14px"
+                height="14px"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                color="gray.500"
+                transition="color 0.2s ease"
+                _hover={{ color: "white" }}
+              >
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.66-.35-1.02.22-1.61.15-.15 2.71-2.48 2.76-2.69.01-.03.02-.14-.05-.2-.07-.06-.18-.04-.26-.02-.11.02-1.86 1.18-5.26 3.48-.5.34-.95.51-1.36.5-.45-.01-1.31-.25-1.95-.46-.78-.25-1.4-.38-1.35-.81.03-.22.33-.45.92-.68 2.02-.88 4.26-1.78 6.18-2.38 1.56-.49 3.98-1.06 4.49-1.06.18 0 .46.04.64.19.15.13.19.31.17.53-.02.09-.01.18-.03.28z" />
+              </Box>
+            </Box>
+          </Tooltip>
+          
+          <Tooltip label="Discord - Join our community" hasArrow placement="top">
+            <Box
+              as="a"
+              href="https://discord.com/invite/FVSQT68NPC"
+              target="_blank"
+              rel="noopener noreferrer"
+              w="28px"
+              h="28px"
+              borderRadius="full"
+              bg="rgba(139,92,246,0.08)"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              transition="all 0.3s ease"
+              _hover={{
+                bg: "rgba(59,130,246,0.3)",
+                transform: "translateY(-2px)",
+              }}
+            >
+              <Box
+                as="svg"
+                width="14px"
+                height="14px"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                color="gray.500"
+                transition="color 0.2s ease"
+                _hover={{ color: "white" }}
+              >
+                <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+              </Box>
+            </Box>
+          </Tooltip>
+        </HStack>
       </Box>
 
       {/* Leaderboard Modal */}

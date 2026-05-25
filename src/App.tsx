@@ -2173,8 +2173,12 @@ const handleAction = async (type: "register" | "gm") => {
             </HStack>
           </VStack>
 
-          <HStack spacing={4} animation={`${slideInRight} 0.6s ease-out`}>
-            {/* Activity Reputation Button */}
+          {/* Pe desktop: HStack orizontal în dreapta */}
+          <HStack 
+            spacing={4} 
+            display={{ base: "none", md: "flex" }}
+            animation={`${slideInRight} 0.6s ease-out`}
+          >
             <Tooltip 
               label="Complete activities to boost your reputation score" 
               hasArrow 
@@ -2210,7 +2214,7 @@ const handleAction = async (type: "register" | "gm") => {
               </Button>
             </Tooltip>
             
-            <Box transform={{ base: "scale(0.95)", md: "scale(1)" }} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
+            <Box transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
               <ConnectButton 
                 chainStatus="full"
                 accountStatus="full"
@@ -2218,7 +2222,69 @@ const handleAction = async (type: "register" | "gm") => {
               />
             </Box>
           </HStack>
+
+          {/* Pe mobil: VStack vertical, ConnectButton sus, Activity Reputation jos */}
+          <VStack 
+            spacing={4} 
+            display={{ base: "flex", md: "none" }}
+            width="full"
+            animation={`${slideInRight} 0.6s ease-out`}
+          >
+            <Box 
+              transition="transform 0.3s" 
+              _hover={{ transform: "scale(1.02)" }}
+              width="full"
+              display="flex"
+              justifyContent="center"
+            >
+              <ConnectButton 
+                chainStatus="full"
+                accountStatus="full"
+                showBalance={false}
+              />
+            </Box>
+            
+            <Tooltip 
+              label="Complete activities to boost your reputation score" 
+              hasArrow 
+              placement="top"
+              bg="rgba(0,0,0,0.8)"
+              color="white"
+              fontSize="xs"
+              fontWeight="normal"
+              px={3}
+              py={2}
+              borderRadius="lg"
+              border="1px solid rgba(59,130,246,0.4)"
+            >
+              <Button
+                onClick={() => navigate("/activity-reputation")}
+                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
+                color="white"
+                size="sm"
+                borderRadius="full"
+                px={4}
+                py={5}
+                fontWeight="600"
+                letterSpacing="wider"
+                fontSize="xs"
+                boxShadow="0 0 15px rgba(139,92,246,0.4)"
+                _hover={{
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
+                }}
+                transition="all 0.3s ease"
+                leftIcon={<Box as="span" fontSize="12px">🏆</Box>}
+                width="auto"
+                display="inline-flex"
+                alignSelf="center"
+              >
+                Activity Reputation
+              </Button>
+            </Tooltip>
+          </VStack>
         </Flex>
+
 
         {/* ENHANCED HERO SECTION */}
         <VStack spacing={6} textAlign="center" mb={16} animation={`${slideUp} 0.8s ease-out`}>

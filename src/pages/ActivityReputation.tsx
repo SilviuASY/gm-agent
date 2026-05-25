@@ -75,7 +75,7 @@ const API_URL = "/api";
 // ================= PARTNER ACTIONS =================
 const PARTNER_ACTIONS = [
   { id: 0, name: "Dice Or Die Check In", logo: "/dod.png", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#d32a14", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 1, name: "AXD Daily Check In", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 1, name: "Axolt’s Check In", logo: "/axd.png", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
   { id: 2, name: "Rubyscore Vote", logo: "/ruby.png", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#c6f1f1", hasReferral: false, externalFee: 5000000000000, isPayable: true },
   { id: 3, name: "Lootcoin Check In", logo: "/loot.png", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#e2f818", hasReferral: true, externalFee: 0, isPayable: false },
   { id: 4, name: "PressA Daily", logo: "/presa.png", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#55e412", hasReferral: false, externalFee: 0, isPayable: false },

@@ -2772,14 +2772,6 @@ const handleAction = async (type: "register" | "gm") => {
                   <Text fontSize="10px" color="gray.500" fontWeight="400">DECENTRALIZED</Text>
                 </HStack>
               </HStack>
-              
-              <Text fontSize="11px" color="gray.500" fontFamily="mono" letterSpacing="wider">
-                ACTIVITY REPUTATION SYSTEM — BUILD YOUR ON-CHAIN LEGACY
-              </Text>
-              
-              <Text fontSize="10px" color="gray.500" opacity={0.7}>
-                © 2026 gm-agent.xyz — All transactions are recorded on the Soneium blockchain
-              </Text>
             </VStack>
 
             {/* Right Side - Social Icons */}

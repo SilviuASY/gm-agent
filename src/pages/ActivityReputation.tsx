@@ -82,24 +82,26 @@ const API_URL = "/api";
 
 // ================= PARTNER ACTIONS WITH TWITTER =================
 const PARTNER_ACTIONS = [
-  { id: 0, name: "Dice Or Die", fullName: "Dice Or Die Check In", logo: "/dod.png", twitterHandle: "@DiceOrDieGame", twitterUrl: "https://x.com/DiceOrDieGame", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#d32a14", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 1, name: "Axolts", fullName: "AXD Daily Check In", logo: "/axd.png", twitterHandle: "@Axoltsescape", twitterUrl: "https://x.com/Axoltsescape", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 2, name: "Rubyscore", fullName: "Rubyscore Vote", logo: "/ruby.png", twitterHandle: "@rubyscore_io", twitterUrl: "https://x.com/rubyscore_io", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#c6f1f1", hasReferral: false, externalFee: 5000000000000, isPayable: true },
-  { id: 3, name: "Lootcoin", fullName: "Lootcoin Check In", logo: "/loot.png", twitterHandle: "@Lootcointech", twitterUrl: "https://x.com/Lootcointech", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#e2f818", hasReferral: true, externalFee: 0, isPayable: false },
-  { id: 4, name: "PressA", fullName: "PressA Daily", logo: "/presa.png", twitterHandle: "@PressA_to_start", twitterUrl: "https://x.com/PressA_to_start", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#55e412", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 5, name: "OnChain GM", fullName: "OnChain GM", logo: "/onchaingm.png", twitterHandle: "@OnChainGm", twitterUrl: "https://x.com/OnChainGm", target: "0x8ADA1808cc5ed8493836e6A79080ea0ea2f008eC", selector: "0x84a3bb6b", functionName: "onChainGM", points: 1, color: "#0fa1e4", hasReferral: true, externalFee: 29000000000000, isPayable: true },
-  { id: 6, name: "Captain", fullName: "Captain Check In", logo: "/captain.png", twitterHandle: "@capncompany", twitterUrl: "https://x.com/capncompany", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f1ee0f", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 7, name: "Arkada", fullName: "Arkada Check In", logo: "/arkada.png", twitterHandle: "@Arkada_gg", twitterUrl: "https://x.com/Arkada_gg", target: "0x98826e728977B25279ad7629134FD0e96bd5A7b2", selector: "0x919840ad", functionName: "check", points: 1, color: "#e9660e", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 8, name: "Owlto", fullName: "Owlto Check In", logo: "/owlto.png", twitterHandle: "@Owlto_Finance", twitterUrl: "https://x.com/Owlto_Finance", target: "0xF40448F38d99A2Db70de37416B22B4338A1c2Ad7", selector: "0xf516f88e", functionName: "checkIn", points: 1, color: "#e9b60e", hasReferral: false, externalFee: 55000000000000, isPayable: true },
-  { id: 9, name: "NekoKat", fullName: "NekoKat GMeow", logo: "/neko.png", twitterHandle: "@nekocat_world", twitterUrl: "https://x.com/nekocat_world", target: "0xfF3aC835a193Cc08543256e24508b42248A63A26", selector: "0x95b2fd73", functionName: "signGMeow", points: 1, color: "#ecf0b4", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 10, name: "SurfLayer", fullName: "SurfLayer GM", logo: "/surf.png", twitterHandle: "@SurfLayer", twitterUrl: "https://x.com/SurfLayer", target: "0x3d97B802fFD7F36d50CE1498e8Ca5318C5c8e9EC", selector: "0x498c249a", functionName: "dailyGM", points: 1, color: "#22c23d", hasReferral: false, externalFee: 40000000000000, isPayable: true },
-  { id: 11, name: "WheelX", fullName: "WheelX GM", logo: "/wheels.png", twitterHandle: "@WheelX_fi", twitterUrl: "https://x.com/WheelX_fi", target: "0x62f79aab09B60A27cd3607aCaE55281Efd7294Bb", selector: "0xc0129d43", functionName: "gm", points: 1, color: "#8413c5", hasReferral: false, externalFee: 20000000000000, isPayable: true },
-  { id: 12, name: "MetaMap", fullName: "Meta Mint", logo: "/meta.png", twitterHandle: "@MetaMap_xyz", twitterUrl: "https://x.com/MetaMap_xyz", target: "0xc09286a6F0687C769579ac38dD682390A48d0092", selector: "0x77097fc8", functionName: "mint", points: 1, color: "#3b82f6", hasReferral: false, externalFee: 25000000000000, isPayable: true },
-  { id: 13, name: "Dmail", fullName: "Dmail Send", logo: "/dmail.png", twitterHandle: "@Dmailofficial", twitterUrl: "https://x.com/Dmailofficial", target: "0xbf930F20E468428968E72F219795D679f45cf2A4", selector: "0x5b7d7482", functionName: "send_mail", points: 1, color: "#f97316", hasReferral: false, externalFee: 6000000000000, isPayable: true },
-  { id: 14, name: "Pods", fullName: "Pods Mint", logo: "/pods.png", twitterHandle: "", twitterUrl: "", target: "0x43048F15167BDB4A592C2f0F92B9A39e51240F39", selector: "0xd204c45e", functionName: "safeMint", points: 1, color: "#a855f7", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 15, name: "Startale", fullName: "Startale Check In", logo: "/startale.png", twitterHandle: "@StartaleGroup", twitterUrl: "https://x.com/StartaleGroup", target: "0x0B9f730bF4C1Bf1c0D5B548556a239d5eC0A1D3e", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#a7d0e0", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 16, name: "Exarta", fullName: "Exarta Check In", logo: "/exarta.png", twitterHandle: "@ExartaOfficial", twitterUrl: "https://x.com/ExartaOfficial", target: "0xb97DDf414748d1DBEF846fc2Fe74391f7Bc8A715", selector: "0x7c21bd5a", functionName: "checkin", points: 1, color: "#e0d420", hasReferral: false, externalFee: 0, isPayable: false },
-  { id: 17, name: "ZombieIdle", fullName: "ZombieIdle Check In", logo: "/zombie.png", twitterHandle: "@zombieidle", twitterUrl: "https://x.com/zombieidle", target: "0x1e6d5018970F982Af9208AA10322c29e808cBC89", selector: "0xc63e529b", functionName: "buy", points: 1, color: "#3b5f05", hasReferral: false, externalFee: 1500000000000, isPayable: true },
+  { id: 0, name: "GM Dice Or Die", fullName: "GM Dice Or Die", logo: "/dod.png", twitterHandle: "@DiceOrDieGame", twitterUrl: "https://x.com/DiceOrDieGame", target: "0x17c7E99c2c1aEFdf3811F72ce960a0d560F039B4", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#d32a14", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 1, name: "GM Axolts", fullName: "GM Axolts", logo: "/axd.png", twitterHandle: "@Axoltsescape", twitterUrl: "https://x.com/Axoltsescape", target: "0x6b2249389dC3Db6B27833279F594910caa6465e7", selector: "0x4e71d92d", functionName: "claim", points: 1, color: "#d83fdd", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 2, name: "GM Rubyscore", fullName: "GM Rubyscore", logo: "/ruby.png", twitterHandle: "@rubyscore_io", twitterUrl: "https://x.com/rubyscore_io", target: "0x6cf740D3145b71F705A9745A35b9C91f8B4F7DDF", selector: "0x632a9a52", functionName: "vote", points: 1, color: "#c6f1f1", hasReferral: false, externalFee: 5000000000000, isPayable: true },
+  { id: 3, name: "GM Lootcoin", fullName: "GM Lootcoin", logo: "/loot.png", twitterHandle: "@Lootcointech", twitterUrl: "https://x.com/Lootcointech", target: "0x21Be1D69A77eA5882aCcD5c5319Feb7AC3854751", selector: "0xd9a59e33", functionName: "checkIn", points: 1, color: "#e2f818", hasReferral: true, externalFee: 0, isPayable: false },
+  { id: 4, name: "GM PressA", fullName: "GM PressA", logo: "/presa.png", twitterHandle: "@PressA_to_start", twitterUrl: "https://x.com/PressA_to_start", target: "0xf1Be6F9d4ff40Cac47C620E058535451596a5aBD", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#55e412", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 5, name: "GM OnChain GM", fullName: "GM OnChain GM", logo: "/onchaingm.png", twitterHandle: "@OnChainGm", twitterUrl: "https://x.com/OnChainGm", target: "0x8ADA1808cc5ed8493836e6A79080ea0ea2f008eC", selector: "0x84a3bb6b", functionName: "onChainGM", points: 1, color: "#0fa1e4", hasReferral: true, externalFee: 29000000000000, isPayable: true },
+  { id: 6, name: "GM Captain", fullName: "GM Captain", logo: "/captain.png", twitterHandle: "@capncompany", twitterUrl: "https://x.com/capncompany", target: "0xedCbF9D4CC3BA9aAA896adADeac1b6DF6326f7D8", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#f1ee0f", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 7, name: "GM Arkada", fullName: "GM Arkada", logo: "/arkada.png", twitterHandle: "@Arkada_gg", twitterUrl: "https://x.com/Arkada_gg", target: "0x98826e728977B25279ad7629134FD0e96bd5A7b2", selector: "0x919840ad", functionName: "check", points: 1, color: "#e9660e", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 8, name: "GM Owlto", fullName: "GM Owlto", logo: "/owlto.png", twitterHandle: "@Owlto_Finance", twitterUrl: "https://x.com/Owlto_Finance", target: "0xF40448F38d99A2Db70de37416B22B4338A1c2Ad7", selector: "0xf516f88e", functionName: "checkIn", points: 1, color: "#e9b60e", hasReferral: false, externalFee: 55000000000000, isPayable: true },
+  { id: 9, name: "GM NekoKat", fullName: "GM NekoKat", logo: "/neko.png", twitterHandle: "@nekocat_world", twitterUrl: "https://x.com/nekocat_world", target: "0xfF3aC835a193Cc08543256e24508b42248A63A26", selector: "0x95b2fd73", functionName: "signGMeow", points: 1, color: "#ecf0b4", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 10, name: "GM SurfLayer", fullName: "GM SurfLayer", logo: "/surf.png", twitterHandle: "@SurfLayer", twitterUrl: "https://x.com/SurfLayer", target: "0x3d97B802fFD7F36d50CE1498e8Ca5318C5c8e9EC", selector: "0x498c249a", functionName: "dailyGM", points: 1, color: "#22c23d", hasReferral: false, externalFee: 40000000000000, isPayable: true },
+  { id: 11, name: "GM WheelX", fullName: "GM WheelX", logo: "/wheels.png", twitterHandle: "@WheelX_fi", twitterUrl: "https://x.com/WheelX_fi", target: "0x62f79aab09B60A27cd3607aCaE55281Efd7294Bb", selector: "0xc0129d43", functionName: "gm", points: 1, color: "#8413c5", hasReferral: false, externalFee: 20000000000000, isPayable: true },
+  { id: 12, name: "GM MetaMap", fullName: "GM MetaMap", logo: "/meta.png", twitterHandle: "@MetaMap_xyz", twitterUrl: "https://x.com/MetaMap_xyz", target: "0xc09286a6F0687C769579ac38dD682390A48d0092", selector: "0x77097fc8", functionName: "mint", points: 1, color: "#3b82f6", hasReferral: false, externalFee: 25000000000000, isPayable: true },
+  { id: 13, name: "GM Dmail", fullName: "GM Dmail", logo: "/dmail.png", twitterHandle: "@Dmailofficial", twitterUrl: "https://x.com/Dmailofficial", target: "0xbf930F20E468428968E72F219795D679f45cf2A4", selector: "0x5b7d7482", functionName: "send_mail", points: 1, color: "#f97316", hasReferral: false, externalFee: 6000000000000, isPayable: true },
+  { id: 14, name: "GM Pods", fullName: "Pods Mint", logo: "/pods.png", twitterHandle: "@ExartaOfficial", twitterUrl: "https://x.com/ExartaOfficial", target: "0x43048F15167BDB4A592C2f0F92B9A39e51240F39", selector: "0xd204c45e", functionName: "safeMint", points: 1, color: "#a855f7", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 15, name: "GM Startale", fullName: "GM Startale", logo: "/startale.png", twitterHandle: "@StartaleGroup", twitterUrl: "https://x.com/StartaleGroup", target: "0x0B9f730bF4C1Bf1c0D5B548556a239d5eC0A1D3e", selector: "0x183ff085", functionName: "checkIn", points: 1, color: "#a7d0e0", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 16, name: "GM Exarta", fullName: "GM Exarta", logo: "/exarta.png", twitterHandle: "@ExartaOfficial", twitterUrl: "https://x.com/ExartaOfficial", target: "0xb97DDf414748d1DBEF846fc2Fe74391f7Bc8A715", selector: "0x7c21bd5a", functionName: "checkin", points: 1, color: "#e0d420", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 17, name: "GM ZombieIdle", fullName: "GM ZombieIdle", logo: "/zombie.png", twitterHandle: "@zombieidle", twitterUrl: "https://x.com/zombieidle", target: "0x1e6d5018970F982Af9208AA10322c29e808cBC89", selector: "0xc63e529b", functionName: "buy", points: 1, color: "#3b5f05", hasReferral: false, externalFee: 1500000000000, isPayable: true },
+  { id: 18, name: "GM Pocket Knights", fullName: "GM Pocket Knights", logo: "/pocket.png", twitterHandle: "@pocketknights_", twitterUrl: "https://x.com/pocketknights_", target: "0x3F50Ba759b0e8BF4Fc78E79b36dfcC015Cb11DAa", selector: "0x5838496f", functionName: "logDailyLogin", points: 1, color: "#f59e0b", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 19, name: "GM Morning Moon", fullName: "GM Morning Moon", logo: "/morning.png", twitterHandle: "@mmpgame", twitterUrl: "https://x.com/mmpgame", target: "0x63bA28fB04b4130557EE7810d829689dF4AC3845", selector: "0x4641257d", functionName: "harvest", points: 1, color: "#10b981", hasReferral: false, externalFee: 0, isPayable: false },
 ];
 
 // ================= ABI-uri pentru contractele partenere =================
@@ -121,6 +123,8 @@ const podsABI = [{ inputs: [{ internalType: "address", name: "to", type: "addres
 const startaleABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const exartaABI = [{ inputs: [{ internalType: "uint256", name: "id", type: "uint256" }, { internalType: "uint256", name: "amount", type: "uint256" }], name: "checkin", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const zombieABI = [{ inputs: [{ internalType: "string", name: "_id", type: "string" }, { internalType: "string", name: "_symbol", type: "string" }], name: "buy", outputs: [], stateMutability: "payable", type: "function" }] as const;
+const pocketKnightsABI = [{ inputs: [], name: "logDailyLogin", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+const morningMoonABI = [{ inputs: [], name: "harvest", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 
 // ================= ANIMATIONS =================
 const float = keyframes`
@@ -475,20 +479,28 @@ export default function ActivityReputation() {
   const toast = useToast();
   useColorMode();
 
+
+  // Fix complet pentru scroll - elimină orice restricție
+  useEffect(() => {
+    // Setează stiluri direct pe elemente
+    document.documentElement.style.overflow = 'visible';
+    document.documentElement.style.height = 'auto';
+    document.body.style.overflow = 'visible';
+    document.body.style.height = 'auto';
+    document.getElementById('root')!.style.overflow = 'visible';
+    document.getElementById('root')!.style.height = 'auto';
+    
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+    };
+  }, []);
+
+
   // Refs for scroll position
   const scrollPositionRef = useRef<number>(0);
-
-  // Save scroll position before any action
-  const saveScrollPosition = useCallback(() => {
-    scrollPositionRef.current = window.scrollY;
-  }, []);
-
-  // Restore scroll position after action
-  const restoreScrollPosition = useCallback(() => {
-    setTimeout(() => {
-      window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
-    }, 100);
-  }, []);
 
   // UI State
   const [isTxPending, setIsTxPending] = useState(false);
@@ -518,6 +530,23 @@ export default function ActivityReputation() {
   const { isOpen: isLeaderboardOpen, onOpen: onLeaderboardOpen, onClose: onLeaderboardClose } = useDisclosure();
 
   const isCorrectChain = chainId === SONEIUM_CHAIN_ID;
+
+  // Save scroll position before any action
+  const saveScrollPosition = useCallback(() => {
+    scrollPositionRef.current = window.scrollY;
+  }, []);
+
+  // Restore scroll position after action
+  const restoreScrollPosition = useCallback(() => {
+    // Nu restaura dacă suntem într-un modal deschis
+    if (showSuccessModal || showPaymentModal || txOpen) {
+      return;
+    }
+    // Așteaptă ca DOM-ul să se stabilizeze
+    setTimeout(() => {
+      window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
+    }, 150);
+  }, [showSuccessModal, showPaymentModal, txOpen]);
 
   // ================= CITIRE COOLDOWN DIN CONTRACT PER ACȚIUNE =================
   const cooldownData = PARTNER_ACTIONS.map(action =>
@@ -998,6 +1027,12 @@ export default function ActivityReputation() {
         case 17:
           hash = await writeContractAsync({ address: toHexAddress(action.target), abi: zombieABI, functionName: "buy", args: ["bearstudio.zombie.ads", "ETH"], value: BigInt(action.externalFee) });
           break;
+        case 18:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: pocketKnightsABI, functionName: "logDailyLogin" });
+          break;
+        case 19:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: morningMoonABI, functionName: "harvest" });
+          break;
         default: throw new Error("Unknown action");
       }
 
@@ -1166,7 +1201,7 @@ export default function ActivityReputation() {
   ];
 
   return (
-    <Box minH="100vh" position="relative" bg="#020208" overflowX="hidden">
+    <Box minH="100vh" bg="#020208" overflowX="hidden" sx={{ WebkitOverflowScrolling: 'touch' }}>
       <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
@@ -1186,32 +1221,37 @@ export default function ActivityReputation() {
       <Container maxW="1400px" position="relative" zIndex={1} px={{ base: 4, md: 6, lg: 8 }} py={{ base: 6, md: 8 }}>
         {/* Header - Back button unificat */}
         <Flex justify="space-between" align="center" mb={8} direction={{ base: "column", md: "row" }} gap={4}>
-          <HStack spacing={4} animation={`${slideInLeft} 0.6s ease-out`}>
+          {/* Back button și titlu - stânga - PE PC rămâne sus, PE MOBIL sus de tot */}
+          <HStack spacing={4} animation={`${slideInLeft} 0.6s ease-out`} w={{ base: "full", md: "auto" }} justify={{ base: "flex-start", md: "flex-start" }}>
             <Button
               onClick={() => window.history.back()}
               variant="solid"
               bg="rgba(139,92,246,0.2)"
               color="white"
-              size="lg"
-              leftIcon={<ChevronLeftIcon boxSize={5} />}
+              size={{ base: "xs", md: "lg" }}
+              leftIcon={<ChevronLeftIcon boxSize={{ base: 3, md: 5 }} />}
               _hover={{ bg: "rgba(139,92,246,0.4)", transform: "scale(1.02)", boxShadow: "0 0 20px rgba(139,92,246,0.4)" }}
               transition="all 0.2s"
               borderRadius="full"
               border="1px solid rgba(139,92,246,0.5)"
               fontWeight="500"
+              px={{ base: 3, md: 6 }}
+              py={{ base: 1, md: 3 }}
             >
               Back
             </Button>
-            <VStack align="start" spacing={1}>
-              <HStack spacing={3} flexWrap="wrap">
-                <Box w="10px" h="10px" borderRadius="full" bg="#4ade80" animation={`${pulseGlow} 2s ease-in-out infinite`} />
-                <Heading fontSize={{ base: "xl", md: "3xl", lg: "4xl" }} fontWeight="800" bgGradient="linear(135deg, #c084fc 0%, #ec4899 40%, #3b82f6 100%)" bgClip="text" letterSpacing="tight">Activity Reputation</Heading>
-                <Badge bgGradient="linear(135deg, #8b5cf6, #ec4899)" px={4} py={1.5} rounded="full" fontSize="xs" color="white" boxShadow="0 0 12px rgba(139,92,246,0.6)" fontFamily="mono">✨ Soneium</Badge>
+            <VStack align="start" spacing={0.5}>
+              <HStack spacing={2} flexWrap="wrap">
+                <Box w="8px" h="8px" borderRadius="full" bg="#4ade80" animation={`${pulseGlow} 2s ease-in-out infinite`} />
+                <Heading fontSize={{ base: "md", md: "3xl", lg: "4xl" }} fontWeight="800" bgGradient="linear(135deg, #c084fc 0%, #ec4899 40%, #3b82f6 100%)" bgClip="text" letterSpacing="tight">Activity Reputation</Heading>
+                <Badge bgGradient="linear(135deg, #8b5cf6, #ec4899)" px={{ base: 2, md: 4 }} py={{ base: 1, md: 1.5 }} rounded="full" fontSize="9px" color="white" boxShadow="0 0 12px rgba(139,92,246,0.6)" fontFamily="mono">✨ Soneium</Badge>
               </HStack>
-              <Text color="gray.500" fontSize={{ base: "xs", md: "sm" }} letterSpacing="wider" fontFamily="mono" maxW={{ base: "280px", md: "100%" }}>Track your on-chain legacy across GM, Votes, Check-Ins, Deployments & Partner Actions</Text>
+              <Text color="gray.500" fontSize={{ base: "9px", md: "sm" }} letterSpacing="wider" fontFamily="mono" maxW={{ base: "200px", md: "100%" }}>Track your on-chain legacy</Text>
             </VStack>
           </HStack>
-          <HStack spacing={3} animation={`${slideInRight} 0.6s ease-out`}>
+          
+          {/* Pe desktop: butoanele Leaderboard, DOCS, ConnectButton în dreapta pe același rând */}
+          <HStack spacing={3} display={{ base: "none", md: "flex" }} animation={`${slideInRight} 0.6s ease-out`}>
             <Button
               onClick={onLeaderboardOpen}
               size="md"
@@ -1252,6 +1292,50 @@ export default function ActivityReputation() {
             </Box>
           </HStack>
         </Flex>
+
+        {/* Pe mobil: ConnectButton sus, apoi Leaderboard și DOCS dedesubt */}
+        <VStack spacing={3} display={{ base: "flex", md: "none" }} w="full" animation={`${slideInRight} 0.6s ease-out`} mb={4}>
+          <Box w="full" display="flex" justifyContent="center">
+            <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+          </Box>
+          <HStack spacing={3} justify="center" w="full">
+            <Button
+              onClick={onLeaderboardOpen}
+              size="sm"
+              bg="rgba(139,92,246,0.15)"
+              border="1px solid rgba(139,92,246,0.4)"
+              color="gray.300"
+              _hover={{ bg: "rgba(139,92,246,0.3)", color: "white", borderColor: "rgba(139,92,246,0.8)", transform: "scale(1.02)" }}
+              borderRadius="full"
+              fontSize="xs"
+              fontWeight="600"
+              px={4}
+              py={4}
+              leftIcon={<Text fontSize="sm">🏆</Text>}
+            >
+              Leaderboard
+            </Button>
+            <Button
+              as="a"
+              href="https://docs.gm-agent.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="sm"
+              bg="rgba(139,92,246,0.15)"
+              border="1px solid rgba(139,92,246,0.4)"
+              color="gray.300"
+              _hover={{ bg: "rgba(139,92,246,0.3)", color: "white", borderColor: "rgba(139,92,246,0.8)", transform: "scale(1.02)" }}
+              borderRadius="full"
+              fontSize="xs"
+              fontWeight="600"
+              px={4}
+              py={4}
+              rightIcon={<ExternalLinkIcon boxSize={3} />}
+            >
+              DOCS
+            </Button>
+          </HStack>
+        </VStack>
 
         {/* Network Warning */}
         {!isCorrectChain && isConnected && (
@@ -1811,7 +1895,12 @@ export default function ActivityReputation() {
         </Modal>
 
         {/* Unified Success Modal */}
-        <Modal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} isCentered size="lg">
+        <Modal isOpen={showSuccessModal} onClose={() => {
+          setShowSuccessModal(false);
+          setTimeout(() => {
+            restoreScrollPosition();
+          }, 300);
+        }} isCentered size="lg">
           <ModalOverlay backdropFilter="blur(10px)" />
           <ModalContent bg="rgba(8,8,20,0.98)" border="1px solid rgba(139,92,246,0.4)" borderRadius="2xl" mx={4}>
             <ModalCloseButton color="gray.400" />

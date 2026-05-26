@@ -1721,7 +1721,7 @@ export default function ActivityReputation() {
                   <HStack spacing={2} mb={6}>
                     <Box w="4px" h="4px" borderRadius="full" bg="#fbbf24" animation={`${pulseGlow} 2s infinite`} />
                     <Heading size="md" color="gray.300" fontWeight="600">🤝 Partner Actions</Heading>
-                    <Badge bg="#fbbf24" color="black" ml={2}>18 Actions Available</Badge>
+                    <Badge bg="#fbbf24" color="black" ml={2}>20 Actions Available</Badge>
                   </HStack>
 
                   <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>

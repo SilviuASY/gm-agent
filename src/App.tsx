@@ -1813,6 +1813,19 @@ export default function App() {
     }
   }, [chainId, isConnected, accountStatus]);
 
+    // Setează Soneium ca default dacă nu există chainId în URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chainIdParam = urlParams.get('chainId');
+    
+    // Dacă nu există parametrul chainId, adaugă automat Soneium (1868)
+    if (!chainIdParam) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('chainId', '1868');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, []);
+
   // 🔄 SYNCRONIZE: Update selectedChainKey when chainId changes from wallet
   useEffect(() => {
     if (chainId) {

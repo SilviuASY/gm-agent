@@ -31,7 +31,6 @@ import {
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
-import { useNavigate } from "react-router-dom";
 
 import {
   soneiumChain as soneium,
@@ -1713,7 +1712,6 @@ export default function App() {
   const { switchChain, isPending: switching } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
-  const navigate = useNavigate();
 
   // Track if initial chain from URL has been applied
   const hasAppliedInitialChain = useRef(false);
@@ -2173,116 +2171,33 @@ const handleAction = async (type: "register" | "gm") => {
             </HStack>
           </VStack>
 
-          {/* Pe desktop: HStack orizontal în dreapta */}
-          <HStack 
-            spacing={4} 
-            display={{ base: "none", md: "flex" }}
-            animation={`${slideInRight} 0.6s ease-out`}
-          >
-            <Tooltip 
-              label="Complete activities to boost your reputation score" 
-              hasArrow 
-              placement="bottom"
-              bg="rgba(0,0,0,0.8)"
-              color="white"
-              fontSize="xs"
-              fontWeight="normal"
-              px={3}
-              py={2}
-              borderRadius="lg"
-              border="1px solid rgba(59,130,246,0.4)"
-            >
-              <Button
-                onClick={() => navigate("/activity-reputation")}
-                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
-                color="white"
-                size="md"
-                borderRadius="full"
-                px={6}
-                fontWeight="600"
-                letterSpacing="wider"
-                fontSize="sm"
-                boxShadow="0 0 15px rgba(139,92,246,0.4)"
-                _hover={{
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
-                }}
-                transition="all 0.3s ease"
-                leftIcon={<Box as="span">🏆</Box>}
-              >
-                Activity Reputation
-              </Button>
-            </Tooltip>
-            
-            <Box transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
+          {/* ConnectButton - atat pe desktop cat si pe mobil */}
+          <Box>
+            {/* Desktop */}
+            <Box display={{ base: "none", md: "block" }} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
               <ConnectButton 
                 chainStatus="full"
                 accountStatus="full"
                 showBalance={false}
               />
             </Box>
-          </HStack>
-
-          {/* Pe mobil: VStack vertical, ConnectButton sus, Activity Reputation jos */}
-          <VStack 
-            spacing={4} 
-            display={{ base: "flex", md: "none" }}
-            width="full"
-            animation={`${slideInRight} 0.6s ease-out`}
-          >
-            <Box 
-              transition="transform 0.3s" 
-              _hover={{ transform: "scale(1.02)" }}
-              width="full"
-              display="flex"
-              justifyContent="center"
-            >
-              <ConnectButton 
-                chainStatus="full"
-                accountStatus="full"
-                showBalance={false}
-              />
-            </Box>
-            
-            <Tooltip 
-              label="Complete activities to boost your reputation score" 
-              hasArrow 
-              placement="top"
-              bg="rgba(0,0,0,0.8)"
-              color="white"
-              fontSize="xs"
-              fontWeight="normal"
-              px={3}
-              py={2}
-              borderRadius="lg"
-              border="1px solid rgba(59,130,246,0.4)"
-            >
-              <Button
-                onClick={() => navigate("/activity-reputation")}
-                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
-                color="white"
-                size="sm"
-                borderRadius="full"
-                px={4}
-                py={5}
-                fontWeight="600"
-                letterSpacing="wider"
-                fontSize="xs"
-                boxShadow="0 0 15px rgba(139,92,246,0.4)"
-                _hover={{
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
-                }}
-                transition="all 0.3s ease"
-                leftIcon={<Box as="span" fontSize="12px">🏆</Box>}
-                width="auto"
-                display="inline-flex"
-                alignSelf="center"
+            {/* Mobil */}
+            <Box display={{ base: "block", md: "none" }} width="full">
+              <Box 
+                transition="transform 0.3s" 
+                _hover={{ transform: "scale(1.02)" }}
+                width="full"
+                display="flex"
+                justifyContent="center"
               >
-                Activity Reputation
-              </Button>
-            </Tooltip>
-          </VStack>
+                <ConnectButton 
+                  chainStatus="full"
+                  accountStatus="full"
+                  showBalance={false}
+                />
+              </Box>
+            </Box>
+          </Box>
         </Flex>
 
 

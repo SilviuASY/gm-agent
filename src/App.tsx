@@ -34,10 +34,6 @@ import confetti from "canvas-confetti";
 
 import {
   soneiumChain as soneium,
-  inkChain as ink,
-  optimismChain as optimism,
-  baseChain as base,
-  unichainChain as unichain,
 } from "./wagmi";
 
 import TransactionModal from "./components/TransactionModal";
@@ -1685,10 +1681,6 @@ const getChainKeyFromId = (chainId: number): keyof typeof CONTRACTS | null => {
 const getChainConfigFromId = (chainId: number) => {
   switch (chainId) {
     case 1868: return soneium;
-    case 57073: return ink;
-    case 10: return optimism;
-    case 8453: return base;
-    case 130: return unichain;
     default: return soneium;
   }
 };
@@ -1697,13 +1689,6 @@ const getChainConfigFromId = (chainId: number) => {
 const getUrlParam = (param: string): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param);
-};
-
-// Helper to clean URL (remove chainId parameter without page reload)
-const cleanUrl = () => {
-  const url = new URL(window.location.href);
-  url.searchParams.delete('chainId');
-  window.history.replaceState({}, '', url.toString());
 };
 
 export default function App() {
@@ -1715,7 +1700,6 @@ export default function App() {
 
   // Track if initial chain from URL has been applied
   const hasAppliedInitialChain = useRef(false);
-  const hasCleanedUrl = useRef(false);
   const isSwitchingRef = useRef(false);
   
   // State for selected chain (can be changed by user via Wagmi selector)
@@ -1741,6 +1725,11 @@ export default function App() {
           hasAppliedInitialChain.current = true;
         }
       }
+    } else {
+      // Dacă nu există parametru, setează Soneium ca default
+      requestedChainIdRef.current = 1868;
+      setSelectedChainKey("soneium");
+      hasAppliedInitialChain.current = true;
     }
   }, []);
 
@@ -1766,59 +1755,11 @@ export default function App() {
     }
   }, [isConnected, accountStatus, chainId, switchChain]);
 
-  // Clean URL after initial chain switch is complete or if no switch was needed
-  useEffect(() => {
-    // Wait for either:
-    // 1. No requested chain (nothing to clean)
-    // 2. Already cleaned
-    // 3. Wallet is connected and chain matches requested OR no switch needed
-    if (hasCleanedUrl.current) return;
-    
-    if (!requestedChainIdRef.current) {
-      // No chain requested, nothing to clean
-      hasCleanedUrl.current = true;
-      return;
-    }
-    
-    const requestedChainId = requestedChainIdRef.current;
-    
-    // If wallet is not connected, we can still clean the URL after a short delay
-    if (!isConnected) {
-      const timer = setTimeout(() => {
-        if (!hasCleanedUrl.current) {
-          hasCleanedUrl.current = true;
-          cleanUrl();
-          requestedChainIdRef.current = null;
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-    
-    // Wallet is connected, check if we're on the right chain
-    if (chainId === requestedChainId) {
-      if (!hasCleanedUrl.current) {
-        hasCleanedUrl.current = true;
-        cleanUrl();
-        requestedChainIdRef.current = null;
-      }
-    } else if (!isSwitchingRef.current && chainId !== requestedChainId) {
-      const timer = setTimeout(() => {
-        if (!hasCleanedUrl.current) {
-          hasCleanedUrl.current = true;
-          cleanUrl();
-          requestedChainIdRef.current = null;
-        }
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [chainId, isConnected, accountStatus]);
-
-    // Setează Soneium ca default dacă nu există chainId în URL
+  // Setează Soneium ca default în URL DOAR când nu există chainId (o singură dată)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const chainIdParam = urlParams.get('chainId');
     
-    // Dacă nu există parametrul chainId, adaugă automat Soneium (1868)
     if (!chainIdParam) {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('chainId', '1868');
@@ -1833,29 +1774,16 @@ export default function App() {
       if (currentChain && currentChain !== selectedChainKey) {
         console.log(`🔄 Chain changed to: ${currentChain} (ID: ${chainId})`);
         setSelectedChainKey(currentChain);
+        // Actualizează și requestedChainIdRef pentru a reflecta noul chain
+        requestedChainIdRef.current = chainId;
       }
     }
   }, [chainId]);
 
-  // Update selected chain when user changes network via Wagmi (after initial load)
-  useEffect(() => {
-    if (!hasAppliedInitialChain.current) return;
-    
-    if (chainId) {
-      const currentChain = getChainKeyFromId(chainId);
-      if (currentChain && currentChain !== selectedChainKey) {
-        setSelectedChainKey(currentChain);
-      }
-    }
-  }, [chainId, selectedChainKey]);
-
   // === Target Chain ===
   const targetChain = useMemo(() => {
     switch (selectedChainKey) {
-      case "ink": return ink;
-      case "optimism": return optimism;
-      case "base": return base;
-      case "unichain": return unichain;
+      case "soneium": return soneium;
       default: return soneium;
     }
   }, [selectedChainKey]);

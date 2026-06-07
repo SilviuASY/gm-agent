@@ -102,6 +102,7 @@ const PARTNER_ACTIONS = [
   { id: 17, name: "GM ZombieIdle", fullName: "GM ZombieIdle", logo: "/zombie.png", twitterHandle: "@zombieidle", twitterUrl: "https://x.com/zombieidle", target: "0x1e6d5018970F982Af9208AA10322c29e808cBC89", selector: "0xc63e529b", functionName: "buy", points: 1, color: "#3b5f05", hasReferral: false, externalFee: 1500000000000, isPayable: true },
   { id: 18, name: "GM Pocket Knights", fullName: "GM Pocket Knights", logo: "/pocket.png", twitterHandle: "@pocketknights_", twitterUrl: "https://x.com/pocketknights_", target: "0x3F50Ba759b0e8BF4Fc78E79b36dfcC015Cb11DAa", selector: "0x5838496f", functionName: "logDailyLogin", points: 1, color: "#f59e0b", hasReferral: false, externalFee: 0, isPayable: false },
   { id: 19, name: "GM Morning Moon", fullName: "GM Morning Moon", logo: "/morning.png", twitterHandle: "@mmpgame", twitterUrl: "https://x.com/mmpgame", target: "0x63bA28fB04b4130557EE7810d829689dF4AC3845", selector: "0x4641257d", functionName: "harvest", points: 1, color: "#10b981", hasReferral: false, externalFee: 0, isPayable: false },
+  { id: 20, name: "GM coNFT", fullName: "GM coNFT", logo: "/conft.png", twitterHandle: "@ConftApp", twitterUrl: "https://x.com/ConftApp", target: "0x4a5926bD645473D11190Bc86a94d985077f2a9B3", selector: "0x4579817e", functionName: "deploy", points: 1, color: "#a855f7", hasReferral: false, externalFee: 0, isPayable: false },
 ];
 
 // ================= ABI-uri pentru contractele partenere =================
@@ -125,6 +126,7 @@ const exartaABI = [{ inputs: [{ internalType: "uint256", name: "id", type: "uint
 const zombieABI = [{ inputs: [{ internalType: "string", name: "_id", type: "string" }, { internalType: "string", name: "_symbol", type: "string" }], name: "buy", outputs: [], stateMutability: "payable", type: "function" }] as const;
 const pocketKnightsABI = [{ inputs: [], name: "logDailyLogin", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 const morningMoonABI = [{ inputs: [], name: "harvest", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+const coNFTABI = [{ inputs: [{ internalType: "string", name: "name_", type: "string" }, { internalType: "string", name: "symbol_", type: "string" }, { internalType: "string", name: "tokenUri", type: "string" }, { internalType: "uint256", name: "maxSupply_", type: "uint256" }, { internalType: "uint256", name: "mintPrice_", type: "uint256" }, { internalType: "address", name: "payTokenAddress_", type: "address" }, { internalType: "address", name: "ownerAddress", type: "address" }], name: "deploy", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
 
 // ================= ANIMATIONS =================
 const float = keyframes`
@@ -1033,6 +1035,9 @@ export default function ActivityReputation() {
         case 19:
           hash = await writeContractAsync({ address: toHexAddress(action.target), abi: morningMoonABI, functionName: "harvest" });
           break;
+        case 20:
+          hash = await writeContractAsync({ address: toHexAddress(action.target), abi: coNFTABI, functionName: "deploy", args: [ "GM AGENT", "AGENT", "https://gm-agent.xyz/twitter-image.png", 100000n, 0n, "0x3f99231dD03a9F0E7e3421c92B7b90fbe012985a", address as `0x${string}` ] });
+        break;
         default: throw new Error("Unknown action");
       }
 
@@ -1721,7 +1726,7 @@ export default function ActivityReputation() {
                   <HStack spacing={2} mb={6}>
                     <Box w="4px" h="4px" borderRadius="full" bg="#fbbf24" animation={`${pulseGlow} 2s infinite`} />
                     <Heading size="md" color="gray.300" fontWeight="600">🤝 Partner Actions</Heading>
-                    <Badge bg="#fbbf24" color="black" ml={2}>20 Actions Available</Badge>
+                    <Badge bg="#fbbf24" color="black" ml={2}>21 Actions Available</Badge>
                   </HStack>
 
                   <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
@@ -1804,7 +1809,7 @@ export default function ActivityReputation() {
                               borderRadius="full"
                               onClick={() => !hasPaidForThisSession ? handlePayAndApprove(action) : handleExecutePartnerAction(action)}
                             >
-                              {!hasPaidForThisSession ? (isOnCooldown ? `⏳ Cooldown (${formatTimeRemaining(frontendCooldown)})` : `💰 Pay & Interact (${formatFee(defaultFee)} ETH)`) : `✨ ${action.name.split(" ")[0]} ✨`}
+                              {!hasPaidForThisSession ? (isOnCooldown ? `⏳ Cooldown (${formatTimeRemaining(frontendCooldown)})` : `💰 Pay & Interact `) : `✨ ${action.name.split(" ")[0]} ✨`}
                             </Button>
 
                             {!hasPaidForThisSession && !isOnCooldown && (

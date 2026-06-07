@@ -31,9 +31,14 @@ import {
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
+import { useNavigate } from "react-router-dom";
 
 import {
   soneiumChain as soneium,
+  inkChain as ink,
+  optimismChain as optimism,
+  baseChain as base,
+  unichainChain as unichain,
 } from "./wagmi";
 
 import TransactionModal from "./components/TransactionModal";
@@ -1681,6 +1686,10 @@ const getChainKeyFromId = (chainId: number): keyof typeof CONTRACTS | null => {
 const getChainConfigFromId = (chainId: number) => {
   switch (chainId) {
     case 1868: return soneium;
+    case 57073: return ink;
+    case 10: return optimism;
+    case 8453: return base;
+    case 130: return unichain;
     default: return soneium;
   }
 };
@@ -1691,15 +1700,24 @@ const getUrlParam = (param: string): string | null => {
   return urlParams.get(param);
 };
 
+// Helper to clean URL (remove chainId parameter without page reload)
+const cleanUrl = () => {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('chainId');
+  window.history.replaceState({}, '', url.toString());
+};
+
 export default function App() {
   const { address, isConnected, status: accountStatus } = useAccount();
   const chainId = useChainId();
   const { switchChain, isPending: switching } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
+  const navigate = useNavigate();
 
   // Track if initial chain from URL has been applied
   const hasAppliedInitialChain = useRef(false);
+  const hasCleanedUrl = useRef(false);
   const isSwitchingRef = useRef(false);
   
   // State for selected chain (can be changed by user via Wagmi selector)
@@ -1725,11 +1743,6 @@ export default function App() {
           hasAppliedInitialChain.current = true;
         }
       }
-    } else {
-      // Dacă nu există parametru, setează Soneium ca default
-      requestedChainIdRef.current = 1868;
-      setSelectedChainKey("soneium");
-      hasAppliedInitialChain.current = true;
     }
   }, []);
 
@@ -1755,17 +1768,52 @@ export default function App() {
     }
   }, [isConnected, accountStatus, chainId, switchChain]);
 
-  // Setează Soneium ca default în URL DOAR când nu există chainId (o singură dată)
+  // Clean URL after initial chain switch is complete or if no switch was needed
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const chainIdParam = urlParams.get('chainId');
+    // Wait for either:
+    // 1. No requested chain (nothing to clean)
+    // 2. Already cleaned
+    // 3. Wallet is connected and chain matches requested OR no switch needed
+    if (hasCleanedUrl.current) return;
     
-    if (!chainIdParam) {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('chainId', '1868');
-      window.history.replaceState({}, '', newUrl.toString());
+    if (!requestedChainIdRef.current) {
+      // No chain requested, nothing to clean
+      hasCleanedUrl.current = true;
+      return;
     }
-  }, []);
+    
+    const requestedChainId = requestedChainIdRef.current;
+    
+    // If wallet is not connected, we can still clean the URL after a short delay
+    if (!isConnected) {
+      const timer = setTimeout(() => {
+        if (!hasCleanedUrl.current) {
+          hasCleanedUrl.current = true;
+          cleanUrl();
+          requestedChainIdRef.current = null;
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    
+    // Wallet is connected, check if we're on the right chain
+    if (chainId === requestedChainId) {
+      if (!hasCleanedUrl.current) {
+        hasCleanedUrl.current = true;
+        cleanUrl();
+        requestedChainIdRef.current = null;
+      }
+    } else if (!isSwitchingRef.current && chainId !== requestedChainId) {
+      const timer = setTimeout(() => {
+        if (!hasCleanedUrl.current) {
+          hasCleanedUrl.current = true;
+          cleanUrl();
+          requestedChainIdRef.current = null;
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [chainId, isConnected, accountStatus]);
 
   // 🔄 SYNCRONIZE: Update selectedChainKey when chainId changes from wallet
   useEffect(() => {
@@ -1774,16 +1822,29 @@ export default function App() {
       if (currentChain && currentChain !== selectedChainKey) {
         console.log(`🔄 Chain changed to: ${currentChain} (ID: ${chainId})`);
         setSelectedChainKey(currentChain);
-        // Actualizează și requestedChainIdRef pentru a reflecta noul chain
-        requestedChainIdRef.current = chainId;
       }
     }
   }, [chainId]);
 
+  // Update selected chain when user changes network via Wagmi (after initial load)
+  useEffect(() => {
+    if (!hasAppliedInitialChain.current) return;
+    
+    if (chainId) {
+      const currentChain = getChainKeyFromId(chainId);
+      if (currentChain && currentChain !== selectedChainKey) {
+        setSelectedChainKey(currentChain);
+      }
+    }
+  }, [chainId, selectedChainKey]);
+
   // === Target Chain ===
   const targetChain = useMemo(() => {
     switch (selectedChainKey) {
-      case "soneium": return soneium;
+      case "ink": return ink;
+      case "optimism": return optimism;
+      case "base": return base;
+      case "unichain": return unichain;
       default: return soneium;
     }
   }, [selectedChainKey]);
@@ -2112,33 +2173,116 @@ const handleAction = async (type: "register" | "gm") => {
             </HStack>
           </VStack>
 
-          {/* ConnectButton - atat pe desktop cat si pe mobil */}
-          <Box>
-            {/* Desktop */}
-            <Box display={{ base: "none", md: "block" }} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
+          {/* Pe desktop: HStack orizontal în dreapta */}
+          <HStack 
+            spacing={4} 
+            display={{ base: "none", md: "flex" }}
+            animation={`${slideInRight} 0.6s ease-out`}
+          >
+            <Tooltip 
+              label="Complete activities to boost your reputation score" 
+              hasArrow 
+              placement="bottom"
+              bg="rgba(0,0,0,0.8)"
+              color="white"
+              fontSize="xs"
+              fontWeight="normal"
+              px={3}
+              py={2}
+              borderRadius="lg"
+              border="1px solid rgba(59,130,246,0.4)"
+            >
+              <Button
+                onClick={() => navigate("/activity-reputation")}
+                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
+                color="white"
+                size="md"
+                borderRadius="full"
+                px={6}
+                fontWeight="600"
+                letterSpacing="wider"
+                fontSize="sm"
+                boxShadow="0 0 15px rgba(139,92,246,0.4)"
+                _hover={{
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
+                }}
+                transition="all 0.3s ease"
+                leftIcon={<Box as="span">🏆</Box>}
+              >
+                Activity Reputation
+              </Button>
+            </Tooltip>
+            
+            <Box transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
               <ConnectButton 
                 chainStatus="full"
                 accountStatus="full"
                 showBalance={false}
               />
             </Box>
-            {/* Mobil */}
-            <Box display={{ base: "block", md: "none" }} width="full">
-              <Box 
-                transition="transform 0.3s" 
-                _hover={{ transform: "scale(1.02)" }}
-                width="full"
-                display="flex"
-                justifyContent="center"
-              >
-                <ConnectButton 
-                  chainStatus="full"
-                  accountStatus="full"
-                  showBalance={false}
-                />
-              </Box>
+          </HStack>
+
+          {/* Pe mobil: VStack vertical, ConnectButton sus, Activity Reputation jos */}
+          <VStack 
+            spacing={4} 
+            display={{ base: "flex", md: "none" }}
+            width="full"
+            animation={`${slideInRight} 0.6s ease-out`}
+          >
+            <Box 
+              transition="transform 0.3s" 
+              _hover={{ transform: "scale(1.02)" }}
+              width="full"
+              display="flex"
+              justifyContent="center"
+            >
+              <ConnectButton 
+                chainStatus="full"
+                accountStatus="full"
+                showBalance={false}
+              />
             </Box>
-          </Box>
+            
+            <Tooltip 
+              label="Complete activities to boost your reputation score" 
+              hasArrow 
+              placement="top"
+              bg="rgba(0,0,0,0.8)"
+              color="white"
+              fontSize="xs"
+              fontWeight="normal"
+              px={3}
+              py={2}
+              borderRadius="lg"
+              border="1px solid rgba(59,130,246,0.4)"
+            >
+              <Button
+                onClick={() => navigate("/activity-reputation")}
+                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
+                color="white"
+                size="sm"
+                borderRadius="full"
+                px={4}
+                py={5}
+                fontWeight="600"
+                letterSpacing="wider"
+                fontSize="xs"
+                boxShadow="0 0 15px rgba(139,92,246,0.4)"
+                _hover={{
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
+                }}
+                transition="all 0.3s ease"
+                leftIcon={<Box as="span" fontSize="12px">🏆</Box>}
+                width="auto"
+                display="inline-flex"
+                alignSelf="center"
+              >
+                Activity Reputation
+              </Button>
+            </Tooltip>
+          </VStack>
         </Flex>
 
 

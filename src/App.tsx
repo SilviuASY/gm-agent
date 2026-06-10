@@ -67,7 +67,7 @@ const CONTRACTS = {
   },
   unichain: {
     identityRegistry: "0x81729754038058742b8fcc5792e6bd8612b504c1" as const,
-    dailyGM: "0xfde59299612a1cb07e0e6b5346e2f4ca031b42e0" as const,
+    dailyGM: "0xD3cf595cC6bd79Ca6a0183Bef555c27065f573A5" as const,
     chainId: 130,
   },
 } as const;

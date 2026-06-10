@@ -57,7 +57,7 @@ const CONTRACTS = {
   },
   optimism: {
     identityRegistry: "0xbff60bfbb9c327619e1d955ae2f9c31bc719db8b" as const,
-    dailyGM: "0xd18acf5e068527a2e47be761b4eab2e9e2f1b01c" as const,
+    dailyGM: "0x4AB2db4852D4E56Ea721a40136ED6F9aEc3ae404" as const,
     chainId: 10,
   },
   base: {

@@ -62,7 +62,7 @@ const CONTRACTS = {
   },
   base: {
     identityRegistry: "0x7a5e06310e9f77d4f302b858a88906f74c22bf78" as const,
-    dailyGM: "0x92d2b6cfc723d485b9f58484296e32963a472710" as const,
+    dailyGM: "0x7e359a9eC6782d68bBc8DefA5aDB5E92e32f5fCd" as const,
     chainId: 8453,
   },
   unichain: {

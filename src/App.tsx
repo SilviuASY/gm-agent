@@ -52,7 +52,7 @@ const CONTRACTS = {
   },
   ink: {
     identityRegistry: "0xd7a368Fd63207A4519BF6636fd6b1246A63C1eF3" as const,
-    dailyGM: "0x7dFb097b47e2D52ef9864d7a1d2A92B135B94515" as const,
+    dailyGM: "0x581091931CBB739A337F9419C393619A47A1278E" as const,
     chainId: 57073,
   },
   optimism: {

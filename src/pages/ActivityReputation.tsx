@@ -77,7 +77,7 @@ const AGENT_GM_CONTRACT = "0xb19922c27C86cc08dc4f0f3Cb4e76c30494c22dc";
 const AGENT_GATEWAY_CONTRACT = "0x1a5d31E9d0bf403aD5782DBc44CD5B891D1e91f4";
 
 const SONEIUM_CHAIN_ID = 1868;
-const BADGE_CONTRACT = "0xb366d0E120a0F85F17f13887025dCDf4cf533e46";
+const BADGE_CONTRACT = "0xEDCd3fee800EA809dAB526743c46bB21D2d5eF15";
 const API_URL = "/api";
 
 // ================= PARTNER ACTIONS WITH TWITTER =================
@@ -843,54 +843,58 @@ export default function ActivityReputation() {
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
   };
 
-  // ================= MINT BADGE HANDLER =================
-  const handleMintBadge = async () => {
-    if (!address || !isCorrectChain || userBadgeBalance > 0n) return;
-    const score = userTotalScore;
-    if (score < minReputationScore) {
-      toast({ title: "Insufficient Score", description: `You need at least ${minReputationScore} points (you have ${score})`, status: "warning", duration: 4000 });
-      return;
+// ================= MINT BADGE HANDLER =================
+const handleMintBadge = async () => {
+  if (!address || !isCorrectChain || userBadgeBalance > 0n) return;
+  const score = userTotalScore;
+  if (score < minReputationScore) {
+    toast({ title: "Insufficient Score", description: `You need at least ${minReputationScore} points (you have ${score})`, status: "warning", duration: 4000 });
+    return;
+  }
+  setIsTxPending(true);
+  setTxOpen(true);
+  setTxStatus("wallet");
+  setTxTitle("🏅 Mint Reputation Badge");
+  setTxDesc("Generating signature...");
+  try {
+    const response = await fetch(`${API_URL}/generate-mint-signature`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userAddress: address, score, nonce: userNonce.toString() }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.signature) throw new Error(data.error || 'Error generating signature');
+    
+    // Extract deadline from API response
+    const { signature, deadline } = data;
+    
+    setTxDesc("Confirm mint on Soneium...");
+    const hash = await writeContractAsync({
+      address: toHexAddress(BADGE_CONTRACT),
+      abi: badgeABI,
+      functionName: "mint",
+      args: [BigInt(score), signature, BigInt(deadline)], // Added deadline as third parameter
+    });
+    setTxStatus("pending");
+    setTxDesc("Waiting for blockchain confirmation...");
+    const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+    if (receipt.status === "success") {
+      setTxStatus("success");
+      setTxTitle("🏅 Badge Minted!");
+      setTxDesc("Congratulations! You received the Reputation Badge!");
+      confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 } });
+      await refetchBadgeBalance();
+      await updateLeaderboardScore(0);
+      toast({ title: "🎉 Success!", description: "Badge minted successfully!", status: "success", duration: 6000 });
     }
-    setIsTxPending(true);
-    setTxOpen(true);
-    setTxStatus("wallet");
-    setTxTitle("🏅 Mint Reputation Badge");
-    setTxDesc("Generating signature...");
-    try {
-      const response = await fetch(`${API_URL}/generate-mint-signature`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userAddress: address, score, nonce: userNonce.toString() }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.signature) throw new Error(data.error || 'Error generating signature');
-      setTxDesc("Confirm mint on Soneium...");
-      const hash = await writeContractAsync({
-        address: toHexAddress(BADGE_CONTRACT),
-        abi: badgeABI,
-        functionName: "mint",
-        args: [BigInt(score), data.signature],
-      });
-      setTxStatus("pending");
-      setTxDesc("Waiting for blockchain confirmation...");
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
-      if (receipt.status === "success") {
-        setTxStatus("success");
-        setTxTitle("🏅 Badge Minted!");
-        setTxDesc("Congratulations! You received the Reputation Badge!");
-        confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 } });
-        await refetchBadgeBalance();
-        await updateLeaderboardScore(0);
-        toast({ title: "🎉 Success!", description: "Badge minted successfully!", status: "success", duration: 6000 });
-      }
-    } catch (err: any) {
-      const rejected = err?.message?.includes("rejected") || err?.code === 4001;
-      setTxStatus(rejected ? "rejected" : "failed");
-      setTxTitle(rejected ? "Mint Cancelled" : "Mint Failed");
-    } finally {
-      setIsTxPending(false);
-    }
-  };
+  } catch (err: any) {
+    const rejected = err?.message?.includes("rejected") || err?.code === 4001;
+    setTxStatus(rejected ? "rejected" : "failed");
+    setTxTitle(rejected ? "Mint Cancelled" : "Mint Failed");
+  } finally {
+    setIsTxPending(false);
+  }
+};
 
   // ================= PARTNER ACTION HANDLERS =================
   const handlePayAndApprove = async (action: typeof PARTNER_ACTIONS[0]) => {

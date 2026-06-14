@@ -14,7 +14,7 @@ app.use(cors({
 
 app.use(express.json());
 
-const BADGE_CONTRACT = '0x141224Bcdd1AE69E510c74928eD8d5B41dCe0D66';
+const BADGE_CONTRACT = '0x39b5aFe768F033672866546C9b07815727648532';
 
 // Test route
 app.get('/api/', (req, res) => {

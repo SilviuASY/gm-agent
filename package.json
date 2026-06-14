@@ -10,7 +10,7 @@
     "build": "npm run build:frontend && npm run build:functions",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:functions": "esbuild netlify/functions/api.ts --bundle --platform=node --target=node20 --outfile=netlify/functions/api.js --external:express --external:ethers --external:cors --external:dotenv --external:serverless-http",
+    "build:functions": "echo 'No TypeScript functions to build - using api.js directly'",
     "build:frontend": "tsc -b && vite build"
   },
   "dependencies": {

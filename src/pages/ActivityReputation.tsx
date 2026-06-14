@@ -225,7 +225,7 @@ const badgeABI = [
   { inputs: [], name: "minReputationScore", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "balanceOf", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "uint256", name: "score", type: "uint256" }, { internalType: "bytes", name: "signature", type: "bytes" }], name: "mint", outputs: [], stateMutability: "nonpayable", type: "function" },
-  { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "nonces", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "getNonce", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
 ] as const;
 
 // Types
@@ -786,7 +786,7 @@ export default function ActivityReputation() {
   const { data: userNonce = 0n } = useReadContract({
     address: toHexAddress(BADGE_CONTRACT),
     abi: badgeABI,
-    functionName: "nonces",
+    functionName: "getNonce",
     args: address ? [address] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });

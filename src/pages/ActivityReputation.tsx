@@ -224,7 +224,7 @@ const agentGMABI = [{ inputs: [{ internalType: "address", name: "user", type: "a
 const badgeABI = [
   { inputs: [], name: "minReputationScore", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "balanceOf", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  { inputs: [{ internalType: "uint256", name: "score", type: "uint256" }, { internalType: "bytes", name: "signature", type: "bytes" }], name: "mint", outputs: [], stateMutability: "nonpayable", type: "function" },
+  { inputs: [{ internalType: "uint256", name: "score", type: "uint256" }, { internalType: "bytes", name: "signature", type: "bytes" }, { internalType: "uint256", name: "deadline", type: "uint256" }], name: "mint", outputs: [], stateMutability: "nonpayable", type: "function" },
   { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "getNonce", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
 ] as const;
 

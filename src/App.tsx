@@ -72,7 +72,7 @@ const CONTRACTS = {
   },
 } as const;
 
-const FIXED_AGENT_URI = "ipfs://bafkreif4dxsg7gm3j62rtypslhjrpwu3gdmjwtft5qp2xxy7yx7s24nzvu";
+const FIXED_AGENT_URI = "ipfs://bafkreihgnwtxqd34dosxms2ud5wupa5mblw4pogswpk7scytgol3v2shue";
 const COOLDOWN_SECONDS = 86400;
 
 // ================= ABIs =================

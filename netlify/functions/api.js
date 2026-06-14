@@ -36,6 +36,7 @@ var import_express = __toESM(require("express"), 1);
 var import_serverless_http = __toESM(require("serverless-http"), 1);
 var import_cors = __toESM(require("cors"), 1);
 var import_ethers = require("ethers");
+
 var app = (0, import_express.default)();
 app.use((0, import_cors.default)({
   origin: true,
@@ -44,34 +45,55 @@ app.use((0, import_cors.default)({
   credentials: true
 }));
 app.use(import_express.default.json());
-var BADGE_CONTRACT = "0xb366d0E120a0F85F17f13887025dCDf4cf533e46";
+
+var BADGE_CONTRACT = "0xEDCd3fee800EA809dAB526743c46bB21D2d5eF15";
+
 app.get("/api/", (req, res) => {
   res.send("<h1>\u2705 Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
+
 app.post("/api/generate-mint-signature", async (req, res) => {
   const { userAddress, score, nonce } = req.body;
+  
   if (!userAddress?.startsWith("0x") || typeof score !== "number" || nonce === void 0) {
     return res.status(400).json({ error: "Invalid parameters" });
   }
+
   const signerPk = process.env.SIGNER_PRIVATE_KEY;
   if (!signerPk) {
     return res.status(500).json({ error: "Missing SIGNER_PRIVATE_KEY in environment variables" });
   }
+
   try {
+    // Calculate deadline (expires in 1 hour from now)
+    const deadline = Math.floor(Date.now() / 1000) + 3600; // Unix timestamp
+    
     const wallet = new import_ethers.ethers.Wallet(signerPk);
+    
+    // Include deadline in the hash (5 parameters now)
     const rawMessageHash = import_ethers.ethers.solidityPackedKeccak256(
-      ["address", "uint256", "uint256", "address"],
-      [userAddress, BigInt(score), BigInt(nonce), BADGE_CONTRACT]
+      ["address", "uint256", "uint256", "uint256", "address"],
+      [userAddress, BigInt(score), BigInt(nonce), BigInt(deadline), BADGE_CONTRACT]
     );
+    
     const signature = await wallet.signMessage(import_ethers.ethers.getBytes(rawMessageHash));
-    console.log(`\u2705 Signature generated for ${userAddress}`);
-    return res.status(200).json({ signature });
+    
+    console.log(`✅ Signature generated for ${userAddress} with deadline: ${deadline} (expires in 1 hour)`);
+    
+    // Return both signature and deadline to the frontend
+    return res.status(200).json({ 
+      signature,
+      deadline
+    });
+    
   } catch (error) {
-    console.error("\u274C Error generating signature:", error);
+    console.error("❌ Error generating signature:", error);
     return res.status(500).json({ error: "Error generating signature" });
   }
 });
+
 var handler = (0, import_serverless_http.default)(app);
+
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   handler

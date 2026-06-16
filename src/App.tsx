@@ -645,32 +645,63 @@ const handleAction = async (type: "register" | "gm") => {
               label="Complete activities to boost your reputation score" 
               hasArrow 
               placement="bottom"
-              bg="rgba(0,0,0,0.8)"
+              bg="rgba(0,0,0,0.85)"
               color="white"
               fontSize="xs"
               fontWeight="normal"
-              px={3}
-              py={2}
+              px={4}
+              py={2.5}
               borderRadius="lg"
-              border="1px solid rgba(59,130,246,0.4)"
+              border="1px solid rgba(59,130,246,0.3)"
+              boxShadow="0 0 30px rgba(0,0,0,0.5)"
             >
               <Button
                 onClick={() => navigate("/activity-reputation")}
-                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
+                bg="rgba(59,130,246,0.12)"
+                border="1.5px solid rgba(59,130,246,0.4)"
                 color="white"
                 size="md"
                 borderRadius="full"
-                px={6}
+                px={7}
+                py={6}
                 fontWeight="600"
-                letterSpacing="wider"
+                letterSpacing="0.02em"
                 fontSize="sm"
-                boxShadow="0 0 15px rgba(139,92,246,0.4)"
+                backdropFilter="blur(10px)"
                 _hover={{
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
+                  bg: "rgba(59,130,246,0.25)",
+                  transform: "translateY(-3px) scale(1.03)",
+                  borderColor: "rgba(59,130,246,0.8)",
+                  boxShadow: "0 0 40px rgba(59,130,246,0.4), inset 0 0 20px rgba(59,130,246,0.1)",
+                  "& > span:first-of-type": {
+                    transform: "rotate(-5deg) scale(1.1)",
+                  },
+                  "& > span:last-of-type": {
+                    transform: "translateX(4px)",
+                  },
                 }}
-                transition="all 0.3s ease"
-                leftIcon={<Box as="span">🏆</Box>}
+                _active={{
+                  transform: "translateY(0px) scale(0.98)",
+                }}
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                leftIcon={
+                  <Box 
+                    as="span" 
+                    fontSize="18px"
+                    transition="transform 0.3s"
+                  >
+                    🏆
+                  </Box>
+                }
+                rightIcon={
+                  <Box 
+                    as="span" 
+                    fontSize="14px"
+                    transition="transform 0.3s"
+                  >
+                    →
+                  </Box>
+                }
               >
                 Activity Reputation
               </Button>
@@ -684,6 +715,7 @@ const handleAction = async (type: "register" | "gm") => {
               />
             </Box>
           </HStack>
+
 
           {/* Pe mobil: VStack vertical, ConnectButton sus, Activity Reputation jos */}
           <VStack 
@@ -710,33 +742,48 @@ const handleAction = async (type: "register" | "gm") => {
               label="Complete activities to boost your reputation score" 
               hasArrow 
               placement="top"
-              bg="rgba(0,0,0,0.8)"
+              bg="rgba(0,0,0,0.85)"
               color="white"
               fontSize="xs"
               fontWeight="normal"
-              px={3}
-              py={2}
+              px={4}
+              py={2.5}
               borderRadius="lg"
-              border="1px solid rgba(59,130,246,0.4)"
+              border="1px solid rgba(59,130,246,0.3)"
             >
               <Button
                 onClick={() => navigate("/activity-reputation")}
-                bgGradient="linear(135deg, #3b82f6, #06b6d4)"
+                bg="rgba(59,130,246,0.12)"
+                border="1.5px solid rgba(59,130,246,0.4)"
                 color="white"
                 size="sm"
                 borderRadius="full"
-                px={4}
-                py={5}
+                px={5}
+                py={3}
                 fontWeight="600"
-                letterSpacing="wider"
+                letterSpacing="0.02em"
                 fontSize="xs"
-                boxShadow="0 0 15px rgba(139,92,246,0.4)"
+                backdropFilter="blur(10px)"
                 _hover={{
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 0 25px rgba(139,92,246,0.6)",
+                  bg: "rgba(59,130,246,0.25)",
+                  transform: "translateY(-2px) scale(1.02)",
+                  borderColor: "rgba(59,130,246,0.8)",
+                  boxShadow: "0 0 30px rgba(59,130,246,0.4)",
                 }}
-                transition="all 0.3s ease"
-                leftIcon={<Box as="span" fontSize="12px">🏆</Box>}
+                _active={{
+                  transform: "translateY(0px) scale(0.97)",
+                }}
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                leftIcon={
+                  <Box as="span" fontSize="16px">
+                    🏆
+                  </Box>
+                }
+                rightIcon={
+                  <Box as="span" fontSize="12px">
+                    →
+                  </Box>
+                }
                 width="auto"
                 display="inline-flex"
                 alignSelf="center"
@@ -749,36 +796,206 @@ const handleAction = async (type: "register" | "gm") => {
 
 
         {/* ENHANCED HERO SECTION */}
-        <VStack spacing={6} textAlign="center" mb={16} animation={`${slideUp} 0.8s ease-out`}>
-          <Badge
-            bgGradient="linear(135deg, #8b5cf6, #ec4899)"
-            px={5}
-            py={2.5}
-            rounded="full"
-            color="white"
-            fontSize="sm"
-            fontWeight="600"
-            letterSpacing="wider"
-            boxShadow="0 0 20px rgba(139,92,246,0.5)"
-            animation={`${glowPulse} 3s ease-in-out infinite`}
-          >
-            🌟 {currentChainName} Mainnet Active
-          </Badge>
+        <VStack spacing={4} textAlign="center" mb={12} animation={`${slideUp} 0.8s ease-out`}>
+          <HStack spacing={3} wrap="wrap" justify="center">
+            <Badge
+              bgGradient="linear(135deg, #8b5cf6, #ec4899)"
+              px={5}
+              py={2.5}
+              rounded="full"
+              color="white"
+              fontSize="sm"
+              fontWeight="600"
+              letterSpacing="wider"
+              boxShadow="0 0 20px rgba(139,92,246,0.5)"
+              animation={`${glowPulse} 3s ease-in-out infinite`}
+            >
+              🌟 {currentChainName} Mainnet Active
+            </Badge>
+            {chainId === 1868 && (
+              <Badge
+                bgGradient="linear(135deg, #fbbf24, #ec4899)"
+                px={4}
+                py={2.5}
+                rounded="full"
+                color="white"
+                fontSize="sm"
+                fontWeight="700"
+                letterSpacing="wider"
+                boxShadow="0 0 20px rgba(251,191,36,0.4)"
+                animation={`${glowPulse} 3s ease-in-out infinite`}
+              >
+                🏆 Season 12 • +7.5 Bonus
+              </Badge>
+            )}
+          </HStack>
+          
           <Heading
-            fontSize={{ base: "4xl", md: "6xl", lg: "7xl" }}
+            fontSize={{ base: "3xl", md: "5xl", lg: "6xl" }}
             fontWeight="800"
             bgGradient="linear(135deg, #ffffff 0%, #c084fc 40%, #a855f7 100%)"
             bgClip="text"
-            lineHeight="1.1"
-            maxW="900px"
+            lineHeight="1.2"
+            maxW="1000px"
             mx="auto"
             letterSpacing="-0.02em"
+            whiteSpace={{ base: "normal", md: "nowrap" }}
           >
-            Prove Your Daily<br />On-Chain Activity
+            Prove Your Daily On-Chain Activity
           </Heading>
-          <Text fontSize={{ base: "lg", md: "xl" }} color="gray.400" maxW="600px" mx="auto" lineHeight="1.6">
+          
+          <Text 
+            fontSize={{ base: "sm", md: "lg" }} 
+            color="gray.400" 
+            maxW="750px" 
+            mx="auto" 
+            lineHeight="1.6"
+            whiteSpace={{ base: "normal", md: "nowrap" }}
+          >
             Register once as an ERC-8004 Agent and send GM daily to build your verifiable on-chain reputation
           </Text>
+
+          {/* Season 12 Quests - doar pe Soneium, stil card */}
+          {chainId === 1868 && (
+            <Box
+              bg="rgba(251,191,36,0.05)"
+              borderRadius="xl"
+              px={{ base: 4, md: 6 }}
+              py={{ base: 3, md: 4 }}
+              border="1px solid rgba(251,191,36,0.12)"
+              maxW="500px"
+              mx="auto"
+              w="full"
+              transition="all 0.3s"
+              _hover={{ borderColor: "rgba(251,191,36,0.25)", bg: "rgba(251,191,36,0.08)" }}
+            >
+              <VStack spacing={3} align="stretch">
+                {/* Header */}
+                <HStack justify="space-between" align="center">
+                  <HStack spacing={2}>
+                    <Text fontSize={{ base: "sm", md: "md" }} color="#fbbf24" fontWeight="700">🏆 S12 Quests</Text>
+                    <Badge
+                      bg={isRegistered && Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(251,191,36,0.15)"}
+                      color={isRegistered && Number(userStreak) >= 5 ? "#4ade80" : "#fbbf24"}
+                      px={2.5}
+                      py={0.5}
+                      borderRadius="full"
+                      fontSize={{ base: "8px", md: "10px" }}
+                      fontWeight="600"
+                      border="1px solid"
+                      borderColor={isRegistered && Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(251,191,36,0.15)"}
+                    >
+                      {isRegistered && Number(userStreak) >= 5 ? "✅ COMPLETE" : "IN PROGRESS"}
+                    </Badge>
+                  </HStack>
+                  <Text fontSize={{ base: "sm", md: "md" }} color="#fbbf24" fontWeight="700">
+                    +7.5 Bonus
+                  </Text>
+                </HStack>
+
+                {/* Quest 1: Register */}
+                <HStack justify="space-between" align="center" p={2} bg="rgba(0,0,0,0.2)" borderRadius="lg">
+                  <HStack spacing={3} align="center">
+                    <Box
+                      w={{ base: "20px", md: "24px" }}
+                      h={{ base: "20px", md: "24px" }}
+                      borderRadius="full"
+                      bg={isRegistered ? "rgba(34,197,94,0.2)" : "rgba(139,92,246,0.15)"}
+                      border="2px solid"
+                      borderColor={isRegistered ? "#4ade80" : "rgba(139,92,246,0.3)"}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize={{ base: "10px", md: "12px" }}
+                      color={isRegistered ? "#4ade80" : "gray.500"}
+                      transition="all 0.3s"
+                    >
+                      {isRegistered ? "✓" : "1"}
+                    </Box>
+                    <Text fontSize={{ base: "sm", md: "md" }} color={isRegistered ? "#4ade80" : "gray.300"} fontWeight="500">
+                      Register as Agent
+                    </Text>
+                  </HStack>
+                  <Badge
+                    bg={isRegistered ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
+                    color={isRegistered ? "#4ade80" : "#a855f7"}
+                    px={2.5}
+                    py={1}
+                    borderRadius="full"
+                    fontSize={{ base: "8px", md: "10px" }}
+                    fontWeight="600"
+                  >
+                    {isRegistered ? "✓ Done" : "Pending"}
+                  </Badge>
+                </HStack>
+
+                {/* Quest 2: Send 5 GM */}
+                <HStack justify="space-between" align="center" p={2} bg="rgba(0,0,0,0.2)" borderRadius="lg">
+                  <HStack spacing={3} align="center">
+                    <Box
+                      w={{ base: "20px", md: "24px" }}
+                      h={{ base: "20px", md: "24px" }}
+                      borderRadius="full"
+                      bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(139,92,246,0.15)"}
+                      border="2px solid"
+                      borderColor={Number(userStreak) >= 5 ? "#4ade80" : "rgba(139,92,246,0.3)"}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize={{ base: "10px", md: "12px" }}
+                      color={Number(userStreak) >= 5 ? "#4ade80" : "gray.500"}
+                      transition="all 0.3s"
+                    >
+                      {Number(userStreak) >= 5 ? "✓" : "2"}
+                    </Box>
+                    <HStack spacing={2} align="center">
+                      <Text fontSize={{ base: "sm", md: "md" }} color={Number(userStreak) >= 5 ? "#4ade80" : "gray.300"} fontWeight="500">
+                        Send 5 GM
+                      </Text>
+                      <Badge
+                        bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
+                        color={Number(userStreak) >= 5 ? "#4ade80" : "#a855f7"}
+                        px={2}
+                        py={0.5}
+                        borderRadius="full"
+                        fontSize={{ base: "8px", md: "10px" }}
+                        fontWeight="600"
+                      >
+                        {Number(userStreak) >= 5 ? "✓" : `${Number(userStreak)}/5`}
+                      </Badge>
+                    </HStack>
+                  </HStack>
+                  <Badge
+                    bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
+                    color={Number(userStreak) >= 5 ? "#4ade80" : "#a855f7"}
+                    px={2.5}
+                    py={1}
+                    borderRadius="full"
+                    fontSize={{ base: "8px", md: "10px" }}
+                    fontWeight="600"
+                  >
+                    {Number(userStreak) >= 5 ? "✓ Done" : `${Number(userStreak)}/5`}
+                  </Badge>
+                </HStack>
+
+                {/* Bonus Unlocked */}
+                {isRegistered && Number(userStreak) >= 5 && (
+                  <Box
+                    textAlign="center"
+                    p={2}
+                    bg="rgba(34,197,94,0.08)"
+                    borderRadius="lg"
+                    border="1px solid rgba(34,197,94,0.15)"
+                    animation={`${pulseGreen} 2s ease-in-out infinite`}
+                  >
+                    <Text fontSize={{ base: "sm", md: "md" }} color="#4ade80" fontWeight="700">
+                      🎉 Bonus +7.5 points unlocked!
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
+            </Box>
+          )}
         </VStack>
 
         {/* ENHANCED Main Card Grid */}
@@ -805,7 +1022,7 @@ const handleAction = async (type: "register" | "gm") => {
             >
               <Box
                 h="4px"
-                bgGradient="linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)"
+                bgGradient={chainId === 1868 ? "linear(90deg, #fbbf24, #ec4899, #8b5cf6, #fbbf24)" : "linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)"}
                 backgroundSize="300% 100%"
                 animation={`${shimmer} 4s ease infinite`}
               />
@@ -814,22 +1031,38 @@ const handleAction = async (type: "register" | "gm") => {
                   <Text color="gray.400" fontWeight="600" letterSpacing="wider" fontSize="sm">
                     AGENT STATUS
                   </Text>
-                  <Tooltip label={isRegistered ? "Soulbound NFT Minted" : "Not yet registered"} hasArrow>
-                    <Badge
-                      bg={isRegistered ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))" : "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1))"}
-                      color={isRegistered ? "#4ade80" : "#a855f7"}
-                      px={3}
-                      py={1.5}
-                      rounded="full"
-                      fontSize="xs"
-                      fontWeight="600"
-                      borderWidth="1px"
-                      borderColor={isRegistered ? "#4ade80" : "#a855f7"}
-                      boxShadow={isRegistered ? "0 0 10px rgba(74,222,128,0.3)" : "none"}
-                    >
-                      {isRegistered ? "✓ REGISTERED" : "⚡ PENDING"}
-                    </Badge>
-                  </Tooltip>
+                  <HStack spacing={2}>
+                    {chainId === 1868 && (
+                      <Badge
+                        bg="rgba(251,191,36,0.15)"
+                        color="#fbbf24"
+                        px={2}
+                        py={1}
+                        rounded="full"
+                        fontSize="17px"
+                        fontWeight="600"
+                        border="1px solid rgba(251,191,36,0.2)"
+                      >
+                        🏆 Season 12 score
+                      </Badge>
+                    )}
+                    <Tooltip label={isRegistered ? "Soulbound NFT Minted" : "Not yet registered"} hasArrow>
+                      <Badge
+                        bg={isRegistered ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))" : "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1))"}
+                        color={isRegistered ? "#4ade80" : "#a855f7"}
+                        px={3}
+                        py={1.5}
+                        rounded="full"
+                        fontSize="xs"
+                        fontWeight="600"
+                        borderWidth="1px"
+                        borderColor={isRegistered ? "#4ade80" : "#a855f7"}
+                        boxShadow={isRegistered ? "0 0 10px rgba(74,222,128,0.3)" : "none"}
+                      >
+                        {isRegistered ? "✓ REGISTERED" : "⚡ PENDING"}
+                      </Badge>
+                    </Tooltip>
+                  </HStack>
                 </HStack>
 
                 <VStack spacing={5}>
@@ -838,7 +1071,6 @@ const handleAction = async (type: "register" | "gm") => {
                     w="130px"
                     h="130px"
                   >
-                    {/* Rotating border ring for registered agents */}
                     {isRegistered && (
                       <Box
                         position="absolute"
@@ -847,7 +1079,7 @@ const handleAction = async (type: "register" | "gm") => {
                         right="-3px"
                         bottom="-3px"
                         borderRadius="full"
-                        bgGradient="linear(135deg, #8b5cf6, #ec4899, #3b82f6)"
+                        bgGradient={chainId === 1868 ? "linear(135deg, #fbbf24, #ec4899, #8b5cf6)" : "linear(135deg, #8b5cf6, #ec4899, #3b82f6)"}
                         animation={`${rotateBorder} 4s linear infinite`}
                         opacity={0.6}
                       />
@@ -875,9 +1107,16 @@ const handleAction = async (type: "register" | "gm") => {
                       <Heading size="lg" color="white" fontFamily="mono">
                         Agent #{Number(agentId).toString()}
                       </Heading>
-                      <Badge variant="outline" colorScheme="purple" px={2} py={1} fontSize="xs">
-                        🔒 Soulbound NFT
-                      </Badge>
+                      <HStack spacing={2} wrap="wrap" justify="center">
+                        <Badge variant="outline" colorScheme="purple" px={2} py={1} fontSize="xs">
+                          🔒 Soulbound NFT
+                        </Badge>
+                        {chainId === 1868 && isRegistered && Number(userStreak) >= 5 && (
+                          <Badge bgGradient="linear(135deg, #fbbf24, #ec4899)" color="white" px={2} py={1} fontSize="xs" fontWeight="600">
+                            🏆 S12 Complete
+                          </Badge>
+                        )}
+                      </HStack>
                     </VStack>
                   ) : (
                     <Text fontSize="xl" fontWeight="600" color="gray.300" textAlign="center">
@@ -886,7 +1125,7 @@ const handleAction = async (type: "register" | "gm") => {
                   )}
                 </VStack>
 
-                {/* Enhanced Stats Grid */}
+                {/* Enhanced Stats Grid - revenit la 4 iteme */}
                 <SimpleGrid columns={2} spacing={4} pt={4}>
                   <Box
                     bg="linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05))"
@@ -977,11 +1216,28 @@ const handleAction = async (type: "register" | "gm") => {
                 />
               )}
               <VStack p={{ base: 6, md: 8 }} spacing={6} align="stretch">
-                <Text color="gray.400" fontWeight="600" letterSpacing="wider" textAlign="center" fontSize="sm">
-                  DAILY INTERACTION
-                </Text>
+                <HStack justify="space-between">
+                  <Text color="gray.400" fontWeight="600" letterSpacing="wider" fontSize="sm">
+                    DAILY INTERACTION
+                  </Text>
+                  {chainId === 1868 && isRegistered && (
+                    <Badge
+                      bg="rgba(251,191,36,0.15)"
+                      color={Number(userStreak) >= 5 ? "#4ade80" : "#fbbf24"}
+                      px={2}
+                      py={1}
+                      rounded="full"
+                      fontSize="17px"
+                      fontWeight="600"
+                      border="1px solid rgba(251,191,36,0.2)"
+                      animation={Number(userStreak) >= 5 ? `${pulseGreen} 2s ease-in-out infinite` : `${pulseGlow} 3s ease-in-out infinite`}
+                    >
+                      {Number(userStreak) >= 5 ? "✅ GM Complete" : `📨 ${Number(userStreak)}/5 GM`}
+                    </Badge>
+                  )}
+                </HStack>
 
-                <VStack spacing={6}>
+                <VStack spacing={4}>
                   <Box
                     position="relative"
                     w={{ base: "180px", md: "200px" }}

@@ -627,7 +627,7 @@ const handleAction = async (type: "register" | "gm") => {
                 Agent GM Protocol
               </Heading>
             </HStack>
-            <HStack spacing={2}>
+            <HStack spacing={2} pl={{ base: 0, md: "37px" }}>
               <Box as="span" fontSize="10px" color="#4ade80">●</Box>
               <Text color="gray.400" fontSize="sm" letterSpacing="wider" fontFamily="mono">
                 ERC-8004 • On-Chain Activity Proof

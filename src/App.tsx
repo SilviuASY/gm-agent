@@ -855,21 +855,35 @@ const handleAction = async (type: "register" | "gm") => {
             Register once as an ERC-8004 Agent and send GM daily to build your verifiable on-chain reputation
           </Text>
 
-          {/* Season 12 Quests - doar pe Soneium, stil card */}
+          {/* Season 12 Quests - doar pe Soneium, stil card profesional */}
           {chainId === 1868 && (
             <Box
-              bg="rgba(251,191,36,0.05)"
+              bg="rgba(251,191,36,0.04)"
               borderRadius="xl"
               px={{ base: 4, md: 6 }}
-              py={{ base: 3, md: 4 }}
+              py={{ base: 3, md: 3.5 }}
               border="1px solid rgba(251,191,36,0.12)"
-              maxW="500px"
+              maxW="700px"
               mx="auto"
               w="full"
               transition="all 0.3s"
-              _hover={{ borderColor: "rgba(251,191,36,0.25)", bg: "rgba(251,191,36,0.08)" }}
+              position="relative"
+              overflow="hidden"
+              _hover={{ borderColor: "rgba(251,191,36,0.25)", bg: "rgba(251,191,36,0.07)" }}
             >
-              <VStack spacing={3} align="stretch">
+              {/* Bara animată de sus */}
+              <Box
+                position="absolute"
+                top="0"
+                left="0"
+                right="0"
+                h="3px"
+                bgGradient="linear(90deg, #fbbf24, #ec4899, #8b5cf6, #fbbf24)"
+                backgroundSize="300% 100%"
+                animation={`${shimmer} 3s ease infinite`}
+              />
+              
+              <VStack spacing={2.5} align="stretch" pt={1}>
                 {/* Header */}
                 <HStack justify="space-between" align="center">
                   <HStack spacing={2}>
@@ -884,21 +898,41 @@ const handleAction = async (type: "register" | "gm") => {
                       fontWeight="600"
                       border="1px solid"
                       borderColor={isRegistered && Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(251,191,36,0.15)"}
+                      animation={isRegistered && Number(userStreak) >= 5 ? `${pulseGreen} 2s ease-in-out infinite` : `${pulseGlow} 2s ease-in-out infinite`}
                     >
-                      {isRegistered && Number(userStreak) >= 5 ? "✅ COMPLETE" : "IN PROGRESS"}
+                      {isRegistered && Number(userStreak) >= 5 ? "✅ COMPLETE" : "⏳ IN PROGRESS"}
                     </Badge>
                   </HStack>
-                  <Text fontSize={{ base: "sm", md: "md" }} color="#fbbf24" fontWeight="700">
+                  <Badge
+                    bg="rgba(251,191,36,0.12)"
+                    color="#fbbf24"
+                    px={2.5}
+                    py={0.5}
+                    borderRadius="full"
+                    fontSize={{ base: "xs", md: "sm" }}
+                    fontWeight="700"
+                    border="1px solid rgba(251,191,36,0.15)"
+                    animation={`${pulseGlow} 2.5s ease-in-out infinite`}
+                  >
                     +7.5 Bonus
-                  </Text>
+                  </Badge>
                 </HStack>
 
                 {/* Quest 1: Register */}
-                <HStack justify="space-between" align="center" p={2} bg="rgba(0,0,0,0.2)" borderRadius="lg">
+                <HStack 
+                  justify="space-between" 
+                  align="center" 
+                  p={1.5} 
+                  bg="rgba(0,0,0,0.2)" 
+                  borderRadius="lg" 
+                  transition="all 0.3s" 
+                  _hover={{ bg: "rgba(0,0,0,0.35)", transform: "scale(1.01)" }}
+                  border="1px solid rgba(255,255,255,0.03)"
+                >
                   <HStack spacing={3} align="center">
                     <Box
-                      w={{ base: "20px", md: "24px" }}
-                      h={{ base: "20px", md: "24px" }}
+                      w={{ base: "20px", md: "22px" }}
+                      h={{ base: "20px", md: "22px" }}
                       borderRadius="full"
                       bg={isRegistered ? "rgba(34,197,94,0.2)" : "rgba(139,92,246,0.15)"}
                       border="2px solid"
@@ -912,7 +946,7 @@ const handleAction = async (type: "register" | "gm") => {
                     >
                       {isRegistered ? "✓" : "1"}
                     </Box>
-                    <Text fontSize={{ base: "sm", md: "md" }} color={isRegistered ? "#4ade80" : "gray.300"} fontWeight="500">
+                    <Text fontSize={{ base: "xs", md: "sm" }} color={isRegistered ? "#4ade80" : "gray.300"} fontWeight="500">
                       Register as Agent
                     </Text>
                   </HStack>
@@ -920,77 +954,152 @@ const handleAction = async (type: "register" | "gm") => {
                     bg={isRegistered ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
                     color={isRegistered ? "#4ade80" : "#a855f7"}
                     px={2.5}
-                    py={1}
+                    py={0.5}
                     borderRadius="full"
                     fontSize={{ base: "8px", md: "10px" }}
                     fontWeight="600"
+                    animation={isRegistered ? `${pulseGreen} 2s ease-in-out infinite` : "none"}
                   >
-                    {isRegistered ? "✓ Done" : "Pending"}
+                    {isRegistered ? "✅ Done" : "⏳ Pending"}
                   </Badge>
                 </HStack>
 
                 {/* Quest 2: Send 5 GM */}
-                <HStack justify="space-between" align="center" p={2} bg="rgba(0,0,0,0.2)" borderRadius="lg">
-                  <HStack spacing={3} align="center">
-                    <Box
-                      w={{ base: "20px", md: "24px" }}
-                      h={{ base: "20px", md: "24px" }}
-                      borderRadius="full"
-                      bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(139,92,246,0.15)"}
-                      border="2px solid"
-                      borderColor={Number(userStreak) >= 5 ? "#4ade80" : "rgba(139,92,246,0.3)"}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      fontSize={{ base: "10px", md: "12px" }}
-                      color={Number(userStreak) >= 5 ? "#4ade80" : "gray.500"}
-                      transition="all 0.3s"
-                    >
-                      {Number(userStreak) >= 5 ? "✓" : "2"}
-                    </Box>
-                    <HStack spacing={2} align="center">
-                      <Text fontSize={{ base: "sm", md: "md" }} color={Number(userStreak) >= 5 ? "#4ade80" : "gray.300"} fontWeight="500">
-                        Send 5 GM
-                      </Text>
+                <Box 
+                  p={1.5} 
+                  bg="rgba(0,0,0,0.2)" 
+                  borderRadius="lg" 
+                  transition="all 0.3s" 
+                  _hover={{ bg: "rgba(0,0,0,0.35)", transform: "scale(1.01)" }}
+                  border="1px solid rgba(255,255,255,0.03)"
+                >
+                  <VStack spacing={1.5} align="stretch">
+                    <HStack justify="space-between" align="center">
+                      <HStack spacing={3} align="center">
+                        <Box
+                          w={{ base: "20px", md: "22px" }}
+                          h={{ base: "20px", md: "22px" }}
+                          borderRadius="full"
+                          bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(139,92,246,0.15)"}
+                          border="2px solid"
+                          borderColor={Number(userStreak) >= 5 ? "#4ade80" : "rgba(139,92,246,0.3)"}
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          fontSize={{ base: "11px", md: "13px" }}
+                          color={Number(userStreak) >= 5 ? "#4ade80" : "gray.500"}
+                          transition="all 0.3s"
+                        >
+                          {Number(userStreak) >= 5 ? "✓" : "2"}
+                        </Box>
+                        <HStack spacing={2} align="center">
+                          <Text fontSize={{ base: "sm", md: "md" }} color={Number(userStreak) >= 5 ? "#4ade80" : "gray.300"} fontWeight="600">
+                            Send 5 GM
+                          </Text>
+                          <Badge
+                            bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
+                            color={Number(userStreak) >= 5 ? "#4ade80" : "#a855f7"}
+                            px={2.5}
+                            py={0.5}
+                            borderRadius="full"
+                            fontSize={{ base: "sm", md: "md" }}
+                            fontWeight="700"
+                            animation={Number(userStreak) >= 5 ? `${pulseGreen} 1.5s ease-in-out infinite` : "none"}
+                          >
+                            {Number(userStreak) >= 5 ? "✓" : `${Number(userStreak)}/5`}
+                          </Badge>
+                        </HStack>
+                      </HStack>
                       <Badge
                         bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
                         color={Number(userStreak) >= 5 ? "#4ade80" : "#a855f7"}
-                        px={2}
+                        px={3}
                         py={0.5}
                         borderRadius="full"
-                        fontSize={{ base: "8px", md: "10px" }}
-                        fontWeight="600"
+                        fontSize={{ base: "sm", md: "md" }}
+                        fontWeight="700"
+                        animation={Number(userStreak) >= 5 ? `${pulseGreen} 2s ease-in-out infinite` : "none"}
                       >
-                        {Number(userStreak) >= 5 ? "✓" : `${Number(userStreak)}/5`}
+                        {Number(userStreak) >= 5 ? "✅ Done" : `${Number(userStreak)}/5`}
                       </Badge>
                     </HStack>
-                  </HStack>
-                  <Badge
-                    bg={Number(userStreak) >= 5 ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.15)"}
-                    color={Number(userStreak) >= 5 ? "#4ade80" : "#a855f7"}
-                    px={2.5}
-                    py={1}
-                    borderRadius="full"
-                    fontSize={{ base: "8px", md: "10px" }}
-                    fontWeight="600"
-                  >
-                    {Number(userStreak) >= 5 ? "✓ Done" : `${Number(userStreak)}/5`}
-                  </Badge>
-                </HStack>
+
+                    {/* Bara de progres pentru GM */}
+                    {Number(userStreak) < 5 && (
+                      <Box>
+                        <Box h="5px" bg="rgba(139,92,246,0.12)" borderRadius="full" overflow="hidden">
+                          <Box
+                            h="100%"
+                            borderRadius="full"
+                            bgGradient="linear(90deg, #8b5cf6, #ec4899, #fbbf24)"
+                            backgroundSize="200% 100%"
+                            transition="width 1.2s ease-out"
+                            width={`${(Number(userStreak) / 5) * 100}%`}
+                            position="relative"
+                            _after={{
+                              content: '""',
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
+                              animation: "shimmer 1.8s infinite",
+                            }}
+                          />
+                        </Box>
+                        <HStack justify="space-between" mt={1}>
+                          <Text fontSize="12px" color="gray.400" fontWeight="500">
+                            Progress: <Text as="span" color="#c084fc" fontWeight="700" fontSize="14px">{Math.round((Number(userStreak) / 5) * 100)}%</Text>
+                          </Text>
+                          <Text fontSize="12px" color="gray.400" fontWeight="500">
+                            <Text as="span" color="#fbbf24" fontWeight="700" fontSize="14px">{5 - Number(userStreak)}</Text> GM{5 - Number(userStreak) > 1 ? 's' : ''} remaining
+                          </Text>
+                        </HStack>
+                      </Box>
+                    )}
+
+                    {/* Când e complet */}
+                    {Number(userStreak) >= 5 && (
+                      <HStack spacing={2} justify="center" py={0.5}>
+                        <Text fontSize="sm" color="#4ade80" fontWeight="600" animation={`${pulseGreen} 2s ease-in-out infinite`}>
+                          ✅ All GM sent! 🎉
+                        </Text>
+                      </HStack>
+                    )}
+                  </VStack>
+                </Box>
 
                 {/* Bonus Unlocked */}
                 {isRegistered && Number(userStreak) >= 5 && (
                   <Box
                     textAlign="center"
                     p={2}
-                    bg="rgba(34,197,94,0.08)"
+                    bg="rgba(34,197,94,0.1)"
                     borderRadius="lg"
-                    border="1px solid rgba(34,197,94,0.15)"
+                    border="1px solid rgba(34,197,94,0.2)"
                     animation={`${pulseGreen} 2s ease-in-out infinite`}
+                    transition="all 0.3s"
+                    _hover={{ bg: "rgba(34,197,94,0.15)", borderColor: "rgba(34,197,94,0.35)", transform: "scale(1.02)" }}
                   >
-                    <Text fontSize={{ base: "sm", md: "md" }} color="#4ade80" fontWeight="700">
-                      🎉 Bonus +7.5 points unlocked!
-                    </Text>
+                    <HStack spacing={2} justify="center">
+                      <Text fontSize={{ base: "sm", md: "md" }} color="#4ade80" fontWeight="700">
+                        🎉 Bonus +7.5 points unlocked!
+                      </Text>
+                      <Badge
+                        bg="rgba(34,197,94,0.15)"
+                        color="#4ade80"
+                        px={2.5}
+                        py={0.5}
+                        borderRadius="full"
+                        fontSize="9px"
+                        fontWeight="600"
+                        animation={`${pulseGreen} 1.5s ease-in-out infinite`}
+                        border="1px solid rgba(34,197,94,0.2)"
+                      >
+                        Claimed ✓
+                      </Badge>
+                    </HStack>
                   </Box>
                 )}
               </VStack>
@@ -1201,21 +1310,27 @@ const handleAction = async (type: "register" | "gm") => {
               borderColor={isRegistered && canSendGM ? "rgba(34, 197, 94, 0.5)" : "rgba(139, 92, 246, 0.3)"}
               overflow="hidden"
               transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+              position="relative"
               _hover={{
                 transform: "translateY(-4px)",
                 borderColor: isRegistered && canSendGM ? "rgba(34, 197, 94, 0.8)" : "rgba(139, 92, 246, 0.8)",
                 boxShadow: isRegistered && canSendGM ? "0 0 30px rgba(34,197,94,0.2)" : "0 0 30px rgba(139,92,246,0.2)"
               }}
             >
-              {isRegistered && canSendGM && (
-                <Box
-                  h="4px"
-                  bgGradient="linear(90deg, #22c55e, #4ade80, #22c55e)"
-                  backgroundSize="200% 100%"
-                  animation={`${shimmer} 2s ease infinite`}
-                />
-              )}
-              <VStack p={{ base: 6, md: 8 }} spacing={6} align="stretch">
+              {/* Bara animată de sus - ca în cardul Agent */}
+              <Box
+                h="4px"
+                bgGradient={isRegistered && canSendGM 
+                  ? "linear(90deg, #22c55e, #4ade80, #22c55e)" 
+                  : isRegistered 
+                    ? "linear(90deg, #fbbf24, #ec4899, #8b5cf6, #fbbf24)"
+                    : "linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)"
+                }
+                backgroundSize="300% 100%"
+                animation={`${shimmer} 4s ease infinite`}
+              />
+              
+              <VStack p={{ base: 6, md: 8 }} spacing={5} align="stretch">
                 <HStack justify="space-between">
                   <Text color="gray.400" fontWeight="600" letterSpacing="wider" fontSize="sm">
                     DAILY INTERACTION
@@ -1278,104 +1393,104 @@ const handleAction = async (type: "register" | "gm") => {
                     </Box>
                   </Box>
 
-            {isRegistered && (
-              <VStack spacing={3} w="full" minH="130px">
-                {canSendGM ? (
-                  <>
-                    <HStack spacing={2}>
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="#22c55e" 
-                        animation={`${pulseGreen} 1.5s ease-in-out infinite`} 
-                        boxShadow="0 0 20px rgba(34,197,94,0.5)"
-                      />
-                      <Heading 
-                        size="md" 
-                        color="#4ade80"
-                        fontWeight="700"
-                        letterSpacing="0.02em"
-                        animation={`${glowPulse} 2.5s ease-in-out infinite`}
-                      >
-                        ✅ GM Available
-                      </Heading>
-                      <Badge
-                        bg="rgba(34,197,94,0.15)"
-                        color="#4ade80"
-                        px={2}
-                        py={0.5}
-                        borderRadius="full"
-                        fontSize="9px"
-                        fontWeight="600"
-                        border="1px solid rgba(34,197,94,0.2)"
-                        animation={`${pulseGreen} 2s ease-in-out infinite`}
-                      >
-                        +1 Point
-                      </Badge>
-                    </HStack>
-                    <Text color="gray.400" fontSize="sm" textAlign="center" maxW="320px" mx="auto">
-                      Your daily GM is ready to be sent on-chain as <Text as="span" color="#4ade80" fontWeight="600">Agent #{Number(agentId).toString()}</Text>
-                    </Text>
-                    <Box h="24px" />
-                  </>
-                ) : (
-                  <>
-                    <HStack spacing={2} justify="center">
-                      <Box 
-                        w="10px" 
-                        h="10px" 
-                        borderRadius="full" 
-                        bg="#fbbf24" 
-                        animation={`${pulseGlow} 2s ease-in-out infinite`}
-                      />
-                      <Heading 
-                        size="md" 
-                        bgGradient="linear(135deg, #c084fc, #ec4899)" 
-                        bgClip="text"
-                        fontWeight="700"
-                        letterSpacing="0.02em"
-                      >
-                        Cooldown Active
-                      </Heading>
-                    </HStack>
-                    <VStack spacing={1.5} w="full">
-                      <Text color="gray.400" fontSize="xs" letterSpacing="0.05em" fontWeight="500">
-                        NEXT GM AVAILABLE IN
-                      </Text>
-                      <Text
-                        fontSize="3xl"
-                        fontWeight="800"
-                        fontFamily="mono"
-                        bgGradient={progressPercent > 75 ? "linear(135deg, #c084fc, #ec4899)" : "linear(135deg, #8b5cf6, #a855f7)"}
-                        bgClip="text"
-                        letterSpacing="3px"
-                      >
-                        {timeLeft}
-                      </Text>
-                      <Progress
-                        value={progressPercent}
-                        size="sm"
-                        w="full"
-                        maxW="300px"
-                        mx="auto"
-                        borderRadius="full"
-                        bg="rgba(139,92,246,0.15)"
-                        sx={{
-                          "& > div": {
-                            bgGradient: "linear(90deg, #8b5cf6, #ec4899)",
-                            borderRadius: "full",
-                          }
-                        }}
-                      />
-                      <Text fontSize="xs" color="gray.500" fontWeight="500">
-                        {Math.floor(progressPercent)}% completed
-                      </Text>
+                  {isRegistered && (
+                    <VStack spacing={3} w="full" minH="130px">
+                      {canSendGM ? (
+                        <>
+                          <HStack spacing={2}>
+                            <Box 
+                              w="10px" 
+                              h="10px" 
+                              borderRadius="full" 
+                              bg="#22c55e" 
+                              animation={`${pulseGreen} 1.5s ease-in-out infinite`} 
+                              boxShadow="0 0 20px rgba(34,197,94,0.5)"
+                            />
+                            <Heading 
+                              size="md" 
+                              color="#4ade80"
+                              fontWeight="700"
+                              letterSpacing="0.02em"
+                              animation={`${glowPulse} 2.5s ease-in-out infinite`}
+                            >
+                              ✅ GM Available
+                            </Heading>
+                            <Badge
+                              bg="rgba(34,197,94,0.15)"
+                              color="#4ade80"
+                              px={2}
+                              py={0.5}
+                              borderRadius="full"
+                              fontSize="9px"
+                              fontWeight="600"
+                              border="1px solid rgba(34,197,94,0.2)"
+                              animation={`${pulseGreen} 2s ease-in-out infinite`}
+                            >
+                              +1 Point
+                            </Badge>
+                          </HStack>
+                          <Text color="gray.400" fontSize="sm" textAlign="center" maxW="320px" mx="auto">
+                            Your daily GM is ready to be sent on-chain as <Text as="span" color="#4ade80" fontWeight="600">Agent #{Number(agentId).toString()}</Text>
+                          </Text>
+                          <Box h="24px" />
+                        </>
+                      ) : (
+                        <>
+                          <HStack spacing={2} justify="center">
+                            <Box 
+                              w="10px" 
+                              h="10px" 
+                              borderRadius="full" 
+                              bg="#fbbf24" 
+                              animation={`${pulseGlow} 2s ease-in-out infinite`}
+                            />
+                            <Heading 
+                              size="md" 
+                              bgGradient="linear(135deg, #c084fc, #ec4899)" 
+                              bgClip="text"
+                              fontWeight="700"
+                              letterSpacing="0.02em"
+                            >
+                              Cooldown Active
+                            </Heading>
+                          </HStack>
+                          <VStack spacing={1.5} w="full">
+                            <Text color="gray.400" fontSize="xs" letterSpacing="0.05em" fontWeight="500">
+                              NEXT GM AVAILABLE IN
+                            </Text>
+                            <Text
+                              fontSize="3xl"
+                              fontWeight="800"
+                              fontFamily="mono"
+                              bgGradient={progressPercent > 75 ? "linear(135deg, #c084fc, #ec4899)" : "linear(135deg, #8b5cf6, #a855f7)"}
+                              bgClip="text"
+                              letterSpacing="3px"
+                            >
+                              {timeLeft}
+                            </Text>
+                            <Progress
+                              value={progressPercent}
+                              size="sm"
+                              w="full"
+                              maxW="300px"
+                              mx="auto"
+                              borderRadius="full"
+                              bg="rgba(139,92,246,0.15)"
+                              sx={{
+                                "& > div": {
+                                  bgGradient: "linear(90deg, #8b5cf6, #ec4899)",
+                                  borderRadius: "full",
+                                }
+                              }}
+                            />
+                            <Text fontSize="xs" color="gray.500" fontWeight="500">
+                              {Math.floor(progressPercent)}% completed
+                            </Text>
+                          </VStack>
+                        </>
+                      )}
                     </VStack>
-                  </>
-                )}
-              </VStack>
-            )}
+                  )}
 
                   {!isRegistered && !loadingRegistered && (
                     <Text color="gray.400" fontSize="sm" textAlign="center">
@@ -1390,7 +1505,7 @@ const handleAction = async (type: "register" | "gm") => {
                   <Button
                     size="lg"
                     w="full"
-                    h="60px"
+                    h="56px"
                     fontSize="lg"
                     fontWeight="bold"
                     borderRadius="full"

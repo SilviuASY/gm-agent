@@ -1,0 +1,23 @@
+// src/constants/partnerABIs.ts
+
+export const dodABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const axdABI = [{ inputs: [], name: "claim", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const rubyscoreABI = [{ inputs: [], name: "vote", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const lootcoinABI = [{ inputs: [{ internalType: "address", name: "referrer", type: "address" }], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const presaABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const onchainGMABI = [{ inputs: [{ internalType: "address", name: "referrer", type: "address" }], name: "onChainGM", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const owltoABI = [{ inputs: [{ internalType: "uint256", name: "date", type: "uint256" }, { internalType: "uint256", name: "timestamp", type: "uint256" }], name: "checkIn", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const captainABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const arkadaABI = [{ inputs: [], name: "check", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const nekoABI = [{ inputs: [{ internalType: "string", name: "message", type: "string" }, { internalType: "uint256", name: "dayNumber", type: "uint256" }, { internalType: "uint256", name: "currentStreak", type: "uint256" }], name: "signGMeow", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const surfABI = [{ inputs: [], name: "dailyGM", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const wheelABI = [{ inputs: [], name: "gm", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const metaABI = [{ inputs: [{ internalType: "uint256", name: "quantity", type: "uint256" }, { internalType: "string", name: "iso", type: "string" }], name: "mint", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const dmailABI = [{ inputs: [{ internalType: "string", name: "to", type: "string" }, { internalType: "string", name: "path", type: "string" }], name: "send_mail", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const podsABI = [{ inputs: [{ internalType: "address", name: "to", type: "address" }, { internalType: "string", name: "uri", type: "string" }], name: "safeMint", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const startaleABI = [{ inputs: [], name: "checkIn", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const exartaABI = [{ inputs: [{ internalType: "uint256", name: "id", type: "uint256" }, { internalType: "uint256", name: "amount", type: "uint256" }], name: "checkin", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const zombieABI = [{ inputs: [{ internalType: "string", name: "_id", type: "string" }, { internalType: "string", name: "_symbol", type: "string" }], name: "buy", outputs: [], stateMutability: "payable", type: "function" }] as const;
+export const pocketKnightsABI = [{ inputs: [], name: "logDailyLogin", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const morningMoonABI = [{ inputs: [], name: "harvest", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;
+export const coNFTABI = [{ inputs: [{ internalType: "string", name: "name_", type: "string" }, { internalType: "string", name: "symbol_", type: "string" }, { internalType: "string", name: "tokenUri", type: "string" }, { internalType: "uint256", name: "maxSupply_", type: "uint256" }, { internalType: "uint256", name: "mintPrice_", type: "uint256" }, { internalType: "address", name: "payTokenAddress_", type: "address" }, { internalType: "address", name: "ownerAddress", type: "address" }], name: "deploy", outputs: [], stateMutability: "nonpayable", type: "function" }] as const;

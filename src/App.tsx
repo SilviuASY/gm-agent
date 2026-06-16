@@ -1278,52 +1278,104 @@ const handleAction = async (type: "register" | "gm") => {
                     </Box>
                   </Box>
 
-                  {isRegistered && (
-                    <VStack spacing={3} w="full">
-                      {canSendGM ? (
-                        <>
-                          <HStack spacing={2}>
-                            <Box w="8px" h="8px" borderRadius="full" bg="#22c55e" animation={`${pulseGreen} 1.5s ease-in-out infinite`} />
-                            <Heading size="md" color="#4ade80">Ready to Send GM</Heading>
-                          </HStack>
-                          <Text color="gray.400" fontSize="sm">Daily cooldown has expired</Text>
-                        </>
-                      ) : (
-                        <>
-                          <Heading size="md" bgGradient="linear(135deg, #c084fc, #ec4899)" bgClip="text">
-                            Cooldown Active
-                          </Heading>
-                          <VStack spacing={1} w="full">
-                            <Text color="gray.400" fontSize="sm">Next GM available in</Text>
-                            <Text
-                              fontSize="3xl"
-                              fontWeight="bold"
-                              fontFamily="mono"
-                              bgGradient={progressPercent > 75 ? "linear(135deg, #c084fc, #ec4899)" : "linear(135deg, #8b5cf6, #a855f7)"}
-                              bgClip="text"
-                              letterSpacing="2px"
-                            >
-                              {timeLeft}
-                            </Text>
-                            <Progress
-                              value={progressPercent}
-                              size="sm"
-                              w="full"
-                              borderRadius="full"
-                              bg="rgba(139,92,246,0.2)"
-                              sx={{
-                                "& > div": {
-                                  bgGradient: "linear(90deg, #8b5cf6, #ec4899)",
-                                  borderRadius: "full",
-                                }
-                              }}
-                            />
-                            <Text fontSize="xs" color="gray.500">{Math.floor(progressPercent)}% completed</Text>
-                          </VStack>
-                        </>
-                      )}
+            {isRegistered && (
+              <VStack spacing={3} w="full" minH="130px">
+                {canSendGM ? (
+                  <>
+                    <HStack spacing={2}>
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="#22c55e" 
+                        animation={`${pulseGreen} 1.5s ease-in-out infinite`} 
+                        boxShadow="0 0 20px rgba(34,197,94,0.5)"
+                      />
+                      <Heading 
+                        size="md" 
+                        color="#4ade80"
+                        fontWeight="700"
+                        letterSpacing="0.02em"
+                        animation={`${glowPulse} 2.5s ease-in-out infinite`}
+                      >
+                        ✅ GM Available
+                      </Heading>
+                      <Badge
+                        bg="rgba(34,197,94,0.15)"
+                        color="#4ade80"
+                        px={2}
+                        py={0.5}
+                        borderRadius="full"
+                        fontSize="9px"
+                        fontWeight="600"
+                        border="1px solid rgba(34,197,94,0.2)"
+                        animation={`${pulseGreen} 2s ease-in-out infinite`}
+                      >
+                        +1 Point
+                      </Badge>
+                    </HStack>
+                    <Text color="gray.400" fontSize="sm" textAlign="center" maxW="320px" mx="auto">
+                      Your daily GM is ready to be sent on-chain as <Text as="span" color="#4ade80" fontWeight="600">Agent #{Number(agentId).toString()}</Text>
+                    </Text>
+                    <Box h="24px" />
+                  </>
+                ) : (
+                  <>
+                    <HStack spacing={2} justify="center">
+                      <Box 
+                        w="10px" 
+                        h="10px" 
+                        borderRadius="full" 
+                        bg="#fbbf24" 
+                        animation={`${pulseGlow} 2s ease-in-out infinite`}
+                      />
+                      <Heading 
+                        size="md" 
+                        bgGradient="linear(135deg, #c084fc, #ec4899)" 
+                        bgClip="text"
+                        fontWeight="700"
+                        letterSpacing="0.02em"
+                      >
+                        Cooldown Active
+                      </Heading>
+                    </HStack>
+                    <VStack spacing={1.5} w="full">
+                      <Text color="gray.400" fontSize="xs" letterSpacing="0.05em" fontWeight="500">
+                        NEXT GM AVAILABLE IN
+                      </Text>
+                      <Text
+                        fontSize="3xl"
+                        fontWeight="800"
+                        fontFamily="mono"
+                        bgGradient={progressPercent > 75 ? "linear(135deg, #c084fc, #ec4899)" : "linear(135deg, #8b5cf6, #a855f7)"}
+                        bgClip="text"
+                        letterSpacing="3px"
+                      >
+                        {timeLeft}
+                      </Text>
+                      <Progress
+                        value={progressPercent}
+                        size="sm"
+                        w="full"
+                        maxW="300px"
+                        mx="auto"
+                        borderRadius="full"
+                        bg="rgba(139,92,246,0.15)"
+                        sx={{
+                          "& > div": {
+                            bgGradient: "linear(90deg, #8b5cf6, #ec4899)",
+                            borderRadius: "full",
+                          }
+                        }}
+                      />
+                      <Text fontSize="xs" color="gray.500" fontWeight="500">
+                        {Math.floor(progressPercent)}% completed
+                      </Text>
                     </VStack>
-                  )}
+                  </>
+                )}
+              </VStack>
+            )}
 
                   {!isRegistered && !loadingRegistered && (
                     <Text color="gray.400" fontSize="sm" textAlign="center">

@@ -50,20 +50,27 @@
   }
 }
 
+/* Reset pentru scroll - VERSIUNE SIMPLIFICATĂ */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
   border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 h1,
@@ -108,4 +115,44 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* Mobile specific adjustments - SIMPLIFICAT */
+@media (max-width: 768px) {
+  #root {
+    padding: 0 !important;
+    margin: 0 !important;
+    border-inline: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  html, body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  .chakra-container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+  #root {
+    border-inline: 1px solid var(--border);
+  }
+}
+
+/* iOS Safari fix pentru 100vh */
+@supports (-webkit-touch-callout: none) {
+  #root {
+    min-height: -webkit-fill-available !important;
+  }
 }

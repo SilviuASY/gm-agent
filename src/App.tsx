@@ -603,7 +603,7 @@ const handleAction = async (type: "register" | "gm") => {
         bgRepeat="repeat"
       />
 
-      <Container maxW="1400px" position="relative" zIndex={1} px={{ base: 4, md: 6, lg: 8 }} py={{ base: 6, md: 8 }}>
+      <Container maxW="1400px" position="relative" zIndex={1} px={{ base: 2, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
         {/* ENHANCED HEADER */}
         <Flex justify="space-between" align="center" mb={{ base: 8, md: 12 }} direction={{ base: "column", md: "row" }} gap={{ base: 4, md: 0 }}>
           <VStack align={{ base: "center", md: "start" }} spacing={2} animation={`${slideInLeft} 0.6s ease-out`}>
@@ -657,38 +657,33 @@ const handleAction = async (type: "register" | "gm") => {
             >
               <Button
                 onClick={() => navigate("/activity-reputation")}
-                bg="rgba(59,130,246,0.12)"
-                border="1.5px solid rgba(59,130,246,0.4)"
-                color="white"
-                size="md"
+                bg="white"
+                color="gray.800"
+                size="sm"
                 borderRadius="full"
-                px={7}
-                py={6}
-                fontWeight="600"
+                px={4}
+                py={1.5}
+                h="40px"
+                fontWeight="700"
                 letterSpacing="0.02em"
                 fontSize="sm"
-                backdropFilter="blur(10px)"
+                border="1px solid rgba(0,0,0,0.08)"
+                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
                 _hover={{
-                  bg: "rgba(59,130,246,0.25)",
-                  transform: "translateY(-3px) scale(1.03)",
-                  borderColor: "rgba(59,130,246,0.8)",
-                  boxShadow: "0 0 40px rgba(59,130,246,0.4), inset 0 0 20px rgba(59,130,246,0.1)",
-                  "& > span:first-of-type": {
-                    transform: "rotate(-5deg) scale(1.1)",
-                  },
-                  "& > span:last-of-type": {
-                    transform: "translateX(4px)",
-                  },
+                  bg: "gray.50",
+                  transform: "translateY(-2px) scale(1.02)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                  borderColor: "rgba(59,130,246,0.3)",
                 }}
                 _active={{
                   transform: "translateY(0px) scale(0.98)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 }}
                 transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                 leftIcon={
                   <Box 
                     as="span" 
-                    fontSize="18px"
-                    transition="transform 0.3s"
+                    fontSize="14px"
                   >
                     🏆
                   </Box>
@@ -696,14 +691,15 @@ const handleAction = async (type: "register" | "gm") => {
                 rightIcon={
                   <Box 
                     as="span" 
-                    fontSize="14px"
+                    fontSize="12px"
                     transition="transform 0.3s"
+                    _groupHover={{ transform: "translateX(3px)" }}
                   >
                     →
                   </Box>
                 }
               >
-                Activity Reputation
+                Go to Activity Reputation
               </Button>
             </Tooltip>
             
@@ -753,29 +749,30 @@ const handleAction = async (type: "register" | "gm") => {
             >
               <Button
                 onClick={() => navigate("/activity-reputation")}
-                bg="rgba(59,130,246,0.12)"
-                border="1.5px solid rgba(59,130,246,0.4)"
-                color="white"
+                bg="white"
+                color="gray.800"
                 size="sm"
                 borderRadius="full"
-                px={5}
-                py={3}
-                fontWeight="600"
+                px={6}
+                py={5}
+                fontWeight="700"
                 letterSpacing="0.02em"
-                fontSize="xs"
-                backdropFilter="blur(10px)"
+                fontSize="sm"
+                border="1px solid rgba(0,0,0,0.08)"
+                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
                 _hover={{
-                  bg: "rgba(59,130,246,0.25)",
+                  bg: "gray.50",
                   transform: "translateY(-2px) scale(1.02)",
-                  borderColor: "rgba(59,130,246,0.8)",
-                  boxShadow: "0 0 30px rgba(59,130,246,0.4)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                  borderColor: "rgba(59,130,246,0.3)",
                 }}
                 _active={{
-                  transform: "translateY(0px) scale(0.97)",
+                  transform: "translateY(0px) scale(0.98)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 }}
                 transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                 leftIcon={
-                  <Box as="span" fontSize="16px">
+                  <Box as="span" fontSize="14px">
                     🏆
                   </Box>
                 }
@@ -788,7 +785,7 @@ const handleAction = async (type: "register" | "gm") => {
                 display="inline-flex"
                 alignSelf="center"
               >
-                Activity Reputation
+                Go to Activity Reputation
               </Button>
             </Tooltip>
           </VStack>
@@ -812,22 +809,6 @@ const handleAction = async (type: "register" | "gm") => {
             >
               🌟 {currentChainName} Mainnet Active
             </Badge>
-            {chainId === 1868 && (
-              <Badge
-                bgGradient="linear(135deg, #fbbf24, #ec4899)"
-                px={4}
-                py={2.5}
-                rounded="full"
-                color="white"
-                fontSize="sm"
-                fontWeight="700"
-                letterSpacing="wider"
-                boxShadow="0 0 20px rgba(251,191,36,0.4)"
-                animation={`${glowPulse} 3s ease-in-out infinite`}
-              >
-                🏆 Season 12 • +7.5 Bonus
-              </Badge>
-            )}
           </HStack>
           
           <Heading
@@ -1108,71 +1089,62 @@ const handleAction = async (type: "register" | "gm") => {
         </VStack>
 
         {/* ENHANCED Main Card Grid */}
-        <Grid
-          templateColumns={{ base: "1fr", lg: "1.2fr 0.8fr" }}
-          gap={{ base: 6, lg: 8 }}
-          alignItems="start"
-        >
-          {/* Enhanced Status Card */}
-          <GridItem animation={`${slideInLeft} 0.7s ease-out 0.1s both`}>
-            <Box
-              bg="rgba(10, 10, 20, 0.7)"
-              backdropFilter="blur(20px)"
-              borderRadius="3xl"
-              border="1px solid"
-              borderColor="rgba(139, 92, 246, 0.3)"
-              overflow="hidden"
-              transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-              _hover={{
-                borderColor: "rgba(139, 92, 246, 0.8)",
-                transform: "translateY(-4px)",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(139,92,246,0.2)"
-              }}
-            >
+<Grid
+  templateColumns={{ base: "1fr", lg: "1.2fr 0.8fr" }}
+  gap={{ base: 2, lg: 8 }}
+  alignItems="start"
+  px={{ base: 1, md: 0 }}
+  w="full"
+  overflow="hidden"
+>
+{/* Enhanced Status Card */}
+<GridItem animation={`${slideInLeft} 0.7s ease-out 0.1s both`} maxW={{ base: "100%", md: "none" }}>
+  <Box
+    bg="rgba(10, 10, 20, 0.7)"
+    backdropFilter="blur(20px)"
+    borderRadius={{ base: "xl", md: "3xl" }}
+    border="1px solid"
+    borderColor="rgba(139, 92, 246, 0.3)"
+    overflow="hidden"
+    transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+    maxW={{ base: "100%", md: "none" }}
+    w="full"
+    _hover={{
+      borderColor: "rgba(139, 92, 246, 0.8)",
+      transform: "translateY(-4px)",
+      boxShadow: "0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(139,92,246,0.2)"
+    }}
+  >
               <Box
                 h="4px"
                 bgGradient={chainId === 1868 ? "linear(90deg, #fbbf24, #ec4899, #8b5cf6, #fbbf24)" : "linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)"}
                 backgroundSize="300% 100%"
                 animation={`${shimmer} 4s ease infinite`}
               />
-              <VStack p={{ base: 6, md: 8 }} spacing={6} align="stretch">
+              <VStack p={{ base: 1, md: 8 }} spacing={6} align="stretch">
                 <HStack justify="space-between">
                   <Text color="gray.400" fontWeight="600" letterSpacing="wider" fontSize="sm">
                     AGENT STATUS
                   </Text>
-                  <HStack spacing={2}>
-                    {chainId === 1868 && (
-                      <Badge
-                        bg="rgba(251,191,36,0.15)"
-                        color="#fbbf24"
-                        px={2}
-                        py={1}
-                        rounded="full"
-                        fontSize="17px"
-                        fontWeight="600"
-                        border="1px solid rgba(251,191,36,0.2)"
-                      >
-                        🏆 Season 12 score
-                      </Badge>
-                    )}
-                    <Tooltip label={isRegistered ? "Soulbound NFT Minted" : "Not yet registered"} hasArrow>
-                      <Badge
-                        bg={isRegistered ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))" : "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1))"}
-                        color={isRegistered ? "#4ade80" : "#a855f7"}
-                        px={3}
-                        py={1.5}
-                        rounded="full"
-                        fontSize="xs"
-                        fontWeight="600"
-                        borderWidth="1px"
-                        borderColor={isRegistered ? "#4ade80" : "#a855f7"}
-                        boxShadow={isRegistered ? "0 0 10px rgba(74,222,128,0.3)" : "none"}
-                      >
-                        {isRegistered ? "✓ REGISTERED" : "⚡ PENDING"}
-                      </Badge>
-                    </Tooltip>
-                  </HStack>
-                </HStack>
+<HStack spacing={2}>
+  <Tooltip label={isRegistered ? "Soulbound NFT Minted" : "Not yet registered"} hasArrow>
+    <Badge
+      bg={isRegistered ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))" : "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1))"}
+      color={isRegistered ? "#4ade80" : "#a855f7"}
+      px={3}
+      py={1.5}
+      rounded="full"
+      fontSize="xs"
+      fontWeight="600"
+      borderWidth="1px"
+      borderColor={isRegistered ? "#4ade80" : "#a855f7"}
+      boxShadow={isRegistered ? "0 0 10px rgba(74,222,128,0.3)" : "none"}
+    >
+      {isRegistered ? "✓ REGISTERED" : "⚡ PENDING"}
+    </Badge>
+  </Tooltip>
+</HStack>
+</HStack>
 
                 <VStack spacing={5}>
                   <Box
@@ -1300,23 +1272,25 @@ const handleAction = async (type: "register" | "gm") => {
             </Box>
           </GridItem>
 
-          {/* Enhanced Action Card */}
-          <GridItem animation={`${slideInRight} 0.7s ease-out 0.1s both`}>
-            <Box
-              bg="rgba(10, 10, 20, 0.7)"
-              backdropFilter="blur(20px)"
-              borderRadius="3xl"
-              border="1px solid"
-              borderColor={isRegistered && canSendGM ? "rgba(34, 197, 94, 0.5)" : "rgba(139, 92, 246, 0.3)"}
-              overflow="hidden"
-              transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-              position="relative"
-              _hover={{
-                transform: "translateY(-4px)",
-                borderColor: isRegistered && canSendGM ? "rgba(34, 197, 94, 0.8)" : "rgba(139, 92, 246, 0.8)",
-                boxShadow: isRegistered && canSendGM ? "0 0 30px rgba(34,197,94,0.2)" : "0 0 30px rgba(139,92,246,0.2)"
-              }}
-            >
+{/* Enhanced Action Card */}
+<GridItem animation={`${slideInRight} 0.7s ease-out 0.1s both`} maxW={{ base: "100%", md: "none" }}>
+  <Box
+    bg="rgba(10, 10, 20, 0.7)"
+    backdropFilter="blur(20px)"
+    borderRadius={{ base: "xl", md: "3xl" }}
+    border="1px solid"
+    borderColor={isRegistered && canSendGM ? "rgba(34, 197, 94, 0.5)" : "rgba(139, 92, 246, 0.3)"}
+    overflow="hidden"
+    transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+    maxW={{ base: "100%", md: "none" }}
+    w="full"
+    position="relative"
+    _hover={{
+      transform: "translateY(-4px)",
+      borderColor: isRegistered && canSendGM ? "rgba(34, 197, 94, 0.8)" : "rgba(139, 92, 246, 0.8)",
+      boxShadow: isRegistered && canSendGM ? "0 0 30px rgba(34,197,94,0.2)" : "0 0 30px rgba(139,92,246,0.2)"
+    }}
+  >
               {/* Bara animată de sus - ca în cardul Agent */}
               <Box
                 h="4px"
@@ -1330,7 +1304,7 @@ const handleAction = async (type: "register" | "gm") => {
                 animation={`${shimmer} 4s ease infinite`}
               />
               
-              <VStack p={{ base: 6, md: 8 }} spacing={5} align="stretch">
+              <VStack p={{ base: 1, md: 8 }} spacing={5} align="stretch">
                 <HStack justify="space-between">
                   <Text color="gray.400" fontWeight="600" letterSpacing="wider" fontSize="sm">
                     DAILY INTERACTION
@@ -1382,7 +1356,7 @@ const handleAction = async (type: "register" | "gm") => {
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
-                      fontSize={{ base: "80px", md: "96px" }}
+                      fontSize={{ base: "56px", md: "96px" }}
                       backdropFilter="blur(10px)"
                       border="2px solid"
                       borderColor={isRegistered && canSendGM ? "#22c55e" : "rgba(139,92,246,0.4)"}

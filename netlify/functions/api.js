@@ -46,7 +46,7 @@ app.use((0, import_cors.default)({
 }));
 app.use(import_express.default.json());
 
-var BADGE_CONTRACT = "0xEDCd3fee800EA809dAB526743c46bB21D2d5eF15";
+var BADGE_CONTRACT = "0xCCF6C45c57271Bb5E0Ca10428dc7d0945d3CDA27";
 
 app.get("/api/", (req, res) => {
   res.send("<h1>\u2705 Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");

@@ -660,7 +660,7 @@ export default function ActivityReputation() {
               variant="solid"
               bg="rgba(139,92,246,0.2)"
               color="white"
-              size={{ base: "xs", md: "lg" }}
+              size={{ base: "sm", md: "lg" }}
               leftIcon={<ChevronLeftIcon boxSize={{ base: 2.5, md: 5 }} />}
               _hover={{ bg: "rgba(139,92,246,0.4)", transform: "scale(1.02)", boxShadow: "0 0 20px rgba(139,92,246,0.4)" }}
               transition="all 0.2s"
@@ -719,16 +719,28 @@ export default function ActivityReputation() {
           <HStack spacing={3} display={{ base: "none", md: "flex" }} animation={`${slideInRight} 0.6s ease-out`}>
             <Button
               onClick={onLeaderboardOpen}
+              bg="white"
+              color="gray.800"
               size="md"
-              bg="rgba(139,92,246,0.15)"
-              border="1px solid rgba(139,92,246,0.4)"
-              color="gray.300"
-              _hover={{ bg: "rgba(139,92,246,0.3)", color: "white", borderColor: "rgba(139,92,246,0.8)", transform: "scale(1.02)" }}
               borderRadius="full"
-              fontSize="sm"
-              fontWeight="600"
               px={6}
-              py={5}
+              py={2}
+              h="40px"
+              fontWeight="650"
+              fontSize="md"
+              border="1px solid rgba(0,0,0,0.08)"
+              boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+              _hover={{
+                bg: "gray.50",
+                transform: "translateY(-2px) scale(1.02)",
+                boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                borderColor: "rgba(59,130,246,0.3)",
+              }}
+              _active={{
+                transform: "translateY(0px) scale(0.98)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+              transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
               leftIcon={<Text fontSize="lg">🏆</Text>}
             >
               Leaderboard
@@ -738,17 +750,29 @@ export default function ActivityReputation() {
               href="https://docs.gm-agent.xyz"
               target="_blank"
               rel="noopener noreferrer"
+              bg="white"
+              color="gray.800"
               size="md"
-              bg="rgba(139,92,246,0.15)"
-              border="1px solid rgba(139,92,246,0.4)"
-              color="gray.300"
-              _hover={{ bg: "rgba(139,92,246,0.3)", color: "white", borderColor: "rgba(139,92,246,0.8)", transform: "scale(1.02)" }}
               borderRadius="full"
-              fontSize="sm"
-              fontWeight="600"
               px={6}
-              py={5}
-              rightIcon={<ExternalLinkIcon />}
+              py={2}
+              h="40px"
+              fontWeight="650"
+              fontSize="md"
+              border="1px solid rgba(0,0,0,0.08)"
+              boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+              _hover={{
+                bg: "gray.50",
+                transform: "translateY(-2px) scale(1.02)",
+                boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                borderColor: "rgba(59,130,246,0.3)",
+              }}
+              _active={{
+                transform: "translateY(0px) scale(0.98)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+              transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+              rightIcon={<ExternalLinkIcon boxSize={3.5} />}
             >
               DOCS
             </Button>
@@ -758,49 +782,73 @@ export default function ActivityReputation() {
           </HStack>
         </Flex>
 
-        {/* Mobile Header Buttons */}
-        <VStack spacing={2} display={{ base: "flex", md: "none" }} w="full" animation={`${slideInRight} 0.6s ease-out`} mb={3}>
-          <Box w="full" display="flex" justifyContent="center">
-            <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
-          </Box>
-          <HStack spacing={2} justify="center" w="full">
-            <Button
-              onClick={onLeaderboardOpen}
-              size="xs"
-              bg="rgba(139,92,246,0.15)"
-              border="1px solid rgba(139,92,246,0.4)"
-              color="gray.300"
-              _hover={{ bg: "rgba(139,92,246,0.3)", color: "white", borderColor: "rgba(139,92,246,0.8)", transform: "scale(1.02)" }}
-              borderRadius="full"
-              fontSize="xs"
-              fontWeight="600"
-              px={3}
-              py={1.5}
-              leftIcon={<Text fontSize="xs">🏆</Text>}
-            >
-              Leaderboard
-            </Button>
-            <Button
-              as="a"
-              href="https://docs.gm-agent.xyz"
-              target="_blank"
-              rel="noopener noreferrer"
-              size="xs"
-              bg="rgba(139,92,246,0.15)"
-              border="1px solid rgba(139,92,246,0.4)"
-              color="gray.300"
-              _hover={{ bg: "rgba(139,92,246,0.3)", color: "white", borderColor: "rgba(139,92,246,0.8)", transform: "scale(1.02)" }}
-              borderRadius="full"
-              fontSize="xs"
-              fontWeight="600"
-              px={3}
-              py={1.5}
-              rightIcon={<ExternalLinkIcon boxSize={2.5} />}
-            >
-              DOCS
-            </Button>
-          </HStack>
-        </VStack>
+          {/* Mobile Header Buttons */}
+          <VStack spacing={2} display={{ base: "flex", md: "none" }} w="full" animation={`${slideInRight} 0.6s ease-out`} mb={3}>
+            <Box w="full" display="flex" justifyContent="center">
+              <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+            </Box>
+            <HStack spacing={2} justify="center" w="full">
+              <Button
+                onClick={onLeaderboardOpen}
+                bg="white"
+                color="gray.800"
+                size="sm"
+                borderRadius="full"
+                px={4}
+                py={1.5}
+                h="35px"
+                fontWeight="650"
+                fontSize="md"
+                border="1px solid rgba(0,0,0,0.08)"
+                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+                _hover={{
+                  bg: "gray.50",
+                  transform: "translateY(-2px) scale(1.02)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                  borderColor: "rgba(59,130,246,0.3)",
+                }}
+                _active={{
+                  transform: "translateY(0px) scale(0.98)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                leftIcon={<Text fontSize="sm">🏆</Text>}
+              >
+                Leaderboard
+              </Button>
+              <Button
+                as="a"
+                href="https://docs.gm-agent.xyz"
+                target="_blank"
+                rel="noopener noreferrer"
+                bg="white"
+                color="gray.800"
+                size="sm"
+                borderRadius="full"
+                px={4}
+                py={1.5}
+                h="35px"
+                fontWeight="650"
+                fontSize="md"
+                border="1px solid rgba(0,0,0,0.08)"
+                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+                _hover={{
+                  bg: "gray.50",
+                  transform: "translateY(-2px) scale(1.02)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                  borderColor: "rgba(59,130,246,0.3)",
+                }}
+                _active={{
+                  transform: "translateY(0px) scale(0.98)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                rightIcon={<ExternalLinkIcon boxSize={2.5} />}
+              >
+                DOCS
+              </Button>
+            </HStack>
+          </VStack>
 
         {/* Network Warning */}
         {!isCorrectChain && isConnected && (
@@ -866,10 +914,10 @@ export default function ActivityReputation() {
               <HStack spacing={{ base: 1.5, md: 4 }} align="center">
                 <Box 
                   fontSize={{ base: "24px", md: "48px" }} 
-                  animation={{ base: "none", md: `${float} 4s ease-in-out infinite` }}
+                  animation={`${float} 4s ease-in-out infinite`}
                   position="relative"
                   zIndex={1}
-                  transform={{ base: "none", md: "translateY(4px)" }}
+                  transform={{ base: "translateY(2px)", md: "translateY(4px)" }}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
@@ -918,7 +966,7 @@ export default function ActivityReputation() {
                 <Box position="absolute" inset={0} bg={`${action.color}20`} filter="blur(24px)" borderRadius="2xl" opacity={0} transition="opacity 0.4s" />
                 <Box bg="rgba(10,10,25,0.85)" backdropFilter="blur(20px)" borderRadius={{ base: "xl", md: "2xl" }} border={`2px solid ${action.color}40`} p={{ base: 3, md: 5 }} transition="all 0.3s" _hover={{ borderColor: action.color, bg: "rgba(15,15,35,0.95)", boxShadow: `0 0 20px ${action.color}80` }}>
                   <VStack spacing={{ base: 1, md: 3 }}>
-                    <Box fontSize={{ base: "32px", md: "56px" }} animation={{ base: "none", md: `${float} 4s ease-in-out infinite` }}>{action.icon}</Box>
+                    <Box fontSize={{ base: "32px", md: "56px" }} animation={`${float} 4s ease-in-out infinite`} transform={{ base: "scale(0.95)", md: "scale(1)" }} > {action.icon}</Box>
                     <Heading size={{ base: "xs", md: "sm" }} color="white" fontWeight="700">{action.label}</Heading>
                     <Text fontSize={{ base: "8px", md: "xs" }} color="gray.500" textAlign="center" fontFamily="mono" display={{ base: "none", md: "block" }}>{action.desc}</Text>
                     <Badge bg={`${action.color}20`} color={action.color} px={{ base: 2, md: 3 }} py={{ base: 1, md: 1.5 }} borderRadius="full" fontSize={{ base: "8px", md: "xs" }} border={`1px solid ${action.color}40`}>Fee: {formatFee(action.fee)} ETH</Badge>

@@ -23,6 +23,8 @@ import {
   pocketKnightsABI,
   morningMoonABI,
   coNFTABI,
+  harkanABI,
+  redButtonABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -49,6 +51,8 @@ export const getPartnerABI = (actionId: number) => {
     case 18: return pocketKnightsABI;
     case 19: return morningMoonABI;
     case 20: return coNFTABI;
+    case 21: return harkanABI;
+    case 22: return redButtonABI;
     default: throw new Error("Unknown action id");
   }
 };
@@ -86,6 +90,10 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return ["bearstudio.zombie.ads", "ETH"];
     case 20: // coNFT
       return ["GM AGENT", "AGENT", "https://gm-agent.xyz/twitter-image.png", 100000n, 0n, "0x3f99231dD03a9F0E7e3421c92B7b90fbe012985a" as `0x${string}`, address || zeroAddress];
+    case 21: // Harkan - recordActionWithRandom
+      return ["cyber-roulette", "spin", 0n, 1n, 1000n];
+    case 22: // Red Button - drawItem
+      return [0, 1924992000, "0x"];
     default:
       return [];
   }

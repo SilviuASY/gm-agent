@@ -1177,7 +1177,7 @@ export default function ActivityReputation() {
                                   transition="all 0.3s" 
                                   _hover={{ transform: "scale(1.05)", boxShadow: "0 0 40px rgba(192,132,252,0.9)" }}
                                 >
-                                  <Box as="img" src="https://bafybeig47ocebour5hqv2gbzkxaos4omx4vedslzoylr4xnyn4pgvuchpm.ipfs.dweb.link/" alt="Reputation Badge NFT" w="100%" h="100%" objectFit="cover" />
+                                  <Box as="img" src="https://bafkreib2owlravtiqzup4owlejksbnfnp5b6ec2rxgg6bixswxpa54j53i.ipfs.dweb.link/" alt="Reputation Badge NFT" w="100%" h="100%" objectFit="cover" />
                                   <Badge 
                                     position="absolute" 
                                     bottom="4px" 
@@ -1374,7 +1374,7 @@ export default function ActivityReputation() {
                                   transition="all 0.3s"
                                   _hover={{ opacity: 0.8, filter: "grayscale(30%)" }}
                                 >
-                                  <Box as="img" src="https://bafybeig47ocebour5hqv2gbzkxaos4omx4vedslzoylr4xnyn4pgvuchpm.ipfs.dweb.link/" alt="Reputation Badge Preview" w="100%" h="100%" objectFit="cover" />
+                                  <Box as="img" src="https://bafkreib2owlravtiqzup4owlejksbnfnp5b6ec2rxgg6bixswxpa54j53i.ipfs.dweb.link/" alt="Reputation Badge Preview" w="100%" h="100%" objectFit="cover" />
                                   <Box position="absolute" inset={0} bg="rgba(0,0,0,0.5)" display="flex" alignItems="center" justifyContent="center">
                                     <Badge bg="#c084fc" fontSize={{ base: "7px", md: "10px" }} fontWeight="700" px={2} py={1} borderRadius="full">LOCKED</Badge>
                                   </Box>
@@ -1468,7 +1468,7 @@ export default function ActivityReputation() {
                                   filter="blur(4px)" 
                                   opacity={0.5}
                                 >
-                                  <Box as="img" src="https://bafybeig47ocebour5hqv2gbzkxaos4omx4vedslzoylr4xnyn4pgvuchpm.ipfs.dweb.link/" alt="Badge Preview" w="100%" h="100%" objectFit="cover" />
+                                  <Box as="img" src="https://bafkreib2owlravtiqzup4owlejksbnfnp5b6ec2rxgg6bixswxpa54j53i.ipfs.dweb.link/" alt="Badge Preview" w="100%" h="100%" objectFit="cover" />
                                 </Box>
                                 <Text 
                                   fontWeight="700" 

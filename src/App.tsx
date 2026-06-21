@@ -1532,7 +1532,7 @@ export default function App() {
           <VStack spacing={10}>
             <VStack spacing={3}>
               <Badge variant="outline" colorScheme="purple" px={3} py={1} fontSize="xs" letterSpacing="wide">
-                Protocol
+                Protocol Guide
               </Badge>
               <Heading
                 fontSize={{ base: "2xl", md: "3xl" }}

@@ -75,7 +75,7 @@ const CONTRACTS = {
   },
 } as const;
 
-const FIXED_AGENT_URI = "ipfs://bafybeib7xp6re6fcfdwx75b7lgbafrsmjln2yfqo4ghtg4n7krj6ieshoq";
+const FIXED_AGENT_URI = "ipfs://bafkreihkka666l6f7xreletjrvbn3fb3dvlvn3ifbmzj2wlnyhfpnqnobm";
 const COOLDOWN_SECONDS = 86400;
 
 // ================= ANIMATIONS =================

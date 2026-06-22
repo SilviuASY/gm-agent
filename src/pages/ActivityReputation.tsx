@@ -1060,9 +1060,11 @@ export default function ActivityReputation() {
                   <Box p={{ base: 4, md: 8 }}>
                     <VStack spacing={{ base: 2, md: 3.5 }}>
                       <VStack spacing={{ base: 2, md: 3 }} align="center" w="full" pt={{ base: 4, md: 6 }}>
+                        {/* 🕵️ Avatar - acum încarcă public/agent.png */}
                         <Avatar 
                           size={{ base: "lg", md: "2xl" }} 
                           bgGradient="linear(135deg, #8b5cf6, #ec4899)" 
+                          src="/agent.png"
                           icon={<Text fontSize={{ base: "28px", md: "48px" }}>🕵️</Text>} 
                           boxShadow="0 0 30px rgba(139,92,246,0.5)" 
                         />
@@ -1177,7 +1179,14 @@ export default function ActivityReputation() {
                                   transition="all 0.3s" 
                                   _hover={{ transform: "scale(1.05)", boxShadow: "0 0 40px rgba(192,132,252,0.9)" }}
                                 >
-                                  <Box as="img" src="https://bafkreigu4jf4xlulh4cwxa5hxudwu5mmlga6y2inf4vohvguaocso3rj2i.ipfs.dweb.link/" alt="Reputation Badge NFT" w="100%" h="100%" objectFit="cover" />
+                                  <Image 
+                                    src="/agentbadge.png" 
+                                    alt="Reputation Badge NFT" 
+                                    w="100%" 
+                                    h="100%" 
+                                    objectFit="cover" 
+                                    fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50%' x='50%' text-anchor='middle' font-size='48'>🏅</text></svg>"
+                                  />
                                   <Badge 
                                     position="absolute" 
                                     bottom="4px" 
@@ -1374,7 +1383,14 @@ export default function ActivityReputation() {
                                   transition="all 0.3s"
                                   _hover={{ opacity: 0.8, filter: "grayscale(30%)" }}
                                 >
-                                  <Box as="img" src="https://bafkreigu4jf4xlulh4cwxa5hxudwu5mmlga6y2inf4vohvguaocso3rj2i.ipfs.dweb.link/" alt="Reputation Badge Preview" w="100%" h="100%" objectFit="cover" />
+                                  <Image 
+                                    src="/agentbadge.png" 
+                                    alt="Reputation Badge Preview" 
+                                    w="100%" 
+                                    h="100%" 
+                                    objectFit="cover"
+                                    fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50%' x='50%' text-anchor='middle' font-size='48'>🏅</text></svg>"
+                                  />
                                   <Box position="absolute" inset={0} bg="rgba(0,0,0,0.5)" display="flex" alignItems="center" justifyContent="center">
                                     <Badge bg="#c084fc" fontSize={{ base: "7px", md: "10px" }} fontWeight="700" px={2} py={1} borderRadius="full">LOCKED</Badge>
                                   </Box>
@@ -1468,7 +1484,14 @@ export default function ActivityReputation() {
                                   filter="blur(4px)" 
                                   opacity={0.5}
                                 >
-                                  <Box as="img" src="https://bafkreigu4jf4xlulh4cwxa5hxudwu5mmlga6y2inf4vohvguaocso3rj2i.ipfs.dweb.link/" alt="Badge Preview" w="100%" h="100%" objectFit="cover" />
+                                  <Image 
+                                    src="/agentbadge.png" 
+                                    alt="Badge Preview" 
+                                    w="100%" 
+                                    h="100%" 
+                                    objectFit="cover"
+                                    fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50%' x='50%' text-anchor='middle' font-size='48'>🏅</text></svg>"
+                                  />
                                 </Box>
                                 <Text 
                                   fontWeight="700" 

@@ -96,12 +96,12 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [unichainChain.id]: '0x1e1322Deed86cC53031843f323F16415Ba0e9152',
 };
 
-// FIX #1 — Soneium = teal/turquoise, Ink = violet-pink
+// Cards Colour
 const chainMetadata: Record<number, { color: string; gradient: string; glowColor: string }> = {
   [soneiumChain.id]: {
-    color: '#2dd4bf',
-    gradient: 'linear(135deg, #0d9488, #2dd4bf, #5eead4)',
-    glowColor: 'rgba(45,212,191,0.35)',
+    color: '#1c97df',
+    gradient: 'linear(135deg, #0a5d8c, #1c97df, #5ebeea)',
+    glowColor: 'rgba(28,151,223,0.35)',
   },
   [inkChain.id]: {
     color: '#c026d3',
@@ -264,7 +264,8 @@ const TxSuccessModal = ({
                 </Text>
                 {tx.isExempt && (
                   <Badge
-                    bgGradient="linear(135deg, #fbbf24, #ec4899)" color="white"
+                    bgGradient="linear(135deg, #2dd4bf, #0d9488)" 
+                    color="white"
                     fontSize="10px" px={3} py={1} borderRadius="full"
                     fontFamily="'Space Mono', monospace"
                   >
@@ -395,10 +396,10 @@ const SBTBadge = ({ hasSBT }: { hasSBT: boolean }) => {
   return (
     <Tooltip label="Soneium Soulbound Token — fee exempt on all actions" hasArrow placement="top">
       <Badge
-        bgGradient="linear(135deg, #fbbf24, #f97316)"
+        bgGradient="linear(135deg, #2dd4bf, #0d9488)"
         color="white" fontSize="9px" px={2.5} py={1}
         borderRadius="full" display="inline-flex" alignItems="center" gap={1.5}
-        boxShadow="0 0 18px rgba(251,191,36,0.35)"
+        boxShadow="0 0 18px rgba(45,212,191,0.35)"
         _hover={{ transform: 'scale(1.06)' }}
         transition="all 0.2s"
         style={{ animation: 'pulseGlow 3s ease-in-out infinite' }}
@@ -420,7 +421,7 @@ const FeeDisplay = ({ fee, isExempt }: { fee: bigint; isExempt: boolean }) => {
       <Tooltip label="Free for SBT holders on Soneium" hasArrow>
         <HStack spacing={1} justify="center">
           <Text as="del" fontSize="xs" color="gray.700" fontFamily="'Space Mono', monospace">{formatted}</Text>
-          <Badge colorScheme="green" fontSize="9px" px={1.5} py={0.5} borderRadius="full" fontFamily="'Space Mono', monospace">
+          <Badge colorScheme="teal" fontSize="9px" px={1.5} py={0.5} borderRadius="full" fontFamily="'Space Mono', monospace" bg="#2dd4bf" color="white">
             FREE
           </Badge>
         </HStack>
@@ -464,7 +465,6 @@ const ActionCard = ({
   const isSoneium = chain.id === SONEIUM_CHAIN_ID;
   const isExempt = isSoneium && hasSBT;
   const isGM = type === 'gm';
-  // FIX #3 — always show GM/Deploy to <chain>, switch happens silently in background
   const actionLabel = isGM ? `GM to ${chain.name}` : `Deploy to ${chain.name}`;
   const loadingLabel = isGM ? 'Sending GM…' : 'Deploying…';
 
@@ -485,10 +485,10 @@ const ActionCard = ({
 
       <Box
         position="relative" bg="rgba(4,4,14,0.93)" backdropFilter="blur(28px)"
-        borderRadius="2xl" border="1px solid" borderColor={isExempt ? 'rgba(251,191,36,0.25)' : `${meta.color}20`}
+        borderRadius="2xl" border="1px solid" borderColor={isExempt ? `rgba(45,212,191,0.25)` : `${meta.color}20`}
         overflow="hidden" h="full" minH="470px" display="flex" flexDirection="column"
         _hover={{
-          borderColor: isExempt ? 'rgba(251,191,36,0.5)' : `${meta.color}60`,
+          borderColor: isExempt ? `rgba(45,212,191,0.5)` : `${meta.color}60`,
           boxShadow: `0 28px 80px ${meta.glowColor}, inset 0 1px 0 rgba(255,255,255,0.04)`,
         }}
         transition="all 0.38s cubic-bezier(0.175,0.885,0.32,1.275)"
@@ -496,7 +496,7 @@ const ActionCard = ({
         {/* top shimmer bar */}
         <Box
           position="absolute" top={0} left={0} right={0} h="2px"
-          bgGradient={isExempt ? 'linear(90deg, #fbbf24, #f97316, #fbbf24)' : meta.gradient}
+          bgGradient={isExempt ? 'linear(90deg, #2dd4bf, #0d9488, #2dd4bf)' : meta.gradient}
           backgroundSize="200% 100%"
           style={{ animation: 'shimmerBorder 3.5s infinite' }}
         />
@@ -508,7 +508,6 @@ const ActionCard = ({
           style={{ animation: 'scanline 9s linear infinite' }}
         />
 
-        {/* FIX #2 — removed FREE badge from top right; only SBT badge at top left */}
         <Flex position="absolute" top={3} left={3} zIndex={3}>
           {isSoneium && <SBTBadge hasSBT={hasSBT} />}
         </Flex>
@@ -538,7 +537,7 @@ const ActionCard = ({
                   borderRadius="full"
                   bg={`${meta.color}08`}
                   p={1.5}
-                  border={`2px solid ${isExempt ? '#fbbf24' : meta.color}30`}
+                  border={`2px solid ${isExempt ? '#2dd4bf' : meta.color}30`}
                   position="relative" zIndex={1}
                   fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='70'><text y='52%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='34'>⛓️</text></svg>"
                 />
@@ -549,7 +548,7 @@ const ActionCard = ({
             <VStack spacing={1.5} pt={1}>
               <Heading
                 fontSize={{ base: "md", md: "lg" }} fontWeight="800"
-                bgGradient={isExempt ? 'linear(135deg, #fbbf24, #f97316)' : meta.gradient}
+                bgGradient={isExempt ? 'linear(135deg, #2dd4bf, #0d9488)' : meta.gradient}
                 bgClip="text" letterSpacing="-0.015em"
                 fontFamily="'Space Grotesk', sans-serif" textAlign="center"
               >
@@ -591,7 +590,7 @@ const ActionCard = ({
                   My {isGM ? 'GM' : 'Deploys'}
                 </Text>
                 <Text fontSize="xl" fontWeight="800"
-                  color={isExempt ? '#fbbf24' : 'white'}
+                  color={isExempt ? '#2dd4bf' : 'white'}
                   fontFamily="'Space Mono', monospace">
                   {userCount}
                 </Text>
@@ -612,10 +611,9 @@ const ActionCard = ({
               </Text>
             </Flex>
 
-            {/* FIX #3 — button always shows "GM to X" or "Deploy to X" */}
             <Button
               w="full" h="52px" fontWeight="700" fontSize="sm" color="white" borderRadius="xl"
-              bgGradient={isExempt ? 'linear(135deg, #fbbf24, #f97316)' : meta.gradient}
+              bgGradient={isExempt ? 'linear(135deg, #2dd4bf, #0d9488)' : meta.gradient}
               backgroundSize="200% auto"
               _hover={{
                 transform: 'translateY(-2px)',
@@ -656,7 +654,7 @@ const ActionCard = ({
   );
 };
 
-// ============= Info Section (FIX #1 — moved below cards, rendered from parent) =============
+// ============= Info Section =============
 const InfoSection = ({ }: { isGM: boolean }) => (
   <MotionBox
     initial={{ opacity: 0, y: 20 }}
@@ -701,7 +699,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
           Interact with the{' '}
           <Text as="span" color="#2dd4bf" fontWeight="600">Agent GM Protocol</Text>{' '}
           across{' '}
-          <Text as="span" color="#fbbf24" fontWeight="600">5 blockchain networks</Text>.
+          <Text as="span" color="#2dd4bf" fontWeight="600">5 blockchain networks</Text>.
           {' '}Build your on-chain reputation with daily GM messages, or deploy smart contracts
           with one click — no configuration required.
         </Text>
@@ -754,7 +752,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
           {[
             { dot: '#4ade80', text: 'Real on-chain txs' },
             { dot: '#a78bfa', text: 'ERC-8004 compatible' },
-            { dot: '#fbbf24', text: 'SBT fee exempt on Soneium' },
+            { dot: '#2dd4bf', text: 'SBT fee exempt on Soneium' },
             { dot: '#38bdf8', text: 'Daily GM streaks' },
           ].map(({ dot, text }) => (
             <HStack key={text} spacing={1.5}>
@@ -768,7 +766,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
   </MotionBox>
 );
 
-// ============= Footer (FIX #4 — improved) =============
+// ============= Footer =============
 const Footer = () => (
   <Box pt={10} pb={6} position="relative">
     {/* separator */}
@@ -873,12 +871,120 @@ export default function GMPage() {
     setIsCheckingSBT(false);
   }, [sbtBalance]);
 
-  const stats = useMemo(() => [
-    { label: 'Chains', value: '5', icon: '🌐', color: '#2dd4bf', description: 'Networks available', glowColor: 'rgba(45,212,191,0.3)' },
-    { label: isGM ? 'Total GM' : 'Total Deploys', value: isGM ? '12,400' : '3,400', icon: isGM ? '🌅' : '🚀', color: isGM ? '#4ade80' : '#c026d3', description: isGM ? 'GM messages on-chain' : 'Contracts deployed', glowColor: isGM ? 'rgba(74,222,128,0.3)' : 'rgba(192,38,211,0.3)' },
-    { label: 'Active Users', value: '2,347', icon: '👤', color: '#2563eb', description: 'Community members', glowColor: 'rgba(37,99,235,0.3)' },
-    { label: 'Fee / Action', value: '0.000015', icon: '⚡', color: '#fbbf24', description: 'ETH per GM or Deploy', glowColor: 'rgba(251,191,36,0.3)' },
-  ], [isGM]);
+  // ============= Read all GM totals from all chains =============
+  const gmData = chains.map((chain) => {
+    const contract = GM_CONTRACTS[chain.id];
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data: nextTokenId = 0n } = useReadContract({
+      address: contract,
+      abi: DailyGMABI,
+      functionName: 'nextTokenId',
+      chainId: chain.id,
+      query: { enabled: true, staleTime: 30000 },
+    });
+    return { chainId: chain.id, total: Math.max(0, Number(nextTokenId) - 1) };
+  });
+
+  // ============= Read all Deploy totals from all chains =============
+  const deployData = chains.map((chain) => {
+    const contract = DEPLOY_CONTRACTS[chain.id];
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data: totalDeployments = 0n } = useReadContract({
+      address: contract,
+      abi: DeployABI,
+      functionName: 'totalDeployments',
+      chainId: chain.id,
+      query: { enabled: true, staleTime: 30000 },
+    });
+    return { chainId: chain.id, total: Number(totalDeployments) };
+  });
+
+  // Calculate totals
+  const totalGM = useMemo(() => {
+    return gmData.reduce((sum, item) => sum + item.total, 0);
+  }, [gmData]);
+
+  const totalDeploys = useMemo(() => {
+    return deployData.reduce((sum, item) => sum + item.total, 0);
+  }, [deployData]);
+
+  // Active Users - this would require a more complex query across all chains
+  // For now, we'll use a placeholder or you can implement it with a subgraph
+  const activeUsers = 2347; // Placeholder - would need to query unique addresses across all chains
+
+  const stats = useMemo(() => {
+    if (isGM) {
+      return [
+        { 
+          label: 'Chains', 
+          value: '5', 
+          icon: '🌐', 
+          color: '#2dd4bf', 
+          description: 'Networks available', 
+          glowColor: 'rgba(45,212,191,0.3)' 
+        },
+        { 
+          label: 'Total GM', 
+          value: totalGM.toLocaleString(), 
+          icon: '🌅', 
+          color: '#4ade80', 
+          description: 'GM messages on-chain', 
+          glowColor: 'rgba(74,222,128,0.3)' 
+        },
+        { 
+          label: 'Active Users', 
+          value: activeUsers.toLocaleString(), 
+          icon: '👤', 
+          color: '#2563eb', 
+          description: 'Community members', 
+          glowColor: 'rgba(37,99,235,0.3)' 
+        },
+        { 
+          label: 'Fee / Action', 
+          value: '0.000015', 
+          icon: '⚡', 
+          color: '#2dd4bf', 
+          description: 'ETH per GM or Deploy', 
+          glowColor: 'rgba(45,212,191,0.3)' 
+        },
+      ];
+    } else {
+      return [
+        { 
+          label: 'Chains', 
+          value: '5', 
+          icon: '🌐', 
+          color: '#2dd4bf', 
+          description: 'Networks available', 
+          glowColor: 'rgba(45,212,191,0.3)' 
+        },
+        { 
+          label: 'Total Deploys', 
+          value: totalDeploys.toLocaleString(), 
+          icon: '🚀', 
+          color: '#c026d3', 
+          description: 'Contracts deployed', 
+          glowColor: 'rgba(192,38,211,0.3)' 
+        },
+        { 
+          label: 'Active Users', 
+          value: activeUsers.toLocaleString(), 
+          icon: '👤', 
+          color: '#2563eb', 
+          description: 'Community members', 
+          glowColor: 'rgba(37,99,235,0.3)' 
+        },
+        { 
+          label: 'Fee / Action', 
+          value: '0.000015', 
+          icon: '⚡', 
+          color: '#2dd4bf', 
+          description: 'ETH per GM or Deploy', 
+          glowColor: 'rgba(45,212,191,0.3)' 
+        },
+      ];
+    }
+  }, [isGM, totalGM, totalDeploys, activeUsers]);
 
   // FIX #3 — handleAction: auto-switch silently before writing, button label never changes
   const handleAction = async (chain: any, type: 'gm' | 'deploy') => {
@@ -929,7 +1035,7 @@ export default function GMPage() {
         particleCount: 170,
         spread: 72,
         origin: { y: 0.55 },
-        colors: ['#2dd4bf', '#c026d3', '#fbbf24', '#f72585', '#60a5fa'],
+        colors: ['#2dd4bf', '#c026d3', '#0d9488', '#f72585', '#60a5fa'],
       });
 
     } catch (error: any) {
@@ -1002,7 +1108,7 @@ export default function GMPage() {
                     style={{ animation: 'pulseGlow 2.5s ease-in-out infinite' }} />
                   <Heading
                     fontSize={{ base: 'xl', md: '2xl', lg: '3xl' }} fontWeight="800"
-                    bgGradient="linear(135deg, #2dd4bf 0%, #c026d3 50%, #fbbf24 100%)"
+                    bgGradient="linear(135deg, #2dd4bf 0%, #0d9488 50%, #5eead4 100%)"
                     bgClip="text" letterSpacing="-0.03em"
                     fontFamily="'Space Grotesk', sans-serif"
                   >
@@ -1038,19 +1144,19 @@ export default function GMPage() {
           {address && !isCheckingSBT && hasSBT && (
             <MotionBox initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} mb={5}>
               <Box
-                bg="rgba(251,191,36,0.04)" border="1px solid rgba(251,191,36,0.18)"
+                bg="rgba(45,212,191,0.04)" border="1px solid rgba(45,212,191,0.18)"
                 borderRadius="2xl" p={3.5} backdropFilter="blur(14px)"
                 position="relative" overflow="hidden"
               >
                 <Box position="absolute" top={0} left={0} right={0} h="1px"
-                  bgGradient="linear(90deg, transparent, #fbbf24, #f97316, transparent)" />
+                  bgGradient="linear(90deg, transparent, #2dd4bf, #0d9488, transparent)" />
                 <Flex align="center" gap={3}>
                   <Flex w="36px" h="36px" align="center" justify="center"
-                    bg="rgba(251,191,36,0.1)" border="1px solid rgba(251,191,36,0.2)" borderRadius="full" flexShrink={0}>
-                    <StarIcon color="#fbbf24" boxSize={4} />
+                    bg="rgba(45,212,191,0.1)" border="1px solid rgba(45,212,191,0.2)" borderRadius="full" flexShrink={0}>
+                    <StarIcon color="#2dd4bf" boxSize={4} />
                   </Flex>
                   <Box>
-                    <Text fontSize="sm" fontWeight="700" color="#fbbf24" fontFamily="'Space Grotesk', sans-serif">
+                    <Text fontSize="sm" fontWeight="700" color="#2dd4bf" fontFamily="'Space Grotesk', sans-serif">
                       SBT Holder — Benefits Active
                     </Text>
                     <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
@@ -1142,7 +1248,6 @@ export default function GMPage() {
                   })}
                 </SimpleGrid>
 
-                {/* FIX #1 — Info section below GM cards */}
                 <InfoSection isGM={true} />
               </TabPanel>
 
@@ -1182,13 +1287,11 @@ export default function GMPage() {
                   })}
                 </SimpleGrid>
 
-                {/* FIX #1 — Info section below Deploy cards */}
                 <InfoSection isGM={false} />
               </TabPanel>
             </TabPanels>
           </Tabs>
 
-          {/* FIX #4 — Improved Footer */}
           <Footer />
 
         </Container>

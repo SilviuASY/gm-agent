@@ -9,6 +9,7 @@ import App from './App'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import '@rainbow-me/rainbowkit/styles.css'
 import ActivityReputation from "./pages/ActivityReputation";
+import GMPage from './pages/GM'
 
  // Pages
 
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <Routes>
                 <Route path="/" element={<App />} />
                 <Route path="/activity-reputation/*" element={<ActivityReputation />} />
+                <Route path="/gmorning" element={<GMPage />} />
               </Routes>
             </BrowserRouter>
           </ChakraProvider>

@@ -1099,38 +1099,6 @@ export default function ActivityReputation() {
                 Leaderboard
               </Button>
 
-              <Button
-                as="a"
-                href="https://docs.gm-agent.xyz"
-                target="_blank"
-                rel="noopener noreferrer"
-                bg="white"
-                color="gray.800"
-                size="sm"
-                borderRadius="full"
-                px={4}
-                py={1.5}
-                h="40px"
-                fontWeight="700"
-                fontSize="sm"
-                border="1px solid rgba(0,0,0,0.08)"
-                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                _hover={{
-                  bg: "gray.50",
-                  transform: "translateY(-2px) scale(1.02)",
-                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                  borderColor: "rgba(59,130,246,0.3)",
-                }}
-                _active={{
-                  transform: "translateY(0px) scale(0.98)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-                transition="all 0.3s"
-                rightIcon={<ExternalLinkIcon boxSize={3.5} />}
-              >
-                Docs
-              </Button>
-
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
                 <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
               </Box>
@@ -1170,37 +1138,6 @@ export default function ActivityReputation() {
                 leftIcon={<Text fontSize="sm">🏆</Text>}
               >
                 Leaderboard
-              </Button>
-              <Button
-                as="a"
-                href="https://docs.gm-agent.xyz"
-                target="_blank"
-                rel="noopener noreferrer"
-                bg="white"
-                color="gray.800"
-                size="sm"
-                borderRadius="full"
-                px={4}
-                py={1.5}
-                h="35px"
-                fontWeight="650"
-                fontSize="xs"
-                border="1px solid rgba(0,0,0,0.08)"
-                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                _hover={{
-                  bg: "gray.50",
-                  transform: "translateY(-2px) scale(1.02)",
-                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                  borderColor: "rgba(59,130,246,0.3)",
-                }}
-                _active={{
-                  transform: "translateY(0px) scale(0.98)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-                transition="all 0.3s"
-                rightIcon={<ExternalLinkIcon boxSize={2.5} />}
-              >
-                Docs
               </Button>
             </HStack>
           </VStack>

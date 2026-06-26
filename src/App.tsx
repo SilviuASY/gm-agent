@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import {
   Box,
   Button,
@@ -33,6 +35,7 @@ import {
 import { useEffect, useState, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
+import { ChevronDownIcon } from "@chakra-ui/icons";
 
 import {
   soneiumChain as soneium,
@@ -216,6 +219,21 @@ export default function App() {
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const navigate = useNavigate();
+
+  // Tools Dropdown
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
+        setIsToolsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Track whether the initial chain requested via URL has been applied
   const hasAppliedInitialChain = useRef(false);
@@ -525,9 +543,6 @@ export default function App() {
           colors,
         });
 
-        // Refresh every value the UI depends on — no page reload required.
-        // This keeps streak counters, quest progress and global stats in sync
-        // immediately after a successful registration or GM.
         await Promise.all([
           refetchRegistered(),
           refetchAgentId(),
@@ -673,6 +688,147 @@ export default function App() {
             display={{ base: "none", md: "flex" }}
             animation={`${slideInRight} 0.6s ease-out`}
           >
+            {/* TOOLS DROPDOWN - Desktop - ÎN FAȚA ACTIVITY REPUTATION */}
+            <Box ref={toolsRef} position="relative">
+              <Button
+                onClick={() => setIsToolsOpen(!isToolsOpen)}
+                bg="white"
+                color="gray.800"
+                size="sm"
+                borderRadius="full"
+                px={4}
+                py={1.5}
+                h="40px"
+                fontWeight="700"
+                letterSpacing="0.01em"
+                fontSize="sm"
+                border="1px solid rgba(0,0,0,0.08)"
+                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+                _hover={{
+                  bg: "gray.50",
+                  transform: "translateY(-2px) scale(1.02)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                  borderColor: "rgba(59,130,246,0.3)",
+                }}
+                _active={{
+                  transform: "translateY(0px) scale(0.98)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                rightIcon={
+                  <ChevronDownIcon
+                    boxSize={4}
+                    transition="transform 0.3s"
+                    transform={isToolsOpen ? "rotate(180deg)" : "rotate(0deg)"}
+                  />
+                }
+              >
+                <Text as="span" mr={1}>🛠️</Text>
+                Tools
+              </Button>
+
+              {/* Dropdown Menu - Desktop */}
+              {isToolsOpen && (
+                <Box
+                  position="absolute"
+                  top="calc(100% + 8px)"
+                  right="-50px"
+                  bg="white"
+                  borderRadius="2xl"
+                  boxShadow="0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)"
+                  minW="220px"
+                  overflow="hidden"
+                  zIndex={100}
+                >
+                  <VStack spacing={0} align="stretch">
+                    <Button
+                      onClick={() => {
+                        navigate("/activity-reputation");
+                        setIsToolsOpen(false);
+                      }}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      borderRadius="0"
+                      px={4}
+                      py={3}
+                      h="44px"
+                      fontWeight="600"
+                      fontSize="sm"
+                      color="gray.700"
+                      _hover={{ bg: "rgba(139,92,246,0.06)", color: "#8b5cf6" }}
+                      transition="all 0.2s"
+                      leftIcon={<Text fontSize="16px">🏆</Text>}
+                    >
+                      Score 12 · Agent Badge
+                    </Button>
+                    <Box h="1px" bg="gray.100" />
+                    <Button
+                      onClick={() => {
+                        navigate("/badge-season-10");
+                        setIsToolsOpen(false);
+                      }}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      borderRadius="0"
+                      px={4}
+                      py={3}
+                      h="44px"
+                      fontWeight="600"
+                      fontSize="sm"
+                      color="gray.700"
+                      _hover={{ bg: "rgba(168,85,247,0.06)", color: "#a855f7" }}
+                      transition="all 0.2s"
+                      leftIcon={<Text fontSize="16px">🧩</Text>}
+                    >
+                      Score 10 · Pulse Cards
+                    </Button>
+                    <Box h="1px" bg="gray.100" />
+                    <Button
+                      onClick={() => {
+                        navigate("/gmorning");
+                        setIsToolsOpen(false);
+                      }}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      borderRadius="0"
+                      px={4}
+                      py={3}
+                      h="44px"
+                      fontWeight="600"
+                      fontSize="sm"
+                      color="gray.700"
+                      _hover={{ bg: "rgba(45,212,191,0.06)", color: "#2dd4bf" }}
+                      transition="all 0.2s"
+                      leftIcon={<Text fontSize="16px">🌅</Text>}
+                    >
+                      GMorning · GM & Deploy
+                    </Button>
+                    <Box h="1px" bg="gray.100" />
+                    <Button
+                      onClick={() => {
+                        navigate("/vault");
+                        setIsToolsOpen(false);
+                      }}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      borderRadius="0"
+                      px={4}
+                      py={3}
+                      h="44px"
+                      fontWeight="600"
+                      fontSize="sm"
+                      color="gray.700"
+                      _hover={{ bg: "rgba(45,212,191,0.06)", color: "#2dd4bf" }}
+                      transition="all 0.2s"
+                      leftIcon={<Text fontSize="16px">💰</Text>}
+                    >
+                      Vault · Agent Vault
+                    </Button>
+                  </VStack>
+                </Box>
+              )}
+            </Box>
+
             <Tooltip
               label="Complete activities to boost your reputation score"
               hasArrow
@@ -762,60 +918,229 @@ export default function App() {
               />
             </Box>
 
-            <Tooltip
-              label="Complete activities to boost your reputation score"
-              hasArrow
-              placement="top"
-              bg="rgba(0,0,0,0.85)"
-              color="white"
-              fontSize="xs"
-              fontWeight="normal"
-              px={4}
-              py={2.5}
-              borderRadius="lg"
-              border="1px solid rgba(59,130,246,0.3)"
-            >
-              <Button
-                onClick={() => navigate("/activity-reputation")}
-                bg="white"
-                color="gray.800"
-                size="md"
-                borderRadius="full"
-                px={6}
-                h="46px"
-                fontWeight="700"
-                letterSpacing="0.01em"
-                fontSize="sm"
-                border="1px solid rgba(0,0,0,0.08)"
-                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                _hover={{
-                  bg: "gray.50",
-                  transform: "translateY(-2px) scale(1.02)",
-                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                  borderColor: "rgba(59,130,246,0.3)",
-                }}
-                _active={{
-                  transform: "translateY(0px) scale(0.98)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                leftIcon={
-                  <Box as="span" fontSize="14px">
-                    🏆
+            <HStack spacing={2} width="full" justify="center" flexWrap="wrap" position="relative">
+              {/* TOOLS DROPDOWN - Mobile - ÎN FAȚA ACTIVITY */}
+              <Box position="relative" zIndex={999}>
+                <Button
+                  onClick={() => setIsToolsOpen(!isToolsOpen)}
+                  bg="white"
+                  color="gray.800"
+                  size="md"
+                  borderRadius="full"
+                  px={5}
+                  h="46px"
+                  fontWeight="700"
+                  letterSpacing="0.01em"
+                  fontSize="sm"
+                  border="1px solid rgba(0,0,0,0.08)"
+                  boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+                  _hover={{
+                    bg: "gray.50",
+                    transform: "translateY(-2px) scale(1.02)",
+                    boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                    borderColor: "rgba(59,130,246,0.3)",
+                  }}
+                  _active={{
+                    transform: "translateY(0px) scale(0.98)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  }}
+                  transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                  rightIcon={
+                    <ChevronDownIcon
+                      boxSize={4}
+                      transition="transform 0.3s"
+                      transform={isToolsOpen ? "rotate(180deg)" : "rotate(0deg)"}
+                    />
+                  }
+                >
+                  <Text as="span" mr={1}>🛠️</Text>
+                  Tools
+                </Button>
+
+                {/* Dropdown Menu - Mobile - ALINIAT CORECT */}
+                {isToolsOpen && (
+                  <Box
+                    position="absolute"
+                    top="calc(100% + 8px)"
+                    right="-10"
+                    bg="white"
+                    borderRadius="2xl"
+                    boxShadow="0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)"
+                    minW="220px"
+                    overflow="hidden"
+                    zIndex={1000}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    <VStack spacing={0} align="stretch">
+                      <Button
+                        onClick={() => {
+                          setIsToolsOpen(false);
+                          navigate("/activity-reputation");
+                        }}
+                        onTouchStart={() => {
+                          // Pentru mobil, asigură că navigarea se face
+                          setTimeout(() => {
+                            setIsToolsOpen(false);
+                            navigate("/activity-reputation");
+                          }, 50);
+                        }}
+                        variant="ghost"
+                        justifyContent="flex-start"
+                        borderRadius="0"
+                        px={4}
+                        py={3.5}
+                        h="48px"
+                        fontWeight="600"
+                        fontSize="sm"
+                        color="gray.700"
+                        _hover={{ bg: "rgba(139,92,246,0.08)", color: "#8b5cf6" }}
+                        _active={{ bg: "rgba(139,92,246,0.12)" }}
+                        leftIcon={<Text fontSize="16px">🏆</Text>}
+                        width="100%"
+                        _focus={{ bg: "rgba(139,92,246,0.12)" }}
+                      >
+                        Score 12 · Agent Badge
+                      </Button>
+                      <Box h="1px" bg="gray.100" />
+                      <Button
+                        onClick={() => {
+                          setIsToolsOpen(false);
+                          navigate("/badge-season-10");
+                        }}
+                        onTouchStart={() => {
+                          setTimeout(() => {
+                            setIsToolsOpen(false);
+                            navigate("/badge-season-10");
+                          }, 50);
+                        }}
+                        variant="ghost"
+                        justifyContent="flex-start"
+                        borderRadius="0"
+                        px={4}
+                        py={3.5}
+                        h="48px"
+                        fontWeight="600"
+                        fontSize="sm"
+                        color="gray.700"
+                        _hover={{ bg: "rgba(168,85,247,0.08)", color: "#a855f7" }}
+                        _active={{ bg: "rgba(168,85,247,0.12)" }}
+                        leftIcon={<Text fontSize="16px">🧩</Text>}
+                        width="100%"
+                        _focus={{ bg: "rgba(168,85,247,0.12)" }}
+                      >
+                        Score 10 · Pulse Cards
+                      </Button>
+                      <Box h="1px" bg="gray.100" />
+                      <Button
+                        onClick={() => {
+                          setIsToolsOpen(false);
+                          navigate("/gmorning");
+                        }}
+                        onTouchStart={() => {
+                          setTimeout(() => {
+                            setIsToolsOpen(false);
+                            navigate("/gmorning");
+                          }, 50);
+                        }}
+                        variant="ghost"
+                        justifyContent="flex-start"
+                        borderRadius="0"
+                        px={4}
+                        py={3.5}
+                        h="48px"
+                        fontWeight="600"
+                        fontSize="sm"
+                        color="gray.700"
+                        _hover={{ bg: "rgba(45,212,191,0.08)", color: "#2dd4bf" }}
+                        _active={{ bg: "rgba(45,212,191,0.12)" }}
+                        leftIcon={<Text fontSize="16px">🌅</Text>}
+                        width="100%"
+                        _focus={{ bg: "rgba(45,212,191,0.12)" }}
+                      >
+                        GMorning · GM & Deploy
+                      </Button>
+                      <Box h="1px" bg="gray.100" />
+                      <Button
+                        onClick={() => {
+                          setIsToolsOpen(false);
+                          navigate("/vault");
+                        }}
+                        onTouchStart={() => {
+                          setTimeout(() => {
+                            setIsToolsOpen(false);
+                            navigate("/vault");
+                          }, 50);
+                        }}
+                        variant="ghost"
+                        justifyContent="flex-start"
+                        borderRadius="0"
+                        px={4}
+                        py={3.5}
+                        h="48px"
+                        fontWeight="600"
+                        fontSize="sm"
+                        color="gray.700"
+                        _hover={{ bg: "rgba(45,212,191,0.08)", color: "#2dd4bf" }}
+                        _active={{ bg: "rgba(45,212,191,0.12)" }}
+                        leftIcon={<Text fontSize="16px">💰</Text>}
+                        width="100%"
+                        _focus={{ bg: "rgba(45,212,191,0.12)" }}
+                      >
+                        Vault · Agent Vault
+                      </Button>
+                    </VStack>
                   </Box>
-                }
-                rightIcon={
-                  <Box as="span" fontSize="12px">
-                    →
-                  </Box>
-                }
-                width="auto"
-                display="inline-flex"
-                alignSelf="center"
+                )}
+              </Box>
+
+              <Tooltip
+                label="Complete activities to boost your reputation score"
+                hasArrow
+                placement="top"
+                bg="rgba(0,0,0,0.85)"
+                color="white"
+                fontSize="xs"
+                fontWeight="normal"
+                px={4}
+                py={2.5}
+                borderRadius="lg"
+                border="1px solid rgba(59,130,246,0.3)"
               >
-                Activity Reputation
-              </Button>
-            </Tooltip>
+                <Button
+                  onClick={() => navigate("/activity-reputation")}
+                  bg="white"
+                  color="gray.800"
+                  size="md"
+                  borderRadius="full"
+                  px={6}
+                  h="46px"
+                  fontWeight="700"
+                  letterSpacing="0.01em"
+                  fontSize="sm"
+                  border="1px solid rgba(0,0,0,0.08)"
+                  boxShadow="0 2px 8px rgba(0,0,0,0.06)"
+                  _hover={{
+                    bg: "gray.50",
+                    transform: "translateY(-2px) scale(1.02)",
+                    boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+                    borderColor: "rgba(59,130,246,0.3)",
+                  }}
+                  _active={{
+                    transform: "translateY(0px) scale(0.98)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  }}
+                  transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                  leftIcon={<Box as="span" fontSize="14px">🏆</Box>}
+                >
+                  Activity
+                </Button>
+              </Tooltip>
+            </HStack>
           </VStack>
         </Flex>
 
@@ -893,7 +1218,7 @@ export default function App() {
               <VStack spacing={2.5} align="stretch" pt={1}>
                 <HStack justify="space-between" align="center">
                   <HStack spacing={2}>
-                    <Text fontSize={{ base: "sm", md: "md" }} color="#06b6d4" fontWeight="700">Season 12</Text>
+                    <Text fontSize={{ base: "sm", md: "md" }} color="#06b6d4" fontWeight="700">Season 12 Score</Text>
                     <Badge
                       bg={isRegistered && Number(userStreak) >= 5 ? "rgba(34,197,94,0.2)" : "rgba(6,182,212,0.15)"}
                       color={isRegistered && Number(userStreak) >= 5 ? "#4ade80" : "#06b6d4"}

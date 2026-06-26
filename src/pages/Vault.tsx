@@ -44,7 +44,7 @@ import { soneiumChain } from "../wagmi";
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
-const BRAND = "Pulse Vault";
+const BRAND = "Agent Vault";
 const SONEIUM_CHAIN_ID = 1868;
 
 const CONTRACTS = {
@@ -169,7 +169,7 @@ function WrongNetworkBanner({ onSwitch }: { onSwitch: () => void }) {
                 Wrong Network
               </Text>
               <Text fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
-                Pulse Vault runs exclusively on{" "}
+                Agent Vault runs exclusively on{" "}
                 <Text as="span" color="gray.300" fontWeight="600">Soneium</Text>.
                 Switch your network to continue.
               </Text>
@@ -838,7 +838,7 @@ export default function VaultPage() {
 
     (async () => {
       try {
-        const msg = `Confirm referral for Pulse Vault\nReferrer: ${referrer}\nBonus: +5 LXP on first deposit\nTimestamp: ${new Date().toISOString()}`;
+        const msg = `Confirm referral for Agent Vault\nReferrer: ${referrer}\nBonus: +5 LXP on first deposit\nTimestamp: ${new Date().toISOString()}`;
         const sig = await (window as any).ethereum.request({ method: "personal_sign", params: [msg, address] });
         localStorage.setItem("referrer", referrer);
         localStorage.setItem("referralSignature", sig);
@@ -919,7 +919,7 @@ export default function VaultPage() {
                     fontFamily="'Space Grotesk', sans-serif"
                     bgGradient="linear(135deg,#2dd4bf 0%,#c026d3 55%,#fbbf24 100%)"
                     bgClip="text">
-                    Pulse Vault
+                    Agent Vault
                   </Heading>
                   <Badge bg="rgba(45,212,191,0.08)" color="#2dd4bf" fontSize="8px"
                     px={2} py={0.5} borderRadius="full"

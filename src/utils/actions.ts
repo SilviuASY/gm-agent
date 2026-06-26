@@ -25,6 +25,7 @@ import {
   coNFTABI,
   harkanABI,
   redButtonABI,
+  gmBoostABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -53,6 +54,7 @@ export const getPartnerABI = (actionId: number) => {
     case 20: return coNFTABI;
     case 21: return harkanABI;
     case 22: return redButtonABI;
+    case 23: return gmBoostABI;
     default: throw new Error("Unknown action id");
   }
 };

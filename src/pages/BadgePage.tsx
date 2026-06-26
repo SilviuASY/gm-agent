@@ -94,6 +94,33 @@ const pageStyles = `
     0% { text-shadow: 0 0 5px #a855f7, 0 0 10px #a855f7, 0 0 20px #22c55e; }
     100% { text-shadow: 0 0 15px #a855f7, 0 0 25px #a855f7, 0 0 35px #22c55e; }
   }
+    @keyframes progressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes progressGlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes dotPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes completePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes starFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(10deg); }
+}
+@keyframes progressPop {
+  0% { opacity: 0; transform: scale(0.5); }
+  70% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
 `;
 
 // ============= Stat Card =============
@@ -212,7 +239,7 @@ const Footer = () => {
           gap={0}
         >
           {[
-            { label: "Protocol", value: "ERC-721" },
+            { label: "Protocol", value: "ERC-8004" },
             { label: "Chain", value: "Soneium" },
             { label: "Status", value: "Live ✓" },
           ].map(({ label, value }, i, arr) => (
@@ -252,7 +279,7 @@ const Footer = () => {
             letterSpacing="0.12em"
             textAlign="center"
           >
-            © {currentYear} · PulseVault · All rights reserved
+            © {currentYear} · Agent Protocol · All rights reserved
           </Text>
           <Text
             fontSize="9px"
@@ -935,22 +962,24 @@ export default function BadgePage() {
           {/* ─── Main Content ─── */}
           <Flex
             direction={{ base: "column", lg: "row" }}
-            gap={{ base: 8, lg: 12 }}
+            gap={{ base: 8, lg: 8 }}
             align={{ base: "center", lg: "flex-start" }}
+            justify="center"
           >
-            {/* LEFT - Puzzle Grid */}
-            <Box flex="1" w="full" maxW={{ lg: "580px" }}>
+            {/* LEFT - Puzzle Grid - MAI MARE PENTRU A ÎNCĂPEA TOATE IMAGINILE */}
+            <Box flex="1.2" w="full" minW="0" maxW={{ lg: "620px" }}>
               <Box
                 bg="rgba(4,4,14,0.85)"
                 backdropFilter="blur(20px)"
                 borderRadius="2xl"
                 border="1px solid rgba(255,255,255,0.06)"
-                p={{ base: 4, md: 6 }}
+                p={{ base: 3, md: 5 }}
                 _hover={{ borderColor: "rgba(168,85,247,0.3)", boxShadow: "0 20px 60px rgba(168,85,247,0.05)" }}
                 transition="all 0.35s ease"
+                overflow="hidden"
               >
-                <VStack spacing={4}>
-                  <HStack justify="space-between" w="full">
+                <VStack spacing={3} align="stretch">
+                  <HStack justify="space-between" w="full" px={1}>
                     <Heading size="sm" color="white" fontFamily="'Space Grotesk', sans-serif" fontWeight="700">
                       🧩 Pulse Puzzle
                     </Heading>
@@ -967,33 +996,151 @@ export default function BadgePage() {
                     </Badge>
                   </HStack>
 
-                  <PuzzleGrid piecesUnlocked={piecesUnlocked} images={PUZZLE_IMAGES} />
-
-                  <Box w="full">
-                    <Progress
-                      value={(piecesUnlocked / 9) * 100}
-                      size="sm"
-                      colorScheme="green"
-                      bg="rgba(255,255,255,0.05)"
-                      borderRadius="full"
-                      sx={{
-                        "& > div": {
-                          bgGradient: "linear(135deg, #a855f7, #22c55e)",
-                        },
-                      }}
-                    />
-                    <Flex justify="space-between" mt={1}>
-                      <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace">
-                        {piecesUnlocked} unlocked
-                      </Text>
-                      <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace">
-                        {9 - piecesUnlocked} remaining
-                      </Text>
-                    </Flex>
+                  <Box
+                    w="full"
+                    overflow="hidden"
+                    borderRadius="xl"
+                    position="relative"
+                  >
+                    <PuzzleGrid piecesUnlocked={piecesUnlocked} images={PUZZLE_IMAGES} />
                   </Box>
 
+                  {/* ===== SECȚIUNEA PROGRESS CU ANIMAȚII ===== */}
+                  <Box w="full" px={1}>
+                    <Box position="relative" mb={1}>
+                      <Progress
+                        value={(piecesUnlocked / 9) * 100}
+                        size="sm"
+                        colorScheme="green"
+                        bg="rgba(255,255,255,0.05)"
+                        borderRadius="full"
+                        sx={{
+                          "& > div": {
+                            bgGradient: piecesUnlocked === 9 
+                              ? "linear(135deg, #22c55e, #4ade80, #22c55e)" 
+                              : "linear(135deg, #a855f7, #22c55e)",
+                            borderRadius: "full",
+                            transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                            backgroundSize: piecesUnlocked === 9 ? "200% 100%" : "100%",
+                            animation: piecesUnlocked === 9 ? "progressGlow 1.5s ease-in-out infinite" : "none",
+                            position: "relative",
+                            "&::after": {
+                              content: '""',
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
+                              animation: "progressShimmer 2.5s ease-in-out infinite",
+                            },
+                          },
+                        }}
+                      />
+                      
+                      {/* Efect sparkle la final */}
+                      {piecesUnlocked === 9 && (
+                        <Box
+                          position="absolute"
+                          top="-3px"
+                          left="-3px"
+                          right="-3px"
+                          bottom="-3px"
+                          borderRadius="full"
+                          bg="linear-gradient(90deg, #22c55e, #4ade80, #22c55e)"
+                          backgroundSize="200% 100%"
+                          animation="progressGlow 1.2s ease-in-out infinite"
+                          opacity={0.25}
+                        />
+                      )}
+                    </Box>
+                    
+                    <Flex justify="space-between" align="center" mt={1.5}>
+                      <HStack spacing={2}>
+                        <Text fontSize="10px" color="gray.300" fontFamily="'Space Mono', monospace" fontWeight="600">
+                          {piecesUnlocked} / 9
+                        </Text>
+                        {piecesUnlocked === 9 && (
+                          <Badge
+                            colorScheme="green"
+                            variant="solid"
+                            fontSize="9px"
+                            px={2.5}
+                            py={0.5}
+                            borderRadius="full"
+                            animation="completePulse 1s ease-in-out infinite"
+                          >
+                            ✨ Complete
+                          </Badge>
+                        )}
+                        {piecesUnlocked > 0 && piecesUnlocked < 9 && (
+                          <Badge
+                            colorScheme="purple"
+                            variant="subtle"
+                            fontSize="9px"
+                            px={2}
+                            py={0.5}
+                            borderRadius="full"
+                            animation={cooldownReady ? "completePulse 1.2s ease-in-out infinite" : "none"}
+                            border={cooldownReady ? "1px solid rgba(34,197,94,0.3)" : "none"}
+                          >
+                            {cooldownReady ? "⚡ Ready" : `${Math.round((piecesUnlocked / 9) * 100)}%`}
+                          </Badge>
+                        )}
+                      </HStack>
+                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">
+                        {9 - piecesUnlocked} left
+                      </Text>
+                    </Flex>
+
+                    {/* Indicator puncte - 9 puncte care se colorează */}
+                    {piecesUnlocked > 0 && piecesUnlocked < 9 && (
+                      <HStack spacing={1} justify="center" mt={2}>
+                        {[...Array(9)].map((_, i) => (
+                          <Box
+                            key={i}
+                            w="8px"
+                            h="8px"
+                            borderRadius="full"
+                            bg={i < piecesUnlocked ? "#22c55e" : "rgba(255,255,255,0.08)"}
+                            transition="all 0.4s ease"
+                            boxShadow={i < piecesUnlocked ? "0 0 8px rgba(34,197,94,0.4)" : "none"}
+                            border={i < piecesUnlocked ? "1px solid rgba(34,197,94,0.2)" : "none"}
+                          />
+                        ))}
+                      </HStack>
+                    )}
+
+                    {/* Efect de stea când se completează */}
+                    {piecesUnlocked === 9 && (
+                      <HStack spacing={2} justify="center" mt={2}>
+                        <Text fontSize="16px" animation="starFloat 1.5s ease-in-out infinite">⭐</Text>
+                        <Text fontSize="13px" color="#4ade80" fontWeight="700" fontFamily="'Space Grotesk', sans-serif" animation="completePulse 1.2s ease-in-out infinite">
+                          Puzzle Complete! 🎉
+                        </Text>
+                        <Text fontSize="16px" animation="starFloat 1.5s ease-in-out infinite" style={{ animationDelay: "0.3s" }}>⭐</Text>
+                      </HStack>
+                    )}
+
+                    {/* Mesaj când e gata de boost */}
+                    {cooldownReady && piecesUnlocked > 0 && piecesUnlocked < 9 && (
+                      <Text
+                        fontSize="9px"
+                        color="#22c55e"
+                        fontFamily="'Space Mono', monospace"
+                        textAlign="center"
+                        mt={1.5}
+                        animation="progressPop 0.4s ease-out"
+                        fontWeight="600"
+                      >
+                        ⚡ Boost ready! Click to unlock next piece
+                      </Text>
+                    )}
+                  </Box>
+
+                  {/* Badge-uri (rămân neschimbate) */}
                   {piecesUnlocked > 0 && piecesUnlocked < 9 && (
-                    <HStack spacing={2} justify="center" w="full">
+                    <HStack spacing={2} justify="center" w="full" flexWrap="wrap">
                       <Badge
                         variant="subtle"
                         colorScheme={piecesUnlocked >= 6 ? "purple" : piecesUnlocked >= 3 ? "blue" : "gray"}
@@ -1017,247 +1164,257 @@ export default function BadgePage() {
             </Box>
 
             {/* RIGHT - Preview & Actions */}
-            <VStack flex="1" spacing={6} w="full" maxW={{ lg: "420px" }}>
-              <Box
-                w="full"
-                bg="rgba(4,4,14,0.85)"
-                backdropFilter="blur(20px)"
-                borderRadius="2xl"
-                border="2px solid"
-                borderColor={
-                  hasMintedPulseCards
-                    ? "rgba(74,222,128,0.4)"
-                    : canMintPulseCards
-                      ? "rgba(74,222,128,0.3)"
-                      : hasEntry
-                        ? "rgba(168,85,247,0.3)"
-                        : "rgba(255,255,255,0.06)"
-                }
-                p={{ base: 4, md: 6 }}
-                textAlign="center"
-                position="relative"
-                overflow="hidden"
-                transition="all 0.5s ease"
-                _hover={{
-                  borderColor: hasEntry ? "rgba(168,85,247,0.5)" : "rgba(255,255,255,0.1)",
-                  boxShadow: canMintPulseCards || hasMintedPulseCards ? "0 0 60px rgba(74,222,128,0.1)" : "none",
-                }}
-              >
+            <Box flex="1" w="full" maxW={{ lg: "400px" }}>
+              <VStack spacing={5} align="stretch" w="full">
                 <Box
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  right={0}
-                  h="3px"
-                  bgGradient={
+                  w="full"
+                  bg="rgba(4,4,14,0.85)"
+                  backdropFilter="blur(20px)"
+                  borderRadius="2xl"
+                  border="2px solid"
+                  borderColor={
                     hasMintedPulseCards
-                      ? "linear(90deg, #4ade80, #22c55e, #4ade80)"
+                      ? "rgba(74,222,128,0.4)"
                       : canMintPulseCards
-                        ? "linear(90deg, #a855f7, #22c55e, #a855f7)"
+                        ? "rgba(74,222,128,0.3)"
                         : hasEntry
-                          ? "linear(90deg, #a855f7, #8b5cf6, #a855f7)"
-                          : "linear(90deg, #6b7280, #4b5563, #6b7280)"
+                          ? "rgba(168,85,247,0.3)"
+                          : "rgba(255,255,255,0.06)"
                   }
-                  backgroundSize="200% 100%"
-                  style={{ animation: "shimmerBorder 3s infinite" }}
-                />
-
-                {hasEntry && (
+                  p={{ base: 4, md: 5 }}
+                  textAlign="center"
+                  position="relative"
+                  overflow="visible"
+                  transition="all 0.5s ease"
+                  _hover={{
+                    borderColor: hasEntry ? "rgba(168,85,247,0.5)" : "rgba(255,255,255,0.1)",
+                    boxShadow: canMintPulseCards || hasMintedPulseCards ? "0 0 60px rgba(74,222,128,0.1)" : "none",
+                  }}
+                >
                   <Box
                     position="absolute"
-                    top="-8px"
-                    left="50%"
-                    transform="translateX(-50%)"
-                    bg="rgba(168,85,247,0.15)"
-                    backdropFilter="blur(10px)"
-                    px={4}
-                    py={1}
-                    borderRadius="full"
-                    border="1px solid rgba(168,85,247,0.3)"
-                    whiteSpace="nowrap"
-                    boxShadow="0 0 30px rgba(168,85,247,0.2)"
-                  >
-                    <HStack spacing={2}>
-                      <Image src={PULSE_ENTRY_IMAGE} alt="PulseEntry" boxSize="18px" borderRadius="full" objectFit="cover" />
-                      <Text fontSize="10px" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
-                        PulseEntry Owned
-                      </Text>
-                    </HStack>
-                  </Box>
-                )}
+                    top={0}
+                    left={0}
+                    right={0}
+                    h="3px"
+                    bgGradient={
+                      hasMintedPulseCards
+                        ? "linear(90deg, #4ade80, #22c55e, #4ade80)"
+                        : canMintPulseCards
+                          ? "linear(90deg, #a855f7, #22c55e, #a855f7)"
+                          : hasEntry
+                            ? "linear(90deg, #a855f7, #8b5cf6, #a855f7)"
+                            : "linear(90deg, #6b7280, #4b5563, #6b7280)"
+                    }
+                    backgroundSize="200% 100%"
+                    style={{ animation: "shimmerBorder 3s infinite" }}
+                  />
 
-                <Box pt={hasEntry ? 6 : 0} position="relative">
-                  {hasEntry ? (
-                    <Box position="relative" display="inline-block">
+                  {/* PulseEntry Owned Badge - DEPĂȘEȘTE MARGINEA DE SUS */}
+                  {hasEntry && (
+                    <Box
+                      position="absolute"
+                      top="-14px"
+                      left="50%"
+                      transform="translateX(-50%)"
+                      bg="rgba(168,85,247,0.15)"
+                      backdropFilter="blur(12px)"
+                      px={4}
+                      py={1.5}
+                      borderRadius="full"
+                      border="1px solid rgba(168,85,247,0.4)"
+                      whiteSpace="nowrap"
+                      boxShadow="0 0 30px rgba(168,85,247,0.3), 0 4px 20px rgba(0,0,0,0.3)"
+                      zIndex={10}
+                    >
+                      <HStack spacing={2}>
+                        <Image 
+                          src={PULSE_ENTRY_IMAGE} 
+                          alt="PulseEntry" 
+                          boxSize="20px" 
+                          borderRadius="full" 
+                          objectFit="cover" 
+                        />
+                        <Text fontSize="11px" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
+                          PulseEntry Owned
+                        </Text>
+                      </HStack>
+                    </Box>
+                  )}
+
+                  <Box pt={hasEntry ? 8 : 0} position="relative">
+                    {hasEntry ? (
+                      <Box position="relative" display="inline-block">
+                        <Image
+                          src={PULSECARDS_SOULBOUND_IMAGE}
+                          alt="PulseCards Soulbound"
+                          boxSize={{ base: "170px", md: "200px" }}
+                          objectFit="contain"
+                          mx="auto"
+                          filter={
+                            hasMintedPulseCards
+                              ? "none"
+                              : canMintPulseCards
+                                ? "drop-shadow(0 0 40px rgba(168,85,247,0.4))"
+                                : "blur(10px) grayscale(60%) brightness(0.5)"
+                          }
+                          transition="filter 1s ease, transform 0.8s"
+                          borderRadius="2xl"
+                        />
+
+                        {!canMintPulseCards && !hasMintedPulseCards && hasEntry && (
+                          <Box
+                            position="absolute"
+                            inset={0}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            bg="rgba(0,0,0,0.6)"
+                            borderRadius="2xl"
+                            backdropFilter="blur(4px)"
+                          >
+                            <Badge colorScheme="purple" fontSize="sm" px={4} py={2} borderRadius="full" fontFamily="'Space Mono', monospace">
+                              {9 - piecesUnlocked} Boost{9 - piecesUnlocked !== 1 ? "s" : ""} remaining
+                            </Badge>
+                          </Box>
+                        )}
+                      </Box>
+                    ) : (
                       <Image
-                        src={PULSECARDS_SOULBOUND_IMAGE}
-                        alt="PulseCards Soulbound"
-                        boxSize={{ base: "180px", md: "220px" }}
+                        src={PULSE_ENTRY_IMAGE}
+                        alt="PulseEntry Preview"
+                        boxSize={{ base: "190px", md: "220px" }}
                         objectFit="contain"
                         mx="auto"
-                        filter={
-                          hasMintedPulseCards
-                            ? "none"
-                            : canMintPulseCards
-                              ? "drop-shadow(0 0 40px rgba(168,85,247,0.4))"
-                              : "blur(10px) grayscale(60%) brightness(0.5)"
-                        }
-                        transition="filter 1s ease, transform 0.8s"
                         borderRadius="2xl"
+                        boxShadow="0 0 40px rgba(168,85,247,0.2)"
                       />
+                    )}
+                  </Box>
 
-                      {!canMintPulseCards && !hasMintedPulseCards && hasEntry && (
-                        <Box
-                          position="absolute"
-                          inset={0}
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          bg="rgba(0,0,0,0.6)"
-                          borderRadius="2xl"
-                          backdropFilter="blur(4px)"
-                        >
-                          <Badge colorScheme="purple" fontSize="sm" px={4} py={2} borderRadius="full" fontFamily="'Space Mono', monospace">
-                            {9 - piecesUnlocked} Boost{9 - piecesUnlocked !== 1 ? "s" : ""} remaining
-                          </Badge>
-                        </Box>
-                      )}
-                    </Box>
+                  {/* Status Text */}
+                  {hasMintedPulseCards ? (
+                    <Text fontSize="md" fontWeight="700" color="#4ade80" fontFamily="'Space Grotesk', sans-serif" mt={2}>
+                      ✦ Soulbound PulseCards Minted! ✦
+                    </Text>
+                  ) : canMintPulseCards ? (
+                    <Text fontSize="md" fontWeight="700" color="#22c55e" fontFamily="'Space Grotesk', sans-serif" mt={2} style={{ animation: "pulseAnimation 1.5s infinite" }}>
+                      🔓 Achievement Unlocked!
+                    </Text>
+                  ) : hasEntry ? (
+                    <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={2}>
+                      {9 - piecesUnlocked} Boost{9 - piecesUnlocked !== 1 ? "s" : ""} remaining
+                    </Text>
                   ) : (
-                    <Image
-                      src={PULSE_ENTRY_IMAGE}
-                      alt="PulseEntry Preview"
-                      boxSize={{ base: "200px", md: "240px" }}
-                      objectFit="contain"
-                      mx="auto"
-                      borderRadius="2xl"
-                      boxShadow="0 0 40px rgba(168,85,247,0.2)"
-                    />
+                    <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={2}>
+                      Mint PulseEntry to start your journey
+                    </Text>
+                  )}
+
+                  {/* Cooldown Timer */}
+                  {hasEntry && !canBoost && piecesUnlocked < 9 && (
+                    <HStack spacing={3} justify="center" bg="rgba(168,85,247,0.05)" px={4} py={2} borderRadius="full" mt={3}>
+                      <Badge colorScheme="orange" variant="solid" borderRadius="full" px={2} fontSize="9px" fontFamily="'Space Mono', monospace">
+                        ⏱️
+                      </Badge>
+                      <Text fontSize="md" color="#a855f7" fontWeight="600" fontFamily="'Space Mono', monospace">
+                        {timeLeft}
+                      </Text>
+                    </HStack>
                   )}
                 </Box>
 
-                {/* Status Text */}
-                {hasMintedPulseCards ? (
-                  <Text fontSize="lg" fontWeight="700" color="#4ade80" fontFamily="'Space Grotesk', sans-serif" mt={2}>
-                    ✦ Soulbound PulseCards Minted! ✦
-                  </Text>
-                ) : canMintPulseCards ? (
-                  <Text fontSize="lg" fontWeight="700" color="#22c55e" fontFamily="'Space Grotesk', sans-serif" mt={2} style={{ animation: "pulseAnimation 1.5s infinite" }}>
-                    🔓 Achievement Unlocked!
-                  </Text>
-                ) : hasEntry ? (
-                  <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={2}>
-                    {9 - piecesUnlocked} Boost{9 - piecesUnlocked !== 1 ? "s" : ""} remaining
-                  </Text>
+                {/* Main Action Button */}
+                {isConnected ? (
+                  <Button
+                    w="full"
+                    size="lg"
+                    h="52px"
+                    fontSize="md"
+                    fontWeight="700"
+                    fontFamily="'Space Grotesk', sans-serif"
+                    bgGradient={
+                      !isCorrectChain
+                        ? "linear(135deg, #ef4444, #dc2626)"
+                        : mainActionType === "mintPulseCards"
+                          ? "linear(135deg, #a855f7, #7c3aed)"
+                          : mainActionType === "mintEntry"
+                            ? "linear(135deg, #8b5cf6, #6d28d9)"
+                            : mainActionType === "boost"
+                              ? "linear(135deg, #22c55e, #16a34a)"
+                              : "linear(135deg, #6b7280, #4b5563)"
+                    }
+                    color="white"
+                    borderRadius="xl"
+                    onClick={handleMainClick}
+                    isDisabled={isMainDisabled || (mainActionType === "boost" && !canBoost) || (mainActionType === "mintEntry" && hasEntry)}
+                    isLoading={isTxPending}
+                    _hover={
+                      !isMainDisabled && mainActionType
+                        ? {
+                            transform: "translateY(-3px)",
+                            boxShadow: `0 10px 40px ${
+                              mainActionType === "mintPulseCards"
+                                ? "rgba(168,85,247,0.4)"
+                                : mainActionType === "boost"
+                                  ? "rgba(34,197,94,0.4)"
+                                  : "rgba(139,92,246,0.4)"
+                            }`,
+                          }
+                        : {}
+                    }
+                    _active={!isMainDisabled && mainActionType ? { transform: "scale(0.97)" } : {}}
+                    transition="all 0.2s"
+                  >
+                    {!isCorrectChain ? "⚠️ Switch to Soneium" : mainButtonLabel}
+                  </Button>
                 ) : (
-                  <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={2}>
-                    Mint PulseEntry to start your journey
-                  </Text>
-                )}
-
-                {/* Cooldown Timer */}
-                {hasEntry && !canBoost && piecesUnlocked < 9 && (
-                  <HStack spacing={3} justify="center" bg="rgba(168,85,247,0.05)" px={4} py={2} borderRadius="full" mt={3}>
-                    <Badge colorScheme="orange" variant="solid" borderRadius="full" px={2} fontSize="9px" fontFamily="'Space Mono', monospace">
-                      ⏱️
-                    </Badge>
-                    <Text fontSize="md" color="#a855f7" fontWeight="600" fontFamily="'Space Mono', monospace">
-                      {timeLeft}
+                  <Box w="full" p={4} textAlign="center" bg="rgba(255,255,255,0.03)" borderRadius="xl" border="1px solid rgba(255,255,255,0.06)">
+                    <Text fontSize="sm" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                      Connect your wallet to start
                     </Text>
-                  </HStack>
+                  </Box>
                 )}
-              </Box>
 
-              {/* Main Action Button */}
-              {isConnected ? (
-                <Button
+                {/* SBT Utility Teaser */}
+                <Box
                   w="full"
-                  size="lg"
-                  h="56px"
-                  fontSize="lg"
-                  fontWeight="700"
-                  fontFamily="'Space Grotesk', sans-serif"
-                  bgGradient={
-                    !isCorrectChain
-                      ? "linear(135deg, #ef4444, #dc2626)"
-                      : mainActionType === "mintPulseCards"
-                        ? "linear(135deg, #a855f7, #7c3aed)"
-                        : mainActionType === "mintEntry"
-                          ? "linear(135deg, #8b5cf6, #6d28d9)"
-                          : mainActionType === "boost"
-                            ? "linear(135deg, #22c55e, #16a34a)"
-                            : "linear(135deg, #6b7280, #4b5563)"
-                  }
-                  color="white"
+                  bg="rgba(168,85,247,0.05)"
+                  border="1px solid rgba(168,85,247,0.15)"
                   borderRadius="xl"
-                  onClick={handleMainClick}
-                  isDisabled={isMainDisabled || (mainActionType === "boost" && !canBoost) || (mainActionType === "mintEntry" && hasEntry)}
-                  isLoading={isTxPending}
-                  _hover={
-                    !isMainDisabled && mainActionType
-                      ? {
-                          transform: "translateY(-3px)",
-                          boxShadow: `0 10px 40px ${
-                            mainActionType === "mintPulseCards"
-                              ? "rgba(168,85,247,0.4)"
-                              : mainActionType === "boost"
-                                ? "rgba(34,197,94,0.4)"
-                                : "rgba(139,92,246,0.4)"
-                          }`,
-                        }
-                      : {}
-                  }
-                  _active={!isMainDisabled && mainActionType ? { transform: "scale(0.97)" } : {}}
-                  transition="all 0.2s"
+                  p={3.5}
+                  _hover={{
+                    borderColor: "rgba(168,85,247,0.3)",
+                    bg: "rgba(168,85,247,0.08)",
+                  }}
+                  transition="all 0.3s ease"
+                  cursor="pointer"
+                  onClick={() => setIsSbtOpen(true)}
                 >
-                  {!isCorrectChain ? "⚠️ Switch to Soneium" : mainButtonLabel}
-                </Button>
-              ) : (
-                <Box w="full" p={4} textAlign="center" bg="rgba(255,255,255,0.03)" borderRadius="xl" border="1px solid rgba(255,255,255,0.06)">
-                  <Text fontSize="sm" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
-                    Connect your wallet to start
-                  </Text>
+                  <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+                    <HStack spacing={2}>
+                      <Text fontSize="lg">🎯</Text>
+                      <Box>
+                        <Text fontSize="xs" fontWeight="600" color="white" fontFamily="'Space Grotesk', sans-serif">
+                          PulseCards SBT Utility
+                        </Text>
+                        <Text fontSize="9px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                          Free daily on-chain actions
+                        </Text>
+                      </Box>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Badge colorScheme="green" borderRadius="full" px={2} py={0.5} fontSize="8px" fontFamily="'Space Mono', monospace">
+                        ● LIVE
+                      </Badge>
+                      <Button size="xs" colorScheme="purple" variant="ghost" borderRadius="full" fontSize="9px" fontWeight="600">
+                        Learn More →
+                      </Button>
+                    </HStack>
+                  </Flex>
                 </Box>
-              )}
-
-              {/* SBT Utility Teaser */}
-              <Box
-                w="full"
-                bg="rgba(168,85,247,0.05)"
-                border="1px solid rgba(168,85,247,0.15)"
-                borderRadius="xl"
-                p={4}
-                _hover={{
-                  borderColor: "rgba(168,85,247,0.3)",
-                  bg: "rgba(168,85,247,0.08)",
-                }}
-                transition="all 0.3s ease"
-                cursor="pointer"
-                onClick={() => setIsSbtOpen(true)}
-              >
-                <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
-                  <HStack spacing={3}>
-                    <Text fontSize="lg">🎯</Text>
-                    <Box>
-                      <Text fontSize="sm" fontWeight="600" color="white" fontFamily="'Space Grotesk', sans-serif">
-                        PulseCards SBT Utility
-                      </Text>
-                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
-                        Free daily on-chain actions
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack spacing={2}>
-                    <Badge colorScheme="green" borderRadius="full" px={2} py={0.5} fontSize="8px" fontFamily="'Space Mono', monospace">
-                      ● LIVE
-                    </Badge>
-                    <Button size="xs" colorScheme="purple" variant="ghost" borderRadius="full" fontSize="10px" fontWeight="600">
-                      Learn More →
-                    </Button>
-                  </HStack>
-                </Flex>
-              </Box>
-            </VStack>
+              </VStack>
+            </Box>
           </Flex>
 
           {/* ─── How It Works ─── */}

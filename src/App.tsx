@@ -743,7 +743,7 @@ export default function App() {
                   <VStack spacing={0} align="stretch">
                     <Button
                       onClick={() => {
-                        navigate("/activity-reputation");
+                        navigate("/tools/badge-season-12");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -764,7 +764,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/badge-season-10");
+                        navigate("/tools/badge-season-10");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -785,7 +785,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/gmorning");
+                        navigate("/tools/gmorning");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -806,7 +806,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/vault");
+                        navigate("/tools/vault");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -980,13 +980,13 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/activity-reputation");
+                          navigate("/tools/badge-season-12");
                         }}
                         onTouchStart={() => {
                           // Pentru mobil, asigură că navigarea se face
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/activity-reputation");
+                            navigate("/tools/badge-season-12");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1010,12 +1010,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/badge-season-10");
+                          navigate("/tools/badge-season-10");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/badge-season-10");
+                            navigate("/tools/badge-season-10");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1039,12 +1039,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/gmorning");
+                          navigate("/tools/gmorning");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/gmorning");
+                            navigate("/tools/gmorning");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1068,12 +1068,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/vault");
+                          navigate("/tools/vault");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/vault");
+                            navigate("/tools/vault");
                           }, 50);
                         }}
                         variant="ghost"

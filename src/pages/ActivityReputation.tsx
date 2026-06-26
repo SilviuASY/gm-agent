@@ -523,7 +523,7 @@ export default function ActivityReputation() {
         `👤 +${points} Reputation Point\n` +
         `📈 Keeping the Web3 streak alive! 🔥\n\n` +
         `🎯 Join the community and start building your on-chain legacy!\n\n` +
-        `@Soneium • @pulse_vault${handleTag}\n\n` +
+        `@Soneium • @gm_agent_xyz${handleTag}\n\n` +
         `✨ gm-agent.xyz ✨`
     );
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");

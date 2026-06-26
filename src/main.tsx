@@ -12,6 +12,7 @@ import ActivityReputation from "./pages/ActivityReputation";
 import GMPage from './pages/GM'
 import VaultPage from './pages/Vault'
 import BadgePage from './pages/BadgePage'
+import Docs from './pages/docs'
 
  // Pages
 
@@ -33,6 +34,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/tools/gmorning" element={<GMPage />} />
                 <Route path="/tools/vault" element={<VaultPage />} />
                 <Route path="/tools/badge-season-10" element={<BadgePage />} />
+                <Route path="/tools/docs" element={<Docs />} />
               </Routes>
             </BrowserRouter>
           </ChakraProvider>

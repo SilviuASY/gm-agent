@@ -45,6 +45,7 @@ import { useState } from "react";
 import confetti from "canvas-confetti";
 import { ChevronLeftIcon, ExternalLinkIcon, CopyIcon } from "@chakra-ui/icons";
 import { FaTwitter } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
 
 import TransactionModal from "../components/TransactionModal";
 import { LeaderboardModal } from "../components/LeaderboardModal";
@@ -109,6 +110,8 @@ interface SuccessModalData {
 }
 
 export default function ActivityReputation() {
+  const navigate = useNavigate();
+
   useFixScroll();
 
   const { address, isConnected } = useAccount();
@@ -656,7 +659,7 @@ export default function ActivityReputation() {
         <Flex justify="space-between" align="center" mb={{ base: 4, md: 8 }} direction={{ base: "column", md: "row" }} gap={{ base: 3, md: 4 }}>
           <HStack spacing={{ base: 1, md: 4 }} animation={`${slideInLeft} 0.6s ease-out`} w={{ base: "full", md: "auto" }} justify={{ base: "flex-start", md: "flex-start" }}>
             <Button
-              onClick={() => window.history.back()}
+              onClick={() => navigate(-1)}
               variant="solid"
               bg="rgba(139,92,246,0.2)"
               color="white"

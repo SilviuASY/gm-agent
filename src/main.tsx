@@ -29,9 +29,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/" element={<App />} />
                 <Route path="/activity-reputation" element={<ActivityReputation />} />
                 <Route path="/activity-reputation/*" element={<ActivityReputation />} />
-                <Route path="/gmorning" element={<GMPage />} />
-                <Route path="/vault" element={<VaultPage />} />
-                <Route path="/badge-season-10" element={<BadgePage />} />
+                <Route path="/tools/badge-season-12/" element={<ActivityReputation />} />
+                <Route path="/tools/gmorning" element={<GMPage />} />
+                <Route path="/tools/vault" element={<VaultPage />} />
+                <Route path="/tools/badge-season-10" element={<BadgePage />} />
               </Routes>
             </BrowserRouter>
           </ChakraProvider>

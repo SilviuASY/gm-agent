@@ -372,7 +372,7 @@ const StatCard = ({ stat, index }: { stat: any; index: number }) => (
           {stat.icon}
         </Flex>
         <Box flex="1" minW="0">
-          <Text fontSize="9px" color="gray.600" textTransform="uppercase" letterSpacing="0.2em"
+          <Text fontSize="9px" color="gray.500" textTransform="uppercase" letterSpacing="0.2em"
             fontFamily="'Space Mono', monospace" fontWeight="700" mb={0.5}>
             {stat.label}
           </Text>
@@ -381,7 +381,7 @@ const StatCard = ({ stat, index }: { stat: any; index: number }) => (
             style={{ animation: 'countUp 0.6s ease-out forwards' }}>
             {stat.value}
           </Text>
-          <Text fontSize="9px" color="gray.700" mt={1} fontFamily="'Space Grotesk', sans-serif">
+          <Text fontSize="9px" color="gray.400" mt={1} fontFamily="'Space Grotesk', sans-serif" fontWeight="500">
             {stat.description}
           </Text>
         </Box>
@@ -689,7 +689,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
             <Heading size="sm" color="white" fontWeight="700" fontFamily="'Space Grotesk', sans-serif">
               What is GM &amp; Deploy?
             </Heading>
-            <Text fontSize="xs" color="gray.600" fontFamily="'Space Grotesk', sans-serif">
+            <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
               Agent GM Protocol · 5 Networks
             </Text>
           </Box>
@@ -717,7 +717,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
                 <Text fontWeight="700" color="#2dd4bf" fontSize="sm" mb={1} fontFamily="'Space Grotesk', sans-serif">
                   Say GM
                 </Text>
-                <Text fontSize="xs" color="gray.500" lineHeight="1.7" fontFamily="'Space Grotesk', sans-serif">
+                <Text fontSize="xs" color="gray.400" lineHeight="1.7" fontFamily="'Space Grotesk', sans-serif">
                   Send a daily on-chain greeting across any network. Each GM mints an ERC-8004 token and
                   contributes to your activity streak.
                 </Text>
@@ -737,7 +737,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
                 <Text fontWeight="700" color="#e879f9" fontSize="sm" mb={1} fontFamily="'Space Grotesk', sans-serif">
                   Deploy Contract
                 </Text>
-                <Text fontSize="xs" color="gray.500" lineHeight="1.7" fontFamily="'Space Grotesk', sans-serif">
+                <Text fontSize="xs" color="gray.400" lineHeight="1.7" fontFamily="'Space Grotesk', sans-serif">
                   Deploy a smart contract on any supported chain in seconds. Ideal for testing,
                   prototyping, or launching your next dApp.
                 </Text>
@@ -757,7 +757,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
           ].map(({ dot, text }) => (
             <HStack key={text} spacing={1.5}>
               <Box w="5px" h="5px" borderRadius="full" bg={dot} flexShrink={0} />
-              <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">{text}</Text>
+              <Text fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif">{text}</Text>
             </HStack>
           ))}
         </HStack>
@@ -810,7 +810,7 @@ const Footer = () => (
         ].map(({ label, value }, i, arr) => (
           <HStack key={label} spacing={0}>
             <VStack spacing={0} px={{ base: 4, md: 6 }} py={1}>
-              <Text fontSize="9px" color="gray.700" textTransform="uppercase" letterSpacing="0.18em"
+              <Text fontSize="9px" color="gray.600" textTransform="uppercase" letterSpacing="0.18em"
                 fontFamily="'Space Mono', monospace">{label}</Text>
               <Text fontSize="xs" fontWeight="700" color="gray.400" fontFamily="'Space Mono', monospace">
                 {value}
@@ -825,11 +825,11 @@ const Footer = () => (
 
       {/* bottom line */}
       <VStack spacing={1}>
-        <Text fontSize="9px" color="gray.700" fontFamily="'Space Mono', monospace" letterSpacing="0.12em" textAlign="center">
+        <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace" letterSpacing="0.12em" textAlign="center">
           © 2026 · Agent GM Protocol · All rights reserved
         </Text>
-        <Text fontSize="9px" color="gray.800" fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
-          Built on Soneium · Powered by EVM
+        <Text fontSize="9px" color="gray.600" fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+          Built on Soneium · Powered by SilviuASY
         </Text>
       </VStack>
     </VStack>
@@ -1123,7 +1123,7 @@ export default function GMPage() {
                     v2.1
                   </Badge>
                 </HStack>
-                <Text color="gray.700" fontSize={{ base: '9px', md: '10px' }} letterSpacing="0.2em"
+                <Text color="gray.600" fontSize={{ base: '9px', md: '10px' }} letterSpacing="0.2em"
                   fontFamily="'Space Mono', monospace" textTransform="uppercase">
                   5 Networks · GM · Deploy · Earn
                 </Text>

@@ -18,6 +18,8 @@ import {
   Progress,
   Spinner,
   Skeleton,
+  Image,
+  Divider,
 } from "@chakra-ui/react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -31,7 +33,7 @@ import {
 } from "wagmi";
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
-import { ChevronLeftIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, CheckCircleIcon, SmallCloseIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -85,6 +87,14 @@ const pageStyles = `
     0%, 100% { transform: scale(1) translateY(0px); opacity: 0.45; }
     50% { transform: scale(1.1) translateY(-20px); opacity: 0.7; }
   }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes confettiDrop {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100px) rotate(720deg); opacity: 0; }
+  }
 `;
 
 // ============= Main Page =============
@@ -130,7 +140,6 @@ export default function Academy() {
 
   // ============= Read Contracts =============
 
-  // Get all quests from contract
   const { data: questsData, refetch: refetchQuests } = useReadContract({
     address: toHexAddress(AGENT_QUEST_ADDRESS),
     abi: AgentQuestABI,
@@ -138,7 +147,6 @@ export default function Academy() {
     query: { enabled: isCorrectChain },
   });
 
-  // Get graduate status
   const { data: graduateStatus, refetch: refetchGraduateStatus } = useReadContract({
     address: toHexAddress(AGENT_GRADUATE_ADDRESS),
     abi: AgentGraduateABI,
@@ -147,7 +155,6 @@ export default function Academy() {
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
-  // Get graduate config for fees
   const { data: graduateConfig, refetch: refetchGraduateConfig } = useReadContract({
     address: toHexAddress(AGENT_GRADUATE_ADDRESS),
     abi: AgentGraduateABI,
@@ -165,7 +172,7 @@ export default function Academy() {
       if (data.error) throw new Error(data.error);
       setQuestQuestions(data.questions);
       setQuestName(data.name);
-      setAnswers(new Array(data.questions.length).fill(false));
+      setAnswers(new Array(data.questions.length).fill(null as any));
       setSelectedQuest(questId);
       setCurrentStep("quiz");
     } catch (error) {
@@ -466,7 +473,6 @@ export default function Academy() {
     }
   };
 
-  // Fetch progress for all quests
   useEffect(() => {
     if (address && isConnected && isCorrectChain && questsData) {
       const quests = questsData as any[];
@@ -476,7 +482,6 @@ export default function Academy() {
     }
   }, [address, isConnected, isCorrectChain, questsData]);
 
-  // Update graduate status
   useEffect(() => {
     if (graduateStatus) {
       const status = graduateStatus as any;
@@ -486,7 +491,6 @@ export default function Academy() {
     }
   }, [graduateStatus]);
 
-  // Extract fees from config
   useEffect(() => {
     if (graduateConfig) {
       const config = graduateConfig as any;
@@ -497,25 +501,30 @@ export default function Academy() {
 
   // ============= UI Helpers =============
 
-  const getQuestIcon = (id: number) => {
-    const icons: { [key: number]: string } = {
-      1: "🌅",
-      2: "🔄",
-      3: "🚀",
-      4: "🧬",
-    };
-    return icons[id] || "📚";
+  const questIcons: { [key: number]: string } = {
+    1: "/soneium.png",
+    2: "/dex.png",
+    3: "/deploy.png",
+    4: "/agent.png",
   };
 
-  const getQuestColor = (id: number) => {
-    const colors: { [key: number]: string } = {
-      1: "#22c55e",
-      2: "#3b82f6",
-      3: "#ec4899",
-      4: "#8b5cf6",
-    };
-    return colors[id] || "#6b7280";
+  const questColors: { [key: number]: string } = {
+    1: "#06b6d4",
+    2: "#3b82f6",
+    3: "#ec4899",
+    4: "#8b5cf6",
   };
+
+  const questBgColors: { [key: number]: string } = {
+    1: "rgba(6,182,212,0.1)",
+    2: "rgba(59,130,246,0.1)",
+    3: "rgba(236,72,153,0.1)",
+    4: "rgba(139,92,246,0.1)",
+  };
+
+  const getQuestIcon = (id: number) => questIcons[id] || "/agent.png";
+  const getQuestColor = (id: number) => questColors[id] || "#6b7280";
+  const getQuestBg = (id: number) => questBgColors[id] || "rgba(139,92,246,0.05)";
 
   const hasUserCompletedQuest = (questId: number): boolean => {
     return userProgress[questId]?.completed || false;
@@ -536,6 +545,10 @@ export default function Academy() {
 
   const isSignatureExpired = (): boolean => {
     return deadline > 0 && Date.now() / 1000 > deadline;
+  };
+
+  const allAnswersSelected = (): boolean => {
+    return answers.every(a => a !== undefined && a !== null);
   };
 
   return (
@@ -749,10 +762,11 @@ export default function Academy() {
                             {hasGraduateBadge ? "🎓 Graduate Agent" : "Agent Graduate"}
                           </Text>
                           <Text fontSize="sm" color="gray.400">
-                            {hasGraduateBadge
-                              ? "You have earned the ultimate badge!"
-                              : `Complete ${4 - completedCount} more quests to unlock (or buy directly)`
-                            }
+                            {hasGraduateBadge ? (
+                              "You have earned the ultimate Agent Graduate badge! 🏆"
+                            ) : (
+                              `Complete all ${4} educational quests to unlock the Graduate badge and earn +2 bonus reputation points for Season 13.`
+                            )}
                           </Text>
                         </Box>
                       </HStack>
@@ -827,6 +841,16 @@ export default function Academy() {
                         }}
                       />
                     </Box>
+
+                    <Text fontSize="xs" color="gray.500" mt={3} textAlign="center" fontFamily="'Space Mono', monospace">
+                      {hasGraduateBadge ? (
+                        "✅ Badge minted — +2 bonus reputation points for Season 13"
+                      ) : isEligible ? (
+                        "🎯 All quests complete! Mint your Graduate badge now."
+                      ) : (
+                        `📚 ${4 - completedCount} quest(s) remaining to unlock the Graduate badge`
+                      )}
+                    </Text>
                   </Box>
                 </Box>
               )}
@@ -836,9 +860,24 @@ export default function Academy() {
                 <HStack mb={4} spacing={2}>
                   <Box w="4px" h="4px" borderRadius="full" bg="#a855f7" animation="pulseGlow 2s infinite" />
                   <Heading size="sm" color="gray.300" fontWeight="600">
-                    📚 Available Quests
+                    📚 Educational Quests
                   </Heading>
+                  <Badge
+                    bg="rgba(139,92,246,0.1)"
+                    color="#a855f7"
+                    fontSize="8px"
+                    px={2}
+                    py={0.5}
+                    borderRadius="full"
+                    fontFamily="'Space Mono', monospace"
+                  >
+                    Season 13
+                  </Badge>
                 </HStack>
+
+                <Text fontSize="sm" color="gray.500" mb={4}>
+                  Complete all {4} quests to earn the exclusive Agent Graduate badge and receive +2 bonus reputation points for Season 13 on Soneium.
+                </Text>
 
                 {!isConnected ? (
                   <Box textAlign="center" py={20} bg="rgba(4,4,14,0.6)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.15)">
@@ -883,22 +922,50 @@ export default function Academy() {
                                 boxShadow: isMinted ? '0 0 30px rgba(74,222,128,0.1)' : '0 0 30px rgba(139,92,246,0.05)',
                               }}
                               opacity={isActive ? 1 : 0.5}
+                              position="relative"
+                              overflow="hidden"
                             >
+                              {isMinted && (
+                                <Box
+                                  position="absolute"
+                                  top={0}
+                                  right={0}
+                                  px={3}
+                                  py={1}
+                                  bg="rgba(34,197,94,0.9)"
+                                  borderBottomLeftRadius="lg"
+                                >
+                                  <HStack spacing={1}>
+                                    <CheckCircleIcon boxSize={3} color="white" />
+                                    <Text fontSize="8px" color="white" fontWeight="700" fontFamily="'Space Mono', monospace">
+                                      COMPLETED
+                                    </Text>
+                                  </HStack>
+                                </Box>
+                              )}
+
                               <HStack justify="space-between" align="start">
-                                <HStack spacing={3}>
+                                <HStack spacing={4}>
                                   <Box
-                                    fontSize="32px"
                                     w="48px"
                                     h="48px"
                                     borderRadius="full"
-                                    bg={`${getQuestColor(id)}15`}
+                                    bg={getQuestBg(id)}
                                     border={`1px solid ${getQuestColor(id)}30`}
                                     display="flex"
                                     alignItems="center"
                                     justifyContent="center"
                                     flexShrink={0}
+                                    overflow="hidden"
                                   >
-                                    {getQuestIcon(id)}
+                                    <Image
+                                      src={getQuestIcon(id)}
+                                      alt={quest.name}
+                                      w="32px"
+                                      h="32px"
+                                      objectFit="contain"
+                                      fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='50%' x='50%' text-anchor='middle' font-size='24'>📚</text></svg>"
+                                    />
                                   </Box>
                                   <Box>
                                     <Text fontWeight="700" color="white" fontSize="md">
@@ -924,7 +991,9 @@ export default function Academy() {
                                 {quest.description || `Complete this quest to earn a badge!`}
                               </Text>
 
-                              <HStack mt={4} spacing={3} justify="space-between">
+                              <Divider my={3} borderColor="rgba(139,92,246,0.1)" />
+
+                              <HStack mt={0} spacing={3} justify="space-between">
                                 <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
                                   Fee: {Number(quest.fee) / 1e18} ETH
                                 </Text>
@@ -959,7 +1028,7 @@ export default function Academy() {
                       })
                     ) : (
                       Array.from({ length: 4 }).map((_, i) => (
-                        <Skeleton key={i} height="200px" borderRadius="2xl" startColor="rgba(139,92,246,0.1)" endColor="rgba(139,92,246,0.05)" />
+                        <Skeleton key={i} height="220px" borderRadius="2xl" startColor="rgba(139,92,246,0.1)" endColor="rgba(139,92,246,0.05)" />
                       ))
                     )}
                   </SimpleGrid>
@@ -1004,13 +1073,16 @@ export default function Academy() {
                   <Badge bg="rgba(139,92,246,0.15)" color="#a855f7" px={3} py={1} borderRadius="full">
                     Quiz
                   </Badge>
+                  <Badge bg="rgba(251,191,36,0.1)" color="#fbbf24" px={3} py={1} borderRadius="full" fontSize="9px">
+                    {questQuestions.length} Questions
+                  </Badge>
                 </HStack>
 
                 <Heading size="md" color="white" mb={2}>
                   {questName}
                 </Heading>
                 <Text color="gray.400" fontSize="sm" mb={6}>
-                  Answer all questions correctly to earn your badge
+                  Test your knowledge about {questName.replace('How to use ', '').replace('Deploy on ', '').replace('Agent ', '')}. Answer all questions correctly to earn your badge.
                 </Text>
 
                 {isLoading ? (
@@ -1027,13 +1099,15 @@ export default function Academy() {
                         borderRadius="xl"
                         p={4}
                         border="1px solid rgba(139,92,246,0.1)"
+                        transition="border-color 0.2s"
+                        _hover={{ borderColor: "rgba(139,92,246,0.3)" }}
                       >
                         <Text fontWeight="600" color="white" mb={3}>
                           {index + 1}. {q.question}
                         </Text>
                         <RadioGroup
                           onChange={(value) => handleAnswerChange(index, value)}
-                          value={answers[index] ? "true" : "false"}
+                          value={answers[index] !== undefined && answers[index] !== null ? (answers[index] ? "true" : "false") : ""}
                         >
                           <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
                             <Radio value="true" colorScheme="green" size="md">
@@ -1056,7 +1130,7 @@ export default function Academy() {
                       w="full"
                       mt={4}
                       isLoading={isSubmitting}
-                      isDisabled={answers.some(a => a === undefined)}
+                      isDisabled={!allAnswersSelected()}
                       _hover={{
                         transform: "scale(1.02)",
                         boxShadow: "0 0 30px rgba(139,92,246,0.3)",
@@ -1064,7 +1138,7 @@ export default function Academy() {
                       transition="all 0.3s"
                       onClick={handleSubmitQuiz}
                     >
-                      Submit Answers
+                      {!allAnswersSelected() ? "Answer all questions" : "Submit Answers"}
                     </Button>
                   </VStack>
                 )}
@@ -1088,8 +1162,21 @@ export default function Academy() {
                 border="1px solid rgba(34,197,94,0.3)"
                 p={{ base: 5, md: 8 }}
                 textAlign="center"
+                position="relative"
+                overflow="hidden"
               >
-                <Box fontSize="56px" mb={4}>🎉</Box>
+                <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  h="3px"
+                  bgGradient="linear(90deg, #22c55e, #4ade80, #22c55e)"
+                />
+
+                <Box fontSize="64px" mb={4} animation="confettiDrop 1.5s ease-in-out">
+                  🎉
+                </Box>
                 <Heading size="lg" color="#4ade80" mb={2}>
                   All Answers Correct!
                 </Heading>
@@ -1103,23 +1190,37 @@ export default function Academy() {
                   p={4}
                   mb={6}
                   textAlign="left"
+                  border="1px solid rgba(34,197,94,0.1)"
                 >
-                  <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" mb={1}>
-                    Signature Generated
-                  </Text>
-                  <Text fontSize="xs" color="#4ade80" fontFamily="'Space Mono', monospace" wordBreak="break-all">
+                  <HStack spacing={3} mb={2}>
+                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                      🔐 Signature Generated
+                    </Text>
+                    <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" fontSize="8px" px={2} py={0.5} borderRadius="full">
+                      Valid
+                    </Badge>
+                  </HStack>
+                  <Text fontSize="xs" color="#4ade80" fontFamily="'Space Mono', monospace" wordBreak="break-all" mb={2}>
                     {signature.slice(0, 40)}...{signature.slice(-20)}
                   </Text>
-                  <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" mt={1}>
-                    ⏰ Valid until: {new Date(deadline * 1000).toLocaleString()}
-                  </Text>
+                  <HStack spacing={2}>
+                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                      ⏰ Valid until:
+                    </Text>
+                    <Text fontSize="xs" color="#fbbf24" fontFamily="'Space Mono', monospace">
+                      {new Date(deadline * 1000).toLocaleString()}
+                    </Text>
+                  </HStack>
                 </Box>
 
                 {isSignatureExpired() && (
                   <Box bg="rgba(239,68,68,0.1)" borderRadius="lg" p={3} mb={4} border="1px solid rgba(239,68,68,0.2)">
-                    <Text fontSize="sm" color="#f87171" fontWeight="600">
-                      ⚠️ Signature expired. Please retake the quiz.
-                    </Text>
+                    <HStack spacing={2} justify="center">
+                      <SmallCloseIcon color="#f87171" />
+                      <Text fontSize="sm" color="#f87171" fontWeight="600">
+                        Signature expired. Please retake the quiz.
+                      </Text>
+                    </HStack>
                   </Box>
                 )}
 

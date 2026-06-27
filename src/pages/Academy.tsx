@@ -49,7 +49,7 @@ import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
 const AGENT_QUEST_ADDRESS = "0xD6e8C8c6B2b9ee50759fd3484e2ebCA7a208bf85";
-const AGENT_GRADUATE_ADDRESS = "0x6b7B725dc1241b0B5134CE1401B2Dbdbb542f2E8";
+const AGENT_GRADUATE_ADDRESS = "0x12C53cDC9BD11660b1Cc95Ab5bd0560bEb78E4C7";
 
 // ============= Motion =============
 const MotionBox = motion(Box);

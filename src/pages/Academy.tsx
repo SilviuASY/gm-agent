@@ -149,9 +149,7 @@ export default function Academy() {
   const fetchQuestions = async (questId: number) => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `/.netlify/functions/api/agent-quest/${questId}`
-      );
+      const response = await fetch(`/api/agent-quest/${questId}`);
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setQuestQuestions(data.questions);
@@ -182,18 +180,15 @@ export default function Academy() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        "/.netlify/functions/api/verify-quiz-answers",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            questId: selectedQuest,
-            userAddress: address,
-            answers: answers,
-          }),
-        }
-      );
+      const response = await fetch("/api/verify-quiz-answers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questId: selectedQuest,
+          userAddress: address,
+          answers: answers,
+        }),
+      });
 
       const data = await response.json();
 

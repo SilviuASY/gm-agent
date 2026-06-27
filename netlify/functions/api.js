@@ -131,7 +131,6 @@ app.get("/api/agent-quest/:questId", async (req, res) => {
   }
 
   const quest = QUEST_QUESTIONS[questId];
-  // Return only questions without answers
   const questions = quest.questions.map(q => ({
     question: q.question
   }));
@@ -179,7 +178,6 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
     });
   }
 
-  // Check all answers
   let allCorrect = true;
   let wrongIndexes = [];
 
@@ -198,7 +196,6 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
     });
   }
 
-  // Generate signature
   const signerPk = process.env.SIGNER_PRIVATE_KEY;
   if (!signerPk) {
     return res.status(500).json({ error: "Missing SIGNER_PRIVATE_KEY" });
@@ -208,7 +205,6 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
     const wallet = new import_ethers.ethers.Wallet(signerPk);
     const chainId = req.headers['x-chain-id'] || 1868;
     
-    // Message must match contract verification
     const messageHash = import_ethers.ethers.solidityPackedKeccak256(
       ["uint256", "address", "uint256"],
       [questId, userAddress, chainId]
@@ -230,25 +226,8 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
   }
 });
 
-// Get user progress from contract (optional, frontend can call contract directly)
-app.post("/api/check-quest-status", async (req, res) => {
-  const { userAddress, questId } = req.body;
-  
-  if (!userAddress || !userAddress.startsWith("0x")) {
-    return res.status(400).json({ error: "Invalid user address" });
-  }
-
-  // This is a proxy endpoint - frontend should call contract directly
-  // But we keep it for convenience
-  return res.status(200).json({
-    message: "Call contract directly using wagmi",
-    contractAddress: "0x5f0bAa915f474E3FA86640b30c9939d64dFd742d"
-  });
-});
-
 var handler = (0, import_serverless_http.default)(app);
 
-// Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   handler
 });

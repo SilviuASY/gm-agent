@@ -872,6 +872,25 @@ export const AgentQuestABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "hasUserMintedAllBadges",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "_questId",
         "type": "uint256"
@@ -928,6 +947,11 @@ export const AgentQuestABI = [
         "internalType": "bytes",
         "name": "_signature",
         "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_deadline",
+        "type": "uint256"
       }
     ],
     "name": "mintBadge",

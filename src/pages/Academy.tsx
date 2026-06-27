@@ -49,7 +49,7 @@ import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
 const AGENT_QUEST_ADDRESS = "0xD6e8C8c6B2b9ee50759fd3484e2ebCA7a208bf85";
-const AGENT_GRADUATE_ADDRESS = "0x594D8046348Ea9269c67FAeD16719DCD80f785EB";
+const AGENT_GRADUATE_ADDRESS = "0x6b7B725dc1241b0B5134CE1401B2Dbdbb542f2E8";
 
 // ============= Motion =============
 const MotionBox = motion(Box);
@@ -125,6 +125,8 @@ export default function Academy() {
   const [hasGraduateBadge, setHasGraduateBadge] = useState(false);
   const [isEligible, setIsEligible] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
+  const [buyFee, setBuyFee] = useState<bigint>(0n);
+  const [questMintFee, setQuestMintFee] = useState<bigint>(0n);
 
   // ============= Read Contracts =============
 
@@ -143,6 +145,14 @@ export default function Academy() {
     functionName: "getGraduateStatus",
     args: address ? [address as `0x${string}`] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+
+  // Get graduate config for fees
+  const { data: graduateConfig, refetch: refetchGraduateConfig } = useReadContract({
+    address: toHexAddress(AGENT_GRADUATE_ADDRESS),
+    abi: AgentGraduateABI,
+    functionName: "getConfig",
+    query: { enabled: isCorrectChain },
   });
 
   // ============= Helper Functions =============
@@ -232,7 +242,6 @@ export default function Academy() {
       return;
     }
 
-    // Check if signature expired
     if (deadline && Date.now() / 1000 > deadline) {
       toast({
         title: "Signature Expired",
@@ -323,13 +332,14 @@ export default function Academy() {
       setTxOpen(true);
       setTxStatus("wallet");
       setTxTitle("🎓 Mint Graduate Badge");
-      setTxDesc("Confirm mint transaction on Soneium...");
+      setTxDesc(`Confirm mint with ${Number(questMintFee) / 1e18} ETH fee...`);
 
       const hash = await writeContractAsync({
         address: toHexAddress(AGENT_GRADUATE_ADDRESS),
         abi: AgentGraduateABI,
-        functionName: "buyGraduate",
-        value: 1500000000000000n,
+        functionName: "mintGraduate",
+        args: [address],
+        value: questMintFee > 0n ? questMintFee : undefined,
       });
 
       setTxStatus("pending");
@@ -358,6 +368,63 @@ export default function Academy() {
 
         setHasGraduateBadge(true);
         refetchGraduateStatus();
+        refetchGraduateConfig();
+
+        setTimeout(() => {
+          setTxOpen(false);
+        }, 2000);
+      }
+    } catch (error: any) {
+      const rejected = error?.message?.includes("rejected") || error?.code === 4001;
+      setTxStatus(rejected ? "rejected" : "failed");
+      setTxTitle(rejected ? "Transaction Cancelled" : "Transaction Failed");
+      setTxDesc(rejected ? "You cancelled the transaction." : error?.message || "Something went wrong.");
+    }
+  };
+
+  const handleBuyGraduate = async () => {
+    if (!address) return;
+
+    try {
+      setTxOpen(true);
+      setTxStatus("wallet");
+      setTxTitle("💎 Buy Graduate Badge");
+      setTxDesc(`Confirm purchase with ${Number(buyFee) / 1e18} ETH...`);
+
+      const hash = await writeContractAsync({
+        address: toHexAddress(AGENT_GRADUATE_ADDRESS),
+        abi: AgentGraduateABI,
+        functionName: "buyGraduate",
+        value: buyFee,
+      });
+
+      setTxStatus("pending");
+      setTxDesc("Waiting for confirmation...");
+
+      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+
+      if (receipt.status === "success") {
+        setTxStatus("success");
+        setTxTitle("💎 Graduate Badge Purchased!");
+        setTxDesc("Congratulations! You are now a Graduate Agent!");
+
+        confetti({
+          particleCount: 300,
+          spread: 100,
+          origin: { y: 0.6 },
+          colors: ["#fbbf24", "#ec4899", "#8b5cf6", "#22c55e", "#3b82f6"],
+        });
+
+        toast({
+          title: "💎 Graduate Badge Purchased!",
+          description: "You are now an Agent Graduate!",
+          status: "success",
+          duration: 5000,
+        });
+
+        setHasGraduateBadge(true);
+        refetchGraduateStatus();
+        refetchGraduateConfig();
 
         setTimeout(() => {
           setTxOpen(false);
@@ -418,6 +485,15 @@ export default function Academy() {
       setCompletedCount(Number(status[2] || 0));
     }
   }, [graduateStatus]);
+
+  // Extract fees from config
+  useEffect(() => {
+    if (graduateConfig) {
+      const config = graduateConfig as any;
+      setQuestMintFee(config[1] || 0n);
+      setBuyFee(config[2] || 0n);
+    }
+  }, [graduateConfig]);
 
   // ============= UI Helpers =============
 
@@ -674,8 +750,8 @@ export default function Academy() {
                           </Text>
                           <Text fontSize="sm" color="gray.400">
                             {hasGraduateBadge
-                              ? "You have completed all quests!"
-                              : `Complete ${4 - completedCount} more quests to unlock`
+                              ? "You have earned the ultimate badge!"
+                              : `Complete ${4 - completedCount} more quests to unlock (or buy directly)`
                             }
                           </Text>
                         </Box>
@@ -706,18 +782,33 @@ export default function Academy() {
                             _hover={{ transform: "scale(1.02)", boxShadow: "0 0 30px rgba(251,191,36,0.3)" }}
                             transition="all 0.3s"
                           >
-                            🎓 Mint Graduate Badge
+                            🎓 Mint ({Number(questMintFee) / 1e18} ETH)
                           </Button>
                         ) : (
-                          <Button
-                            isDisabled
-                            size="md"
-                            borderRadius="full"
-                            bg="rgba(75,85,99,0.3)"
-                            color="gray.500"
-                          >
-                            🔒 Locked
-                          </Button>
+                          <HStack spacing={2}>
+                            <Button
+                              onClick={handleBuyGraduate}
+                              bgGradient="linear(135deg, #8b5cf6, #ec4899)"
+                              color="white"
+                              size="md"
+                              borderRadius="full"
+                              fontWeight="700"
+                              _hover={{ transform: "scale(1.02)", boxShadow: "0 0 30px rgba(139,92,246,0.3)" }}
+                              transition="all 0.3s"
+                              isDisabled={hasGraduateBadge}
+                            >
+                              💎 Buy ({Number(buyFee) / 1e18} ETH)
+                            </Button>
+                            <Button
+                              isDisabled
+                              size="md"
+                              borderRadius="full"
+                              bg="rgba(75,85,99,0.3)"
+                              color="gray.500"
+                            >
+                              🔒 Locked
+                            </Button>
+                          </HStack>
                         )}
                       </HStack>
                     </Flex>

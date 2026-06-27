@@ -426,8 +426,6 @@ function VaultTokenCard({
     : (vaultToken ? formatUnits(vaultToken as bigint, decimals) : "0");
   const vaultLoading   = isNative ? vaultEthLoading : vaultTokenLoading;
 
-  const referrer = localStorage.getItem("referrer") ?? "0x0000000000000000000000000000000000000000";
-
   // ── tx feedback
   useEffect(() => {
     if (isSuccess) {
@@ -439,12 +437,37 @@ function VaultTokenCard({
     }
   }, [isSuccess, isError]); // eslint-disable-line
 
+  // ── get referrer from localStorage or URL
+  const getReferrer = useCallback(() => {
+    // First check localStorage
+    let ref = localStorage.getItem("referrer");
+    if (ref && ref !== "0x0000000000000000000000000000000000000000") {
+      return ref;
+    }
+    
+    // If not in localStorage, check URL params
+    const params = new URLSearchParams(window.location.search);
+    const urlReferrer = params.get("referrer");
+    if (urlReferrer && urlReferrer.toLowerCase() !== address?.toLowerCase()) {
+      // Save it to localStorage for future use
+      localStorage.setItem("referrer", urlReferrer);
+      return urlReferrer;
+    }
+    
+    return "0x0000000000000000000000000000000000000000";
+  }, [address]);
+
   // ── deposit
   async function handleDeposit() {
     const amt = parseFloat(depositAmount);
     if (!depositAmount || isNaN(amt) || amt <= 0) {
-      toast({ title: "Enter a valid amount", status: "warning", duration: 4000, position: "top-right" }); return;
+      toast({ title: "Enter a valid amount", status: "warning", duration: 4000, position: "top-right" }); 
+      return;
     }
+    
+    // Get the referrer dynamically
+    const referrer = getReferrer();
+    
     try {
       if (isNative) {
         const hash = await writeContractAsync({
@@ -485,7 +508,8 @@ function VaultTokenCard({
   async function handleWithdraw() {
     const amt = parseFloat(withdrawAmount);
     if (!withdrawAmount || isNaN(amt) || amt <= 0) {
-      toast({ title: "Enter a valid amount", status: "warning", duration: 4000, position: "top-right" }); return;
+      toast({ title: "Enter a valid amount", status: "warning", duration: 4000, position: "top-right" }); 
+      return;
     }
     try {
       const hash = isNative
@@ -581,7 +605,8 @@ function SidePanel({ onTransactionSuccess }: { onTransactionSuccess: number }) {
   const { isSuccess: claimOk } = useWaitForTransactionReceipt({ hash: claimTx });
   const [copying, setCopying] = useState(false);
 
-  const referralLink = address ? `${window.location.origin}?referrer=${address}` : "";
+  // Build referral link with the current path
+  const referralLink = address ? `${window.location.origin}/tools/vault?referrer=${address}` : "";
 
   const { data: pending, refetch: refetchPending } = useReadContract({
     address: CONTRACTS.Vault, abi: VaultABI, functionName: "getPendingRewards",
@@ -827,27 +852,63 @@ export default function VaultPage() {
 
   const isOnSoneium = chainId === SONEIUM_CHAIN_ID;
 
-  // ── referral capture
+  // ── referral capture from URL
   useEffect(() => {
     if (!address) return;
-    const params   = new URLSearchParams(window.location.search);
+    
+    const params = new URLSearchParams(window.location.search);
     const referrer = params.get("referrer");
-    if (!referrer) return;
-    if (localStorage.getItem("referralSignature")) { hasSignedRef.current = true; return; }
-    if (hasSignedRef.current) return;
+    
+    // If no referrer in URL or it's the user's own address, ignore
+    if (!referrer || referrer.toLowerCase() === address.toLowerCase()) {
+      return;
+    }
 
+    // Check if we already have a referrer stored
+    const storedReferrer = localStorage.getItem("referrer");
+    if (storedReferrer && storedReferrer !== "0x0000000000000000000000000000000000000000") {
+      hasSignedRef.current = true;
+      return;
+    }
+
+    // Store the referrer immediately
+    localStorage.setItem("referrer", referrer);
+    hasSignedRef.current = true;
+
+    // Request signature (optional but keeps record)
     (async () => {
       try {
         const msg = `Confirm referral for Agent Vault\nReferrer: ${referrer}\nBonus: +5 LXP on first deposit\nTimestamp: ${new Date().toISOString()}`;
-        const sig = await (window as any).ethereum.request({ method: "personal_sign", params: [msg, address] });
-        localStorage.setItem("referrer", referrer);
+        const sig = await (window as any).ethereum.request({ 
+          method: "personal_sign", 
+          params: [msg, address] 
+        });
         localStorage.setItem("referralSignature", sig);
-        hasSignedRef.current = true;
-        toast({ title: "Referral confirmed ✓", status: "success", duration: 5000, isClosable: true, position: "top-right" });
+        toast({ 
+          title: "Referral confirmed ✓", 
+          status: "success", 
+          duration: 5000, 
+          isClosable: true, 
+          position: "top-right" 
+        });
       } catch (err: any) {
-        toast({ title: "Referral signature declined", status: "warning", duration: 5000, isClosable: true, position: "top-right" });
+        // Referrer is still saved even if signature fails
+        toast({ 
+          title: "Referral saved", 
+          description: "Continue with your deposit to activate the referral bonus.",
+          status: "info", 
+          duration: 5000, 
+          isClosable: true, 
+          position: "top-right" 
+        });
       }
     })();
+
+    // Optional: Clean URL after capturing referrer
+    const newSearch = params.toString().replace(/referrer=[^&]*&?/, '');
+    const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+    window.history.replaceState({}, '', newUrl);
+    
   }, [address]); // eslint-disable-line
 
   async function switchToSoneium() {

@@ -87,13 +87,10 @@ const pageStyles = `
     0%, 100% { transform: scale(1) translateY(0px); opacity: 0.45; }
     50% { transform: scale(1.1) translateY(-20px); opacity: 0.7; }
   }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
   @keyframes confettiDrop {
-    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(100px) rotate(720deg); opacity: 0; }
+    0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+    50% { transform: translateY(10px) scale(1.1); opacity: 1; }
+    100% { transform: translateY(0px) scale(1); opacity: 1; }
   }
 `;
 
@@ -753,9 +750,17 @@ export default function Academy() {
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
-                          fontSize="28px"
+                          flexShrink={0}
+                          overflow="hidden"
                         >
-                          {hasGraduateBadge ? "🎓" : "📜"}
+                          <Image
+                            src="/agentgraduate.png"
+                            alt="Agent Graduate"
+                            w="100%"
+                            h="100%"
+                            objectFit="cover"
+                            fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><text y='50%' x='50%' text-anchor='middle' font-size='32'>🎓</text></svg>"
+                          />
                         </Box>
                         <Box>
                           <Text fontWeight="700" fontSize="lg" color="white">

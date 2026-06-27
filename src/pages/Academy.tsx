@@ -32,6 +32,7 @@ import {
   useReadContract,
   useWriteContract,
   usePublicClient,
+  useBalance,
 } from "wagmi";
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
@@ -173,7 +174,24 @@ export default function Academy() {
     query: { enabled: isCorrectChain },
   });
 
+  // Get user balance
+  const { data: balance, refetch: refetchBalance } = useBalance({
+    address: address,
+    query: { enabled: !!address && isConnected && isCorrectChain },
+  });
+
   // ============= Helper Functions =============
+
+  // Verifică dacă userul are suficiente fonduri pentru o acțiune
+  const hasSufficientBalance = (requiredAmount: bigint): boolean => {
+    if (!balance) return false;
+    return balance.value >= requiredAmount;
+  };
+
+  // Formatează un bigint în ETH
+  const formatEth = (amount: bigint): string => {
+    return (Number(amount) / 1e18).toFixed(6);
+  };
 
   const fetchQuestions = async (questId: number) => {
     setIsLoading(true);
@@ -273,11 +291,22 @@ export default function Academy() {
       return;
     }
 
-    try {
-      const quest = questsData as any[];
-      const questData = quest?.find((q: any) => Number(q.id) === selectedQuest);
-      const fee = questData ? BigInt(questData.fee) : 0n;
+    const quest = questsData as any[];
+    const questData = quest?.find((q: any) => Number(q.id) === selectedQuest);
+    const fee = questData ? BigInt(questData.fee) : 0n;
 
+    // Verifică soldul utilizatorului
+    if (!hasSufficientBalance(fee)) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need at least ${formatEth(fee)} ETH + gas fees to mint this badge. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
+        status: "error",
+        duration: 8000,
+      });
+      return;
+    }
+
+    try {
       setTxOpen(true);
       setTxStatus("wallet");
       setTxTitle("🏅 Mint Badge");
@@ -297,10 +326,8 @@ export default function Academy() {
       const receipt = await publicClient!.waitForTransactionReceipt({ hash });
 
       if (receipt.status === "success") {
-        // Get token ID from logs - look for Transfer event
         let tokenId: number | null = null;
         for (const log of receipt.logs || []) {
-          // Transfer event signature: 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
           if (log.topics && log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
             tokenId = Number(log.topics[3]);
             break;
@@ -339,6 +366,7 @@ export default function Academy() {
         setCurrentStep("list");
         refetchQuests();
         refetchGraduateStatus();
+        refetchBalance();
 
         setTimeout(() => {
           setTxOpen(false);
@@ -355,11 +383,22 @@ export default function Academy() {
   const handleMintGraduate = async () => {
     if (!address) return;
 
+    // Verifică soldul utilizatorului
+    if (!hasSufficientBalance(questMintFee)) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need at least ${formatEth(questMintFee)} ETH + gas fees to mint the Graduate badge. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
+        status: "error",
+        duration: 8000,
+      });
+      return;
+    }
+
     try {
       setTxOpen(true);
       setTxStatus("wallet");
       setTxTitle("🎓 Mint Graduate Badge");
-      setTxDesc(`Confirm mint with ${Number(questMintFee) / 1e18} ETH fee...`);
+      setTxDesc(`Confirm mint with ${formatEth(questMintFee)} ETH fee...`);
 
       const hash = await writeContractAsync({
         address: toHexAddress(AGENT_GRADUATE_ADDRESS),
@@ -403,6 +442,7 @@ export default function Academy() {
         setHasGraduateBadge(true);
         refetchGraduateStatus();
         refetchGraduateConfig();
+        refetchBalance();
 
         setTimeout(() => {
           setTxOpen(false);
@@ -418,6 +458,17 @@ export default function Academy() {
 
   const handleBuyGraduate = async () => {
     if (!address) return;
+
+    // Verifică soldul utilizatorului
+    if (!hasSufficientBalance(buyFee)) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need at least ${formatEth(buyFee)} ETH + gas fees to purchase the Graduate badge. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
+        status: "error",
+        duration: 8000,
+      });
+      return;
+    }
 
     try {
       setTxOpen(true);
@@ -466,6 +517,7 @@ export default function Academy() {
         setHasGraduateBadge(true);
         refetchGraduateStatus();
         refetchGraduateConfig();
+        refetchBalance();
 
         setTimeout(() => {
           setTxOpen(false);
@@ -701,6 +753,19 @@ export default function Academy() {
             </HStack>
 
             <HStack spacing={3} display={{ base: "none", md: "flex" }}>
+              {balance && (
+                <Badge
+                  bg="rgba(34,197,94,0.1)"
+                  color="#4ade80"
+                  px={3}
+                  py={1.5}
+                  borderRadius="full"
+                  fontSize="xs"
+                  fontFamily="'Space Mono', monospace"
+                >
+                  {Number(balance.formatted).toFixed(4)} ETH
+                </Badge>
+              )}
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
                 <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
               </Box>
@@ -855,10 +920,11 @@ export default function Academy() {
                             size="md"
                             borderRadius="full"
                             fontWeight="700"
+                            isDisabled={!hasSufficientBalance(questMintFee)}
                             _hover={{ transform: "scale(1.02)", boxShadow: "0 0 30px rgba(251,191,36,0.3)" }}
                             transition="all 0.3s"
                           >
-                            🎓 Mint ({Number(questMintFee) / 1e18} ETH)
+                            🎓 Mint ({formatEth(questMintFee)} ETH)
                           </Button>
                         ) : (
                           <HStack spacing={2}>
@@ -869,9 +935,9 @@ export default function Academy() {
                               size="md"
                               borderRadius="full"
                               fontWeight="700"
+                              isDisabled={!hasSufficientBalance(buyFee)}
                               _hover={{ transform: "scale(1.02)", boxShadow: "0 0 30px rgba(139,92,246,0.3)" }}
                               transition="all 0.3s"
-                              isDisabled={hasGraduateBadge}
                             >
                               💎 Buy ({Number(buyFee) / 1e18} ETH)
                             </Button>
@@ -970,6 +1036,7 @@ export default function Academy() {
                         const isActive = quest.isActive;
                         const isCompleted = hasUserCompletedQuest(id);
                         const isMinted = hasUserMintedBadge(id);
+                        const fee = BigInt(quest.fee);
 
                         return (
                           <MotionBox
@@ -1077,32 +1144,37 @@ export default function Academy() {
 
                               <HStack mt={0} spacing={3} justify="space-between">
                                 <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
-                                  Fee: {Number(quest.fee) / 1e18} ETH
+                                  Fee: {formatEth(fee)} ETH
                                 </Text>
-                                <Button
-                                  size="sm"
-                                  bg={isMinted ? "rgba(75,85,99,0.3)" : isCompleted ? "linear(135deg, #fbbf24, #ec4899)" : "linear(135deg, #8b5cf6, #ec4899)"}
-                                  color={isMinted ? "gray.500" : "white"}
-                                  isDisabled={isMinted || !isActive}
-                                  fontWeight="600"
-                                  borderRadius="full"
-                                  px={6}
-                                  _hover={{
-                                    transform: isMinted ? "none" : "scale(1.02)",
-                                    boxShadow: isMinted ? "none" : "0 0 20px rgba(139,92,246,0.3)",
-                                  }}
-                                  transition="all 0.2s"
-                                  onClick={() => {
-                                    if (isCompleted) {
-                                      setSelectedQuest(id);
-                                      fetchQuestions(id);
-                                    } else {
-                                      fetchQuestions(id);
-                                    }
-                                  }}
+                                <Tooltip
+                                  label={!hasSufficientBalance(fee) ? `Insufficient balance. Need ${formatEth(fee)} ETH` : ""}
+                                  hasArrow
                                 >
-                                  {isMinted ? "Minted" : isCompleted ? "Mint Badge" : "Start Quiz"}
-                                </Button>
+                                  <Button
+                                    size="sm"
+                                    bg={isMinted ? "rgba(75,85,99,0.3)" : isCompleted ? "linear(135deg, #fbbf24, #ec4899)" : "linear(135deg, #8b5cf6, #ec4899)"}
+                                    color={isMinted ? "gray.500" : "white"}
+                                    isDisabled={isMinted || !isActive || (isCompleted && !hasSufficientBalance(fee))}
+                                    fontWeight="600"
+                                    borderRadius="full"
+                                    px={6}
+                                    _hover={{
+                                      transform: isMinted ? "none" : "scale(1.02)",
+                                      boxShadow: isMinted ? "none" : "0 0 20px rgba(139,92,246,0.3)",
+                                    }}
+                                    transition="all 0.2s"
+                                    onClick={() => {
+                                      if (isCompleted) {
+                                        setSelectedQuest(id);
+                                        fetchQuestions(id);
+                                      } else {
+                                        fetchQuestions(id);
+                                      }
+                                    }}
+                                  >
+                                    {isMinted ? "Minted" : isCompleted ? "Mint Badge" : "Start Quiz"}
+                                  </Button>
+                                </Tooltip>
                               </HStack>
                             </Box>
                           </MotionBox>
@@ -1413,23 +1485,34 @@ export default function Academy() {
                 )}
 
                 <HStack spacing={4} justify="center" flexWrap="wrap">
-                  <Button
-                    size="lg"
-                    bgGradient={canMint(selectedQuest) ? "linear(135deg, #fbbf24, #ec4899)" : "rgba(75,85,99,0.3)"}
-                    color={canMint(selectedQuest) ? "white" : "gray.500"}
-                    fontWeight="700"
-                    borderRadius="full"
-                    px={8}
-                    isDisabled={!canMint(selectedQuest)}
-                    onClick={handleMintBadge}
-                    _hover={{
-                      transform: canMint(selectedQuest) ? "scale(1.02)" : "none",
-                      boxShadow: canMint(selectedQuest) ? "0 0 30px rgba(251,191,36,0.3)" : "none",
-                    }}
-                    transition="all 0.3s"
+                  <Tooltip
+                    label={!hasSufficientBalance(
+                      (questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n
+                    ) ? `Insufficient balance. Need ${formatEth(
+                      (questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n
+                    )} ETH` : ""}
+                    hasArrow
                   >
-                    {isSignatureExpired() ? "⏳ Expired" : canMint(selectedQuest) ? "🏅 Mint Badge" : "⏳ Already Minted"}
-                  </Button>
+                    <Button
+                      size="lg"
+                      bgGradient={canMint(selectedQuest) ? "linear(135deg, #fbbf24, #ec4899)" : "rgba(75,85,99,0.3)"}
+                      color={canMint(selectedQuest) ? "white" : "gray.500"}
+                      fontWeight="700"
+                      borderRadius="full"
+                      px={8}
+                      isDisabled={!canMint(selectedQuest) || !hasSufficientBalance(
+                        (questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n
+                      )}
+                      onClick={handleMintBadge}
+                      _hover={{
+                        transform: canMint(selectedQuest) ? "scale(1.02)" : "none",
+                        boxShadow: canMint(selectedQuest) ? "0 0 30px rgba(251,191,36,0.3)" : "none",
+                      }}
+                      transition="all 0.3s"
+                    >
+                      {isSignatureExpired() ? "⏳ Expired" : canMint(selectedQuest) ? "🏅 Mint Badge" : "⏳ Already Minted"}
+                    </Button>
+                  </Tooltip>
                   <Button
                     size="lg"
                     variant="outline"

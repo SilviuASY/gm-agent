@@ -48,8 +48,8 @@ import { AgentQuestABI } from "../abi/AgentQuestABI";
 import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
-const AGENT_QUEST_ADDRESS = "0xbC9e6181a050fE67067aB83BAF1D55F65838F02E";
-const AGENT_GRADUATE_ADDRESS = "0xc7Fde4ac6AfC7FEB554CBE8cFE3effbf75b8Ed57";
+const AGENT_QUEST_ADDRESS = "0xD6e8C8c6B2b9ee50759fd3484e2ebCA7a208bf85";
+const AGENT_GRADUATE_ADDRESS = "0x594D8046348Ea9269c67FAeD16719DCD80f785EB";
 
 // ============= Motion =============
 const MotionBox = motion(Box);
@@ -119,6 +119,7 @@ export default function Academy() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signature, setSignature] = useState<`0x${string}` | null>(null);
+  const [deadline, setDeadline] = useState<number>(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [userProgress, setUserProgress] = useState<{ [key: number]: QuestProgress }>({});
   const [hasGraduateBadge, setHasGraduateBadge] = useState(false);
@@ -197,6 +198,7 @@ export default function Academy() {
       }
 
       setSignature(data.signature as `0x${string}`);
+      setDeadline(data.deadline);
       setQuizCompleted(true);
       setCurrentStep("result");
 
@@ -230,6 +232,20 @@ export default function Academy() {
       return;
     }
 
+    // Check if signature expired
+    if (deadline && Date.now() / 1000 > deadline) {
+      toast({
+        title: "Signature Expired",
+        description: "Please complete the quiz again to get a new signature.",
+        status: "error",
+        duration: 5000,
+      });
+      setQuizCompleted(false);
+      setSignature(null);
+      setCurrentStep("list");
+      return;
+    }
+
     try {
       const quest = questsData as any[];
       const questData = quest?.find((q: any) => Number(q.id) === selectedQuest);
@@ -244,7 +260,7 @@ export default function Academy() {
         address: toHexAddress(AGENT_QUEST_ADDRESS),
         abi: AgentQuestABI,
         functionName: "mintBadge",
-        args: [BigInt(selectedQuest), signature],
+        args: [BigInt(selectedQuest), signature, BigInt(deadline)],
         value: fee,
       });
 
@@ -283,6 +299,7 @@ export default function Academy() {
 
         setQuizCompleted(false);
         setSignature(null);
+        setDeadline(0);
         setCurrentStep("list");
         refetchQuests();
         refetchGraduateStatus();
@@ -435,9 +452,14 @@ export default function Academy() {
   const canMint = (questId: number): boolean => {
     if (!signature || selectedQuest !== questId) return false;
     if (hasUserMintedBadge(questId)) return false;
+    if (deadline && Date.now() / 1000 > deadline) return false;
     const quest = (questsData as any[])?.find((q: any) => Number(q.id) === questId);
     if (!quest?.isActive) return false;
     return true;
+  };
+
+  const isSignatureExpired = (): boolean => {
+    return deadline > 0 && Date.now() / 1000 > deadline;
   };
 
   return (
@@ -831,8 +853,6 @@ export default function Academy() {
                                   onClick={() => {
                                     if (isCompleted) {
                                       setSelectedQuest(id);
-                                      // Dacă e completat dar nu mintuit, mergem direct la mint
-                                      // Dar avem nevoie de semnătură - deocamdată deschidem quiz-ul din nou
                                       fetchQuestions(id);
                                     } else {
                                       fetchQuestions(id);
@@ -882,6 +902,7 @@ export default function Academy() {
                       setCurrentStep("list");
                       setQuizCompleted(false);
                       setSignature(null);
+                      setDeadline(0);
                       setAnswers([]);
                     }}
                     color="gray.400"
@@ -998,7 +1019,18 @@ export default function Academy() {
                   <Text fontSize="xs" color="#4ade80" fontFamily="'Space Mono', monospace" wordBreak="break-all">
                     {signature.slice(0, 40)}...{signature.slice(-20)}
                   </Text>
+                  <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" mt={1}>
+                    ⏰ Valid until: {new Date(deadline * 1000).toLocaleString()}
+                  </Text>
                 </Box>
+
+                {isSignatureExpired() && (
+                  <Box bg="rgba(239,68,68,0.1)" borderRadius="lg" p={3} mb={4} border="1px solid rgba(239,68,68,0.2)">
+                    <Text fontSize="sm" color="#f87171" fontWeight="600">
+                      ⚠️ Signature expired. Please retake the quiz.
+                    </Text>
+                  </Box>
+                )}
 
                 <HStack spacing={4} justify="center" flexWrap="wrap">
                   <Button
@@ -1016,7 +1048,7 @@ export default function Academy() {
                     }}
                     transition="all 0.3s"
                   >
-                    {canMint(selectedQuest) ? "🏅 Mint Badge" : "⏳ Already Minted"}
+                    {isSignatureExpired() ? "⏳ Expired" : canMint(selectedQuest) ? "🏅 Mint Badge" : "⏳ Already Minted"}
                   </Button>
                   <Button
                     size="lg"
@@ -1029,6 +1061,7 @@ export default function Academy() {
                       setCurrentStep("list");
                       setQuizCompleted(false);
                       setSignature(null);
+                      setDeadline(0);
                       setAnswers([]);
                     }}
                     _hover={{

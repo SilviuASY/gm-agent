@@ -95,7 +95,7 @@ app.get("/api/", (req, res) => {
   res.send("<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
 
-// Generate mint signature
+// Generate mint signature for reputation badge
 app.post("/api/generate-mint-signature", async (req, res) => {
   const { userAddress, score, nonce } = req.body;
   
@@ -166,7 +166,7 @@ app.get("/api/agent-quest/:questId", async (req, res) => {
   }
 });
 
-// Verify quiz answers
+// Verify quiz answers and generate signature
 app.post("/api/verify-quiz-answers", async (req, res) => {
   try {
     const { questId, userAddress, answers } = req.body;
@@ -191,6 +191,7 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
       });
     }
 
+    // Check all answers
     let allCorrect = true;
     let wrongIndexes = [];
 
@@ -217,14 +218,23 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
     const wallet = new import_ethers.ethers.Wallet(signerPk);
     const chainId = req.headers['x-chain-id'] || 1868;
     
+    // 1. Creează hash-ul mesajului (la fel ca în contract)
     const messageHash = import_ethers.ethers.solidityPackedKeccak256(
       ["uint256", "address", "uint256"],
       [questId, userAddress, chainId]
     );
     
-    const signature = await wallet.signMessage(import_ethers.ethers.getBytes(messageHash));
+    // 2. Aplică prefixul Ethereum Signed Message (la fel ca în contract)
+    const messageHashBytes = import_ethers.ethers.getBytes(messageHash);
+    const ethSignedMessageHash = import_ethers.ethers.hashMessage(messageHashBytes);
+    
+    // 3. Semnează hash-ul cu prefix
+    const signature = await wallet.signMessage(messageHashBytes);
     
     console.log(`✅ Quiz verified for ${userAddress} - Quest ${questId}`);
+    console.log(`📝 Message hash: ${messageHash}`);
+    console.log(`📝 ETH signed hash: ${ethSignedMessageHash}`);
+    console.log(`📝 Signature: ${signature}`);
     
     return res.status(200).json({
       success: true,

@@ -20,6 +20,8 @@ import {
   Skeleton,
   Image,
   Divider,
+  Tooltip,
+  Link,
 } from "@chakra-ui/react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -33,7 +35,7 @@ import {
 } from "wagmi";
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
-import { ChevronLeftIcon, CheckCircleIcon, SmallCloseIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, CheckCircleIcon, SmallCloseIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -52,6 +54,8 @@ import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 // Contract addresses
 const AGENT_QUEST_ADDRESS = "0xD6e8C8c6B2b9ee50759fd3484e2ebCA7a208bf85";
 const AGENT_GRADUATE_ADDRESS = "0x12C53cDC9BD11660b1Cc95Ab5bd0560bEb78E4C7";
+
+const BLOCKSCOUT_URL = "https://soneium.blockscout.com";
 
 // ============= Motion =============
 const MotionBox = motion(Box);
@@ -91,6 +95,14 @@ const pageStyles = `
     0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
     50% { transform: translateY(10px) scale(1.1); opacity: 1; }
     100% { transform: translateY(0px) scale(1); opacity: 1; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(139,92,246,0.2); }
+    50% { box-shadow: 0 0 40px rgba(139,92,246,0.4); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 `;
 
@@ -134,6 +146,7 @@ export default function Academy() {
   const [completedCount, setCompletedCount] = useState(0);
   const [buyFee, setBuyFee] = useState<bigint>(0n);
   const [questMintFee, setQuestMintFee] = useState<bigint>(0n);
+  const [lastMintedTokenId, setLastMintedTokenId] = useState<number | null>(null);
 
   // ============= Read Contracts =============
 
@@ -287,6 +300,9 @@ export default function Academy() {
         setTxTitle("✅ Badge Minted!");
         setTxDesc("Congratulations! You earned a quest badge!");
 
+        const tokenId = Number(receipt.logs?.[0]?.topics?.[3] || 0);
+        setLastMintedTokenId(tokenId);
+
         confetti({
           particleCount: 300,
           spread: 100,
@@ -296,9 +312,9 @@ export default function Academy() {
 
         toast({
           title: "🎉 Badge Minted!",
-          description: `You earned the ${questName} badge!`,
+          description: `Token ID: #${tokenId}`,
           status: "success",
-          duration: 5000,
+          duration: 8000,
         });
 
         setUserProgress(prev => ({
@@ -356,6 +372,9 @@ export default function Academy() {
         setTxTitle("🎓 Graduate Badge Minted!");
         setTxDesc("Congratulations! You are now a Graduate Agent!");
 
+        const tokenId = Number(receipt.logs?.[0]?.topics?.[3] || 0);
+        setLastMintedTokenId(tokenId);
+
         confetti({
           particleCount: 300,
           spread: 100,
@@ -365,9 +384,9 @@ export default function Academy() {
 
         toast({
           title: "🎓 Graduate Badge Minted!",
-          description: "You are now an Agent Graduate!",
+          description: `Token ID: #${tokenId}`,
           status: "success",
-          duration: 5000,
+          duration: 8000,
         });
 
         setHasGraduateBadge(true);
@@ -412,6 +431,9 @@ export default function Academy() {
         setTxTitle("💎 Graduate Badge Purchased!");
         setTxDesc("Congratulations! You are now a Graduate Agent!");
 
+        const tokenId = Number(receipt.logs?.[0]?.topics?.[3] || 0);
+        setLastMintedTokenId(tokenId);
+
         confetti({
           particleCount: 300,
           spread: 100,
@@ -421,9 +443,9 @@ export default function Academy() {
 
         toast({
           title: "💎 Graduate Badge Purchased!",
-          description: "You are now an Agent Graduate!",
+          description: `Token ID: #${tokenId}`,
           status: "success",
-          duration: 5000,
+          duration: 8000,
         });
 
         setHasGraduateBadge(true);
@@ -763,9 +785,22 @@ export default function Academy() {
                           />
                         </Box>
                         <Box>
-                          <Text fontWeight="700" fontSize="lg" color="white">
-                            {hasGraduateBadge ? "🎓 Graduate Agent" : "Agent Graduate"}
-                          </Text>
+                          <HStack spacing={2}>
+                            <Text fontWeight="700" fontSize="lg" color="white">
+                              {hasGraduateBadge ? "🎓 Graduate Agent" : "Agent Graduate"}
+                            </Text>
+                            {hasGraduateBadge && (
+                              <Tooltip label="View on Blockscout" hasArrow>
+                                <Link
+                                  href={`${BLOCKSCOUT_URL}/token/${AGENT_GRADUATE_ADDRESS}`}
+                                  isExternal
+                                  _hover={{ color: "#06b6d4" }}
+                                >
+                                  <ExternalLinkIcon boxSize={4} color="gray.400" />
+                                </Link>
+                              </Tooltip>
+                            )}
+                          </HStack>
                           <Text fontSize="sm" color="gray.400">
                             {hasGraduateBadge ? (
                               "You have earned the ultimate Agent Graduate badge! 🏆"
@@ -973,9 +1008,22 @@ export default function Academy() {
                                     />
                                   </Box>
                                   <Box>
-                                    <Text fontWeight="700" color="white" fontSize="md">
-                                      {quest.name}
-                                    </Text>
+                                    <HStack spacing={2}>
+                                      <Text fontWeight="700" color="white" fontSize="md">
+                                        {quest.name}
+                                      </Text>
+                                      {isMinted && (
+                                        <Tooltip label="View on Blockscout" hasArrow>
+                                          <Link
+                                            href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`}
+                                            isExternal
+                                            _hover={{ color: "#06b6d4" }}
+                                          >
+                                            <ExternalLinkIcon boxSize={3} color="gray.400" />
+                                          </Link>
+                                        </Tooltip>
+                                      )}
+                                    </HStack>
                                     <Text fontSize="xs" color="gray.400">
                                       {Number(quest.totalCompleted) || 0} completed
                                     </Text>
@@ -1177,6 +1225,7 @@ export default function Academy() {
                   right={0}
                   h="3px"
                   bgGradient="linear(90deg, #22c55e, #4ade80, #22c55e)"
+                  animation="shimmerBorder 3s infinite"
                 />
 
                 <Box fontSize="64px" mb={4} animation="confettiDrop 1.5s ease-in-out">
@@ -1189,34 +1238,139 @@ export default function Academy() {
                   You've successfully completed the quiz! You can now mint your badge.
                 </Text>
 
-                <Box
-                  bg="rgba(0,0,0,0.3)"
-                  borderRadius="xl"
-                  p={4}
+                <Flex
+                  direction={{ base: "column", md: "row" }}
+                  gap={6}
+                  align="center"
+                  justify="center"
                   mb={6}
-                  textAlign="left"
-                  border="1px solid rgba(34,197,94,0.1)"
                 >
-                  <HStack spacing={3} mb={2}>
-                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                  {/* NFT Preview */}
+                  <Box
+                    w={{ base: "150px", md: "180px" }}
+                    h={{ base: "150px", md: "180px" }}
+                    borderRadius="2xl"
+                    overflow="hidden"
+                    border="2px solid rgba(139,92,246,0.3)"
+                    boxShadow="0 0 30px rgba(139,92,246,0.2)"
+                    animation="glowPulse 3s ease-in-out infinite"
+                    flexShrink={0}
+                    bg="rgba(0,0,0,0.3)"
+                    position="relative"
+                  >
+                    <Image
+                      src="/agentquest.png"
+                      alt="Quest Badge NFT"
+                      w="100%"
+                      h="100%"
+                      objectFit="cover"
+                      fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><rect width='180' height='180' rx='16' fill='%231a0a2e'/><text y='50%' x='50%' text-anchor='middle' font-size='40'>🏅</text></svg>"
+                    />
+                    <Box
+                      position="absolute"
+                      bottom={2}
+                      right={2}
+                      bg="rgba(0,0,0,0.7)"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      border="1px solid rgba(139,92,246,0.3)"
+                    >
+                      <Text fontSize="8px" color="gray.400" fontFamily="'Space Mono', monospace">
+                        ERC-721
+                      </Text>
+                    </Box>
+                    <Box
+                      position="absolute"
+                      bottom={2}
+                      left={2}
+                      bg="rgba(0,0,0,0.7)"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      border="1px solid rgba(139,92,246,0.3)"
+                    >
+                      <Text fontSize="8px" color="#4ade80" fontFamily="'Space Mono', monospace">
+                        ✓ Ready
+                      </Text>
+                    </Box>
+                  </Box>
+
+                  {/* Details */}
+                  <Box flex={1} textAlign="left" w="full">
+                    <HStack spacing={2} mb={2} flexWrap="wrap">
+                      <Badge bg="rgba(139,92,246,0.2)" color="#a855f7" px={3} py={1} borderRadius="full" fontSize="10px">
+                        {questName}
+                      </Badge>
+                      <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" px={3} py={1} borderRadius="full" fontSize="10px">
+                        ✓ Ready to Mint
+                      </Badge>
+                    </HStack>
+
+                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" mb={3}>
                       🔐 Signature Generated
                     </Text>
-                    <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" fontSize="8px" px={2} py={0.5} borderRadius="full">
-                      Valid
-                    </Badge>
-                  </HStack>
-                  <Text fontSize="xs" color="#4ade80" fontFamily="'Space Mono', monospace" wordBreak="break-all" mb={2}>
-                    {signature.slice(0, 40)}...{signature.slice(-20)}
-                  </Text>
-                  <HStack spacing={2}>
-                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
-                      ⏰ Valid until:
-                    </Text>
-                    <Text fontSize="xs" color="#fbbf24" fontFamily="'Space Mono', monospace">
-                      {new Date(deadline * 1000).toLocaleString()}
-                    </Text>
-                  </HStack>
-                </Box>
+
+                    <Box
+                      bg="rgba(0,0,0,0.3)"
+                      borderRadius="lg"
+                      p={3}
+                      border="1px solid rgba(34,197,94,0.1)"
+                      mb={2}
+                    >
+                      <Text fontSize="xs" color="#4ade80" fontFamily="'Space Mono', monospace" wordBreak="break-all">
+                        {signature.slice(0, 30)}...{signature.slice(-20)}
+                      </Text>
+                    </Box>
+
+                    {lastMintedTokenId && (
+                      <Box
+                        bg="rgba(251,191,36,0.1)"
+                        borderRadius="lg"
+                        p={2}
+                        border="1px solid rgba(251,191,36,0.2)"
+                        mb={2}
+                      >
+                        <HStack spacing={2} justify="center">
+                          <Text fontSize="xs" color="gray.400" fontFamily="'Space Mono', monospace">
+                            🆔 Token ID:
+                          </Text>
+                          <Text fontSize="sm" color="#fbbf24" fontFamily="'Space Mono', monospace" fontWeight="700">
+                            #{lastMintedTokenId}
+                          </Text>
+                          <Tooltip label="View on Blockscout" hasArrow>
+                            <Link
+                              href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}/instance/${lastMintedTokenId}`}
+                              isExternal
+                              _hover={{ color: "#06b6d4" }}
+                            >
+                              <ExternalLinkIcon boxSize={3} color="gray.400" />
+                            </Link>
+                          </Tooltip>
+                        </HStack>
+                      </Box>
+                    )}
+
+                    <HStack spacing={4} flexWrap="wrap">
+                      <HStack spacing={1}>
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                          ⏰ Valid:
+                        </Text>
+                        <Text fontSize="xs" color="#fbbf24" fontFamily="'Space Mono', monospace">
+                          {new Date(deadline * 1000).toLocaleString()}
+                        </Text>
+                      </HStack>
+                      <HStack spacing={1}>
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                          🔗 Chain:
+                        </Text>
+                        <Text fontSize="xs" color="#06b6d4" fontFamily="'Space Mono', monospace">
+                          Soneium
+                        </Text>
+                      </HStack>
+                    </HStack>
+                  </Box>
+                </Flex>
 
                 {isSignatureExpired() && (
                   <Box bg="rgba(239,68,68,0.1)" borderRadius="lg" p={3} mb={4} border="1px solid rgba(239,68,68,0.2)">
@@ -1269,6 +1423,22 @@ export default function Academy() {
                     Back to Quests
                   </Button>
                 </HStack>
+
+                {/* Contract Explorer Link */}
+                <Box mt={4}>
+                  <Tooltip label="View contract on Blockscout" hasArrow>
+                    <Link
+                      href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`}
+                      isExternal
+                      fontSize="xs"
+                      color="gray.500"
+                      _hover={{ color: "#06b6d4" }}
+                      fontFamily="'Space Mono', monospace"
+                    >
+                      📜 View Contract on Blockscout <ExternalLinkIcon mx={1} boxSize={3} />
+                    </Link>
+                  </Tooltip>
+                </Box>
               </Box>
             </MotionBox>
           )}

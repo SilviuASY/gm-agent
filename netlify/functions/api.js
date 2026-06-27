@@ -17,10 +17,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -48,6 +44,50 @@ app.use(import_express.default.json());
 
 var BADGE_CONTRACT = "0xE6D5A673306A5cB2646b0727f9363e13FAC60c72";
 
+// ============ AGENT ACADEMY QUESTIONS ============
+const QUEST_QUESTIONS = {
+  1: {
+    name: "What is Soneium?",
+    questions: [
+      { question: "Soneium is a Layer 2 solution built on Ethereum?", answer: true },
+      { question: "Soneium uses OP Stack for its infrastructure?", answer: true },
+      { question: "Soneium was launched in 2025?", answer: false },
+      { question: "Soneium supports EVM-compatible smart contracts?", answer: true },
+      { question: "Soneium is only available on mainnet?", answer: false },
+    ]
+  },
+  2: {
+    name: "How to use DEX",
+    questions: [
+      { question: "DEX stands for Decentralized Exchange?", answer: true },
+      { question: "Soneium DEX uses automated market makers (AMM)?", answer: true },
+      { question: "You need KYC to use a DEX on Soneium?", answer: false },
+      { question: "DEXs on Soneium support token swaps?", answer: true },
+      { question: "Soneium DEX has lower fees than Ethereum mainnet?", answer: true },
+    ]
+  },
+  3: {
+    name: "Deploy on Soneium",
+    questions: [
+      { question: "You need SOLIDITY to deploy on Soneium?", answer: true },
+      { question: "Deployments on Soneium cost gas fees?", answer: true },
+      { question: "Soneium does not support ERC-721 tokens?", answer: false },
+      { question: "You can deploy contracts using Hardhat on Soneium?", answer: true },
+      { question: "Soneium uses the same address format as Ethereum?", answer: true },
+    ]
+  },
+  4: {
+    name: "Agent Protocol",
+    questions: [
+      { question: "ERC-8004 is the Agent GM Protocol standard?", answer: true },
+      { question: "Agents must send GM daily to build reputation?", answer: true },
+      { question: "Agent NFTs can be transferred to any wallet?", answer: false },
+      { question: "GM cooldown period is 24 hours?", answer: true },
+      { question: "Reputation points can be earned through partner actions?", answer: true },
+    ]
+  }
+};
+
 app.get("/api/", (req, res) => {
   res.send("<h1>\u2705 Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
@@ -65,31 +105,145 @@ app.post("/api/generate-mint-signature", async (req, res) => {
   }
 
   try {
-    // Calculate deadline (expires in 1 hour from now)
-    const deadline = Math.floor(Date.now() / 1000) + 3600; // Unix timestamp
-    
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
     const wallet = new import_ethers.ethers.Wallet(signerPk);
-    
-    // Include deadline in the hash (5 parameters now)
     const rawMessageHash = import_ethers.ethers.solidityPackedKeccak256(
       ["address", "uint256", "uint256", "uint256", "address"],
       [userAddress, BigInt(score), BigInt(nonce), BigInt(deadline), BADGE_CONTRACT]
     );
-    
     const signature = await wallet.signMessage(import_ethers.ethers.getBytes(rawMessageHash));
-    
-    console.log(`✅ Signature generated for ${userAddress} with deadline: ${deadline} (expires in 1 hour)`);
-    
-    // Return both signature and deadline to the frontend
-    return res.status(200).json({ 
-      signature,
-      deadline
-    });
-    
+    console.log(`✅ Signature generated for ${userAddress} with deadline: ${deadline}`);
+    return res.status(200).json({ signature, deadline });
   } catch (error) {
     console.error("❌ Error generating signature:", error);
     return res.status(500).json({ error: "Error generating signature" });
   }
+});
+
+// ============ AGENT ACADEMY ENDPOINTS ============
+
+// Get quest questions (without answers)
+app.get("/api/agent-quest/:questId", async (req, res) => {
+  const questId = parseInt(req.params.questId);
+  
+  if (!QUEST_QUESTIONS[questId]) {
+    return res.status(404).json({ error: "Quest not found" });
+  }
+
+  const quest = QUEST_QUESTIONS[questId];
+  // Return only questions without answers
+  const questions = quest.questions.map(q => ({
+    question: q.question
+  }));
+
+  return res.status(200).json({
+    questId: questId,
+    name: quest.name,
+    questions: questions,
+    totalQuestions: questions.length
+  });
+});
+
+// Get all quests list
+app.get("/api/agent-quests", async (req, res) => {
+  const quests = Object.keys(QUEST_QUESTIONS).map(key => ({
+    id: parseInt(key),
+    name: QUEST_QUESTIONS[key].name,
+    totalQuestions: QUEST_QUESTIONS[key].questions.length
+  }));
+  
+  return res.status(200).json({ quests });
+});
+
+// Verify quiz answers
+app.post("/api/verify-quiz-answers", async (req, res) => {
+  const { questId, userAddress, answers } = req.body;
+  
+  if (!questId || !QUEST_QUESTIONS[questId]) {
+    return res.status(400).json({ error: "Invalid quest ID" });
+  }
+
+  if (!userAddress || !userAddress.startsWith("0x")) {
+    return res.status(400).json({ error: "Invalid user address" });
+  }
+
+  if (!answers || !Array.isArray(answers) || answers.length === 0) {
+    return res.status(400).json({ error: "Invalid answers" });
+  }
+
+  const questQuestions = QUEST_QUESTIONS[questId].questions;
+
+  if (answers.length !== questQuestions.length) {
+    return res.status(400).json({ 
+      error: `Expected ${questQuestions.length} answers, got ${answers.length}` 
+    });
+  }
+
+  // Check all answers
+  let allCorrect = true;
+  let wrongIndexes = [];
+
+  for (let i = 0; i < questQuestions.length; i++) {
+    if (answers[i] !== questQuestions[i].answer) {
+      allCorrect = false;
+      wrongIndexes.push(i);
+    }
+  }
+
+  if (!allCorrect) {
+    return res.status(400).json({
+      error: "Incorrect answers",
+      wrongIndexes: wrongIndexes,
+      correct: false
+    });
+  }
+
+  // Generate signature
+  const signerPk = process.env.SIGNER_PRIVATE_KEY;
+  if (!signerPk) {
+    return res.status(500).json({ error: "Missing SIGNER_PRIVATE_KEY" });
+  }
+
+  try {
+    const wallet = new import_ethers.ethers.Wallet(signerPk);
+    const chainId = req.headers['x-chain-id'] || 1868;
+    
+    // Message must match contract verification
+    const messageHash = import_ethers.ethers.solidityPackedKeccak256(
+      ["uint256", "address", "uint256"],
+      [questId, userAddress, chainId]
+    );
+    
+    const signature = await wallet.signMessage(import_ethers.ethers.getBytes(messageHash));
+    
+    console.log(`✅ Quiz verified for ${userAddress} - Quest ${questId}`);
+    
+    return res.status(200).json({
+      success: true,
+      signature: signature,
+      message: "All answers correct!"
+    });
+
+  } catch (error) {
+    console.error("❌ Error generating signature:", error);
+    return res.status(500).json({ error: "Error generating signature" });
+  }
+});
+
+// Get user progress from contract (optional, frontend can call contract directly)
+app.post("/api/check-quest-status", async (req, res) => {
+  const { userAddress, questId } = req.body;
+  
+  if (!userAddress || !userAddress.startsWith("0x")) {
+    return res.status(400).json({ error: "Invalid user address" });
+  }
+
+  // This is a proxy endpoint - frontend should call contract directly
+  // But we keep it for convenience
+  return res.status(200).json({
+    message: "Call contract directly using wagmi",
+    contractAddress: "0x5f0bAa915f474E3FA86640b30c9939d64dFd742d"
+  });
 });
 
 var handler = (0, import_serverless_http.default)(app);

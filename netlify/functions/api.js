@@ -166,7 +166,7 @@ app.get("/api/agent-quest/:questId", async (req, res) => {
   }
 });
 
-// Verify quiz answers and generate signature
+// Verify quiz answers and generate signature with deadline
 app.post("/api/verify-quiz-answers", async (req, res) => {
   try {
     const { questId, userAddress, answers } = req.body;
@@ -217,28 +217,25 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
 
     const wallet = new import_ethers.ethers.Wallet(signerPk);
     const chainId = req.headers['x-chain-id'] || 1868;
+    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour
     
-    // 1. Creează hash-ul mesajului (la fel ca în contract)
+    // Include deadline in hash
     const messageHash = import_ethers.ethers.solidityPackedKeccak256(
-      ["uint256", "address", "uint256"],
-      [questId, userAddress, chainId]
+      ["uint256", "address", "uint256", "uint256"],
+      [questId, userAddress, chainId, deadline]
     );
     
-    // 2. Aplică prefixul Ethereum Signed Message (la fel ca în contract)
     const messageHashBytes = import_ethers.ethers.getBytes(messageHash);
-    const ethSignedMessageHash = import_ethers.ethers.hashMessage(messageHashBytes);
-    
-    // 3. Semnează hash-ul cu prefix
     const signature = await wallet.signMessage(messageHashBytes);
     
     console.log(`✅ Quiz verified for ${userAddress} - Quest ${questId}`);
-    console.log(`📝 Message hash: ${messageHash}`);
-    console.log(`📝 ETH signed hash: ${ethSignedMessageHash}`);
+    console.log(`⏰ Deadline: ${new Date(deadline * 1000).toISOString()}`);
     console.log(`📝 Signature: ${signature}`);
     
     return res.status(200).json({
       success: true,
       signature: signature,
+      deadline: deadline,
       message: "All answers correct!"
     });
 

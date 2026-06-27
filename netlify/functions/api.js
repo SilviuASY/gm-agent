@@ -88,8 +88,10 @@ const QUEST_QUESTIONS = {
   }
 };
 
+// ============ EXISTING ENDPOINTS ============
+
 app.get("/api/", (req, res) => {
-  res.send("<h1>\u2705 Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
+  res.send("<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
 
 app.post("/api/generate-mint-signature", async (req, res) => {

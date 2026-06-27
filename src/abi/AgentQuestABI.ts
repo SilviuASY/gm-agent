@@ -288,6 +288,12 @@ export const AgentQuestABI = [
         "internalType": "uint256",
         "name": "questFee",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "badgeURI",
+        "type": "string"
       }
     ],
     "name": "ConfigUpdated",
@@ -558,6 +564,11 @@ export const AgentQuestABI = [
         "internalType": "uint256",
         "name": "questFee",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "badgeURI",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -678,6 +689,11 @@ export const AgentQuestABI = [
         "internalType": "uint256",
         "name": "questFee",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "badgeURI",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -1138,6 +1154,11 @@ export const AgentQuestABI = [
         "internalType": "uint256",
         "name": "_questFee",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_badgeURI",
+        "type": "string"
       }
     ],
     "name": "setConfig",

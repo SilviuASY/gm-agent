@@ -827,7 +827,7 @@ export default function Academy() {
                             {hasGraduateBadge ? (
                               "You have earned the ultimate Agent Graduate badge! 🏆"
                             ) : (
-                              "Complete all 4 educational quests to unlock the Graduate badge and earn +2 bonus reputation points for Season 13. Or skip the quests and buy directly."
+                              "Complete all 4 educational quests to earn +2 bonus reputation points for Season 13, or purchase the badge directly."
                             )}
                           </Text>
                         </Box>
@@ -938,8 +938,14 @@ export default function Academy() {
                 </HStack>
 
                 <Text fontSize="sm" color="gray.500" mb={4}>
-                  Complete all {4} quests to earn the exclusive Agent Graduate badge and receive +2 bonus reputation points for Season 13 on Soneium.
-                  {!hasGraduateBadge && !isEligible && ` Alternatively, you can skip the quests and purchase the badge directly for ${Number(buyFee) / 1e18} ETH using the "Buy" button above.`}
+                  Complete each educational quest to learn about the Soneium ecosystem. 
+                  Finish all {4} quests to unlock the exclusive Agent Graduate badge and earn 
+                  <Text as="span" color="#fbbf24" fontWeight="600"> +2 bonus reputation points</Text> for Season 13.
+                  {!hasGraduateBadge && !isEligible && (
+                    <Text as="span" color="gray.500">
+                      {" "}Prefer to skip the learning? You can purchase the badge directly for {Number(buyFee) / 1e18} ETH using the "Buy" button above.
+                    </Text>
+                  )}
                 </Text>
 
                 {!isConnected ? (

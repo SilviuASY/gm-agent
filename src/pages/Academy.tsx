@@ -48,7 +48,7 @@ import { AgentQuestABI } from "../abi/AgentQuestABI";
 import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
-const AGENT_QUEST_ADDRESS = "0x7d6ee79cBD025927eC699A9aDD9f62e2a3CfCD36";
+const AGENT_QUEST_ADDRESS = "0x101580b35a0020CdDdA397840374C31577d950BF";
 const AGENT_GRADUATE_ADDRESS = "0xc7Fde4ac6AfC7FEB554CBE8cFE3effbf75b8Ed57";
 
 // ============= Motion =============

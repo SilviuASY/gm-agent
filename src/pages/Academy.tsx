@@ -147,6 +147,7 @@ export default function Academy() {
   const [buyFee, setBuyFee] = useState<bigint>(0n);
   const [questMintFee, setQuestMintFee] = useState<bigint>(0n);
   const [lastMintedTokenId, setLastMintedTokenId] = useState<number | null>(null);
+  const [lastMintedContract, setLastMintedContract] = useState<string | null>(null);
 
   // ============= Read Contracts =============
 
@@ -296,12 +297,18 @@ export default function Academy() {
       const receipt = await publicClient!.waitForTransactionReceipt({ hash });
 
       if (receipt.status === "success") {
-        setTxStatus("success");
-        setTxTitle("✅ Badge Minted!");
-        setTxDesc("Congratulations! You earned a quest badge!");
+        // Get token ID from logs - look for Transfer event
+        let tokenId: number | null = null;
+        for (const log of receipt.logs || []) {
+          // Transfer event signature: 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+          if (log.topics && log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+            tokenId = Number(log.topics[3]);
+            break;
+          }
+        }
 
-        const tokenId = Number(receipt.logs?.[0]?.topics?.[3] || 0);
         setLastMintedTokenId(tokenId);
+        setLastMintedContract(AGENT_QUEST_ADDRESS);
 
         confetti({
           particleCount: 300,
@@ -312,7 +319,7 @@ export default function Academy() {
 
         toast({
           title: "🎉 Badge Minted!",
-          description: `Token ID: #${tokenId}`,
+          description: tokenId ? `Token ID: #${tokenId}` : "Your badge has been minted successfully!",
           status: "success",
           duration: 8000,
         });
@@ -368,12 +375,16 @@ export default function Academy() {
       const receipt = await publicClient!.waitForTransactionReceipt({ hash });
 
       if (receipt.status === "success") {
-        setTxStatus("success");
-        setTxTitle("🎓 Graduate Badge Minted!");
-        setTxDesc("Congratulations! You are now a Graduate Agent!");
+        let tokenId: number | null = null;
+        for (const log of receipt.logs || []) {
+          if (log.topics && log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+            tokenId = Number(log.topics[3]);
+            break;
+          }
+        }
 
-        const tokenId = Number(receipt.logs?.[0]?.topics?.[3] || 0);
         setLastMintedTokenId(tokenId);
+        setLastMintedContract(AGENT_GRADUATE_ADDRESS);
 
         confetti({
           particleCount: 300,
@@ -384,7 +395,7 @@ export default function Academy() {
 
         toast({
           title: "🎓 Graduate Badge Minted!",
-          description: `Token ID: #${tokenId}`,
+          description: tokenId ? `Token ID: #${tokenId}` : "Your Graduate badge has been minted successfully!",
           status: "success",
           duration: 8000,
         });
@@ -427,12 +438,16 @@ export default function Academy() {
       const receipt = await publicClient!.waitForTransactionReceipt({ hash });
 
       if (receipt.status === "success") {
-        setTxStatus("success");
-        setTxTitle("💎 Graduate Badge Purchased!");
-        setTxDesc("Congratulations! You are now a Graduate Agent!");
+        let tokenId: number | null = null;
+        for (const log of receipt.logs || []) {
+          if (log.topics && log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+            tokenId = Number(log.topics[3]);
+            break;
+          }
+        }
 
-        const tokenId = Number(receipt.logs?.[0]?.topics?.[3] || 0);
         setLastMintedTokenId(tokenId);
+        setLastMintedContract(AGENT_GRADUATE_ADDRESS);
 
         confetti({
           particleCount: 300,
@@ -443,7 +458,7 @@ export default function Academy() {
 
         toast({
           title: "💎 Graduate Badge Purchased!",
-          description: `Token ID: #${tokenId}`,
+          description: tokenId ? `Token ID: #${tokenId}` : "Your Graduate badge has been purchased successfully!",
           status: "success",
           duration: 8000,
         });
@@ -568,6 +583,13 @@ export default function Academy() {
 
   const allAnswersSelected = (): boolean => {
     return answers.every(a => a !== undefined && a !== null);
+  };
+
+  const getExplorerLink = (contract: string, tokenId: number | null): string => {
+    if (tokenId) {
+      return `${BLOCKSCOUT_URL}/token/${contract}/instance/${tokenId}`;
+    }
+    return `${BLOCKSCOUT_URL}/token/${contract}`;
   };
 
   return (
@@ -805,7 +827,7 @@ export default function Academy() {
                             {hasGraduateBadge ? (
                               "You have earned the ultimate Agent Graduate badge! 🏆"
                             ) : (
-                              `Complete all ${4} educational quests to unlock the Graduate badge and earn +2 bonus reputation points for Season 13.`
+                              "Complete all 4 educational quests to unlock the Graduate badge and earn +2 bonus reputation points for Season 13. Or skip the quests and buy directly."
                             )}
                           </Text>
                         </Box>
@@ -888,7 +910,7 @@ export default function Academy() {
                       ) : isEligible ? (
                         "🎯 All quests complete! Mint your Graduate badge now."
                       ) : (
-                        `📚 ${4 - completedCount} quest(s) remaining to unlock the Graduate badge`
+                        `📚 ${4 - completedCount} quest(s) remaining or 💎 buy directly for ${Number(buyFee) / 1e18} ETH`
                       )}
                     </Text>
                   </Box>
@@ -917,6 +939,7 @@ export default function Academy() {
 
                 <Text fontSize="sm" color="gray.500" mb={4}>
                   Complete all {4} quests to earn the exclusive Agent Graduate badge and receive +2 bonus reputation points for Season 13 on Soneium.
+                  {!hasGraduateBadge && !isEligible && ` Alternatively, you can skip the quests and purchase the badge directly for ${Number(buyFee) / 1e18} ETH using the "Buy" button above.`}
                 </Text>
 
                 {!isConnected ? (
@@ -1323,7 +1346,7 @@ export default function Academy() {
                       </Text>
                     </Box>
 
-                    {lastMintedTokenId && (
+                    {lastMintedTokenId && lastMintedContract === AGENT_QUEST_ADDRESS && (
                       <Box
                         bg="rgba(251,191,36,0.1)"
                         borderRadius="lg"
@@ -1340,7 +1363,7 @@ export default function Academy() {
                           </Text>
                           <Tooltip label="View on Blockscout" hasArrow>
                             <Link
-                              href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}/instance/${lastMintedTokenId}`}
+                              href={getExplorerLink(AGENT_QUEST_ADDRESS, lastMintedTokenId)}
                               isExternal
                               _hover={{ color: "#06b6d4" }}
                             >

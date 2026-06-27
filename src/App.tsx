@@ -757,9 +757,9 @@ export default function App() {
                       color="gray.700"
                       _hover={{ bg: "rgba(139,92,246,0.06)", color: "#8b5cf6" }}
                       transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🏆</Text>}
+                      leftIcon={<Text fontSize="16px">💿</Text>}
                     >
-                      Score 12 · Agent Badge
+                      Score 12 Agent Badge
                     </Button>
                     <Box h="1px" bg="gray.100" />
                     <Button
@@ -778,7 +778,7 @@ export default function App() {
                       color="gray.700"
                       _hover={{ bg: "rgba(168,85,247,0.06)", color: "#a855f7" }}
                       transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🧩</Text>}
+                      leftIcon={<Text fontSize="16px">💿</Text>}
                     >
                       Score 10 · Pulse Cards
                     </Button>
@@ -1021,7 +1021,7 @@ export default function App() {
                         color="gray.700"
                         _hover={{ bg: "rgba(139,92,246,0.08)", color: "#8b5cf6" }}
                         _active={{ bg: "rgba(139,92,246,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🏆</Text>}
+                        leftIcon={<Text fontSize="16px">💿</Text>}
                         width="100%"
                         _focus={{ bg: "rgba(139,92,246,0.12)" }}
                       >
@@ -1050,7 +1050,7 @@ export default function App() {
                         color="gray.700"
                         _hover={{ bg: "rgba(168,85,247,0.08)", color: "#a855f7" }}
                         _active={{ bg: "rgba(168,85,247,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🧩</Text>}
+                        leftIcon={<Text fontSize="16px">💿</Text>}
                         width="100%"
                         _focus={{ bg: "rgba(168,85,247,0.12)" }}
                       >

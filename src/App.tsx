@@ -413,7 +413,7 @@ export default function App() {
   const { data: userStreak = 0n, refetch: refetchUserStreak } = useReadContract({
     address: currentDailyGM,
     abi: DailyAgentABI,
-    functionName: "currentStreak",
+    functionName: "totalUserGM",
     args: safeAddress ? [safeAddress] : undefined,
     query: { enabled: enabled && isRegistered },
   });

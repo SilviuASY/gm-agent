@@ -101,6 +101,15 @@ export default function Academy() {
 
   const isCorrectChain = chainId === SONEIUM_CHAIN_ID;
 
+  // ============= Transaction Modal =============
+  const {
+    txOpen, setTxOpen,
+    txStatus, setTxStatus,
+    txTitle, setTxTitle,
+    txDesc, setTxDesc,
+    closeTx,
+  } = useTransactionModal();
+
   // ============= State =============
   const [selectedQuest, setSelectedQuest] = useState<number | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -109,21 +118,12 @@ export default function Academy() {
   const [questName, setQuestName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signature, setSignature] = useState<string | null>(null);
+  const [signature, setSignature] = useState<`0x${string}` | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [userProgress, setUserProgress] = useState<{ [key: number]: QuestProgress }>({});
   const [hasGraduateBadge, setHasGraduateBadge] = useState(false);
   const [isEligible, setIsEligible] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
-
-  // Transaction Modal
-  const {
-    txOpen, setTxOpen,
-    txStatus, setTxStatus,
-    txTitle, setTxTitle,
-    txDesc, setTxDesc,
-    closeTx,
-  } = useTransactionModal();
 
   // ============= Read Contracts =============
 
@@ -196,7 +196,7 @@ export default function Academy() {
         throw new Error(data.error || "Quiz verification failed");
       }
 
-      setSignature(data.signature);
+      setSignature(data.signature as `0x${string}`);
       setQuizCompleted(true);
       setCurrentStep("result");
 
@@ -272,7 +272,6 @@ export default function Academy() {
           duration: 5000,
         });
 
-        // Update local state
         setUserProgress(prev => ({
           ...prev,
           [selectedQuest]: {
@@ -434,11 +433,8 @@ export default function Academy() {
   };
 
   const canMint = (questId: number): boolean => {
-    // Userul a primit semnătură pentru acest quest
     if (!signature || selectedQuest !== questId) return false;
-    // Userul nu are deja badge-ul
     if (hasUserMintedBadge(questId)) return false;
-    // Quest-ul este activ
     const quest = (questsData as any[])?.find((q: any) => Number(q.id) === questId);
     if (!quest?.isActive) return false;
     return true;
@@ -834,20 +830,10 @@ export default function Academy() {
                                   transition="all 0.2s"
                                   onClick={() => {
                                     if (isCompleted) {
-                                      // Dacă e completat dar nu mintuit, mergem direct la mint
                                       setSelectedQuest(id);
-                                      setSignature(null);
-                                      setQuizCompleted(true);
-                                      setCurrentStep("result");
-                                      // Fetch signature dacă nu există
-                                      if (!signature) {
-                                        toast({
-                                          title: "Error",
-                                          description: "No signature found. Please take the quiz again.",
-                                          status: "error",
-                                          duration: 4000,
-                                        });
-                                      }
+                                      // Dacă e completat dar nu mintuit, mergem direct la mint
+                                      // Dar avem nevoie de semnătură - deocamdată deschidem quiz-ul din nou
+                                      fetchQuestions(id);
                                     } else {
                                       fetchQuestions(id);
                                     }

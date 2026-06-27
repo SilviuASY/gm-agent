@@ -88,12 +88,14 @@ const QUEST_QUESTIONS = {
   }
 };
 
-// ============ EXISTING ENDPOINTS ============
+// ============ ENDPOINTS ============
 
+// Health check
 app.get("/api/", (req, res) => {
   res.send("<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
 
+// Generate mint signature
 app.post("/api/generate-mint-signature", async (req, res) => {
   const { userAddress, score, nonce } = req.body;
   
@@ -122,88 +124,96 @@ app.post("/api/generate-mint-signature", async (req, res) => {
   }
 });
 
-// ============ AGENT ACADEMY ENDPOINTS ============
-
-// Get quest questions (without answers)
-app.get("/api/agent-quest/:questId", async (req, res) => {
-  const questId = parseInt(req.params.questId);
-  
-  if (!QUEST_QUESTIONS[questId]) {
-    return res.status(404).json({ error: "Quest not found" });
+// Get all quests
+app.get("/api/agent-quests", async (req, res) => {
+  try {
+    const quests = Object.keys(QUEST_QUESTIONS).map(key => ({
+      id: parseInt(key),
+      name: QUEST_QUESTIONS[key].name,
+      totalQuestions: QUEST_QUESTIONS[key].questions.length
+    }));
+    
+    return res.status(200).json({ quests });
+  } catch (error) {
+    console.error("❌ Error fetching quests:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-
-  const quest = QUEST_QUESTIONS[questId];
-  const questions = quest.questions.map(q => ({
-    question: q.question
-  }));
-
-  return res.status(200).json({
-    questId: questId,
-    name: quest.name,
-    questions: questions,
-    totalQuestions: questions.length
-  });
 });
 
-// Get all quests list
-app.get("/api/agent-quests", async (req, res) => {
-  const quests = Object.keys(QUEST_QUESTIONS).map(key => ({
-    id: parseInt(key),
-    name: QUEST_QUESTIONS[key].name,
-    totalQuestions: QUEST_QUESTIONS[key].questions.length
-  }));
-  
-  return res.status(200).json({ quests });
+// Get specific quest questions
+app.get("/api/agent-quest/:questId", async (req, res) => {
+  try {
+    const questId = parseInt(req.params.questId);
+    
+    if (!QUEST_QUESTIONS[questId]) {
+      return res.status(404).json({ error: "Quest not found" });
+    }
+
+    const quest = QUEST_QUESTIONS[questId];
+    const questions = quest.questions.map(q => ({
+      question: q.question
+    }));
+
+    return res.status(200).json({
+      questId: questId,
+      name: quest.name,
+      questions: questions,
+      totalQuestions: questions.length
+    });
+  } catch (error) {
+    console.error("❌ Error fetching quest:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // Verify quiz answers
 app.post("/api/verify-quiz-answers", async (req, res) => {
-  const { questId, userAddress, answers } = req.body;
-  
-  if (!questId || !QUEST_QUESTIONS[questId]) {
-    return res.status(400).json({ error: "Invalid quest ID" });
-  }
-
-  if (!userAddress || !userAddress.startsWith("0x")) {
-    return res.status(400).json({ error: "Invalid user address" });
-  }
-
-  if (!answers || !Array.isArray(answers) || answers.length === 0) {
-    return res.status(400).json({ error: "Invalid answers" });
-  }
-
-  const questQuestions = QUEST_QUESTIONS[questId].questions;
-
-  if (answers.length !== questQuestions.length) {
-    return res.status(400).json({ 
-      error: `Expected ${questQuestions.length} answers, got ${answers.length}` 
-    });
-  }
-
-  let allCorrect = true;
-  let wrongIndexes = [];
-
-  for (let i = 0; i < questQuestions.length; i++) {
-    if (answers[i] !== questQuestions[i].answer) {
-      allCorrect = false;
-      wrongIndexes.push(i);
-    }
-  }
-
-  if (!allCorrect) {
-    return res.status(400).json({
-      error: "Incorrect answers",
-      wrongIndexes: wrongIndexes,
-      correct: false
-    });
-  }
-
-  const signerPk = process.env.SIGNER_PRIVATE_KEY;
-  if (!signerPk) {
-    return res.status(500).json({ error: "Missing SIGNER_PRIVATE_KEY" });
-  }
-
   try {
+    const { questId, userAddress, answers } = req.body;
+    
+    if (!questId || !QUEST_QUESTIONS[questId]) {
+      return res.status(400).json({ error: "Invalid quest ID" });
+    }
+
+    if (!userAddress || !userAddress.startsWith("0x")) {
+      return res.status(400).json({ error: "Invalid user address" });
+    }
+
+    if (!answers || !Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json({ error: "Invalid answers" });
+    }
+
+    const questQuestions = QUEST_QUESTIONS[questId].questions;
+
+    if (answers.length !== questQuestions.length) {
+      return res.status(400).json({ 
+        error: `Expected ${questQuestions.length} answers, got ${answers.length}` 
+      });
+    }
+
+    let allCorrect = true;
+    let wrongIndexes = [];
+
+    for (let i = 0; i < questQuestions.length; i++) {
+      if (answers[i] !== questQuestions[i].answer) {
+        allCorrect = false;
+        wrongIndexes.push(i);
+      }
+    }
+
+    if (!allCorrect) {
+      return res.status(400).json({
+        error: "Incorrect answers",
+        wrongIndexes: wrongIndexes,
+        correct: false
+      });
+    }
+
+    const signerPk = process.env.SIGNER_PRIVATE_KEY;
+    if (!signerPk) {
+      return res.status(500).json({ error: "Missing SIGNER_PRIVATE_KEY" });
+    }
+
     const wallet = new import_ethers.ethers.Wallet(signerPk);
     const chainId = req.headers['x-chain-id'] || 1868;
     
@@ -223,8 +233,8 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error generating signature:", error);
-    return res.status(500).json({ error: "Error generating signature" });
+    console.error("❌ Error verifying answers:", error);
+    return res.status(500).json({ error: "Error verifying answers" });
   }
 });
 

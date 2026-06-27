@@ -172,19 +172,6 @@ export const AgentGraduateABI = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "contractAddress",
-        "type": "address"
-      }
-    ],
-    "name": "AgentQuestContractUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "owner",
         "type": "address"
       },
@@ -241,7 +228,13 @@ export const AgentGraduateABI = [
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "fee",
+        "name": "questMintFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "buyGraduateFee",
         "type": "uint256"
       },
       {
@@ -441,7 +434,12 @@ export const AgentGraduateABI = [
       },
       {
         "internalType": "uint256",
-        "name": "graduateFee",
+        "name": "questMintFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "buyGraduateFee",
         "type": "uint256"
       },
       {
@@ -517,7 +515,12 @@ export const AgentGraduateABI = [
       },
       {
         "internalType": "uint256",
-        "name": "graduateFee",
+        "name": "questMintFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "buyGraduateFee",
         "type": "uint256"
       },
       {
@@ -845,7 +848,12 @@ export const AgentGraduateABI = [
       },
       {
         "internalType": "uint256",
-        "name": "_graduateFee",
+        "name": "_questMintFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_buyGraduateFee",
         "type": "uint256"
       },
       {

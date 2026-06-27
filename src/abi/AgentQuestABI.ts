@@ -907,6 +907,11 @@ export const AgentQuestABI = [
         "internalType": "uint256",
         "name": "_questId",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_signature",
+        "type": "bytes"
       }
     ],
     "name": "mintBadge",
@@ -1136,24 +1141,6 @@ export const AgentQuestABI = [
       }
     ],
     "name": "setConfig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_questId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_signature",
-        "type": "bytes"
-      }
-    ],
-    "name": "submitAnswers",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

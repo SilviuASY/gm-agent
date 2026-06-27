@@ -48,7 +48,7 @@ import { AgentQuestABI } from "../abi/AgentQuestABI";
 import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
-const AGENT_QUEST_ADDRESS = "0x5f0bAa915f474E3FA86640b30c9939d64dFd742d";
+const AGENT_QUEST_ADDRESS = "0x7d6ee79cBD025927eC699A9aDD9f62e2a3CfCD36";
 const AGENT_GRADUATE_ADDRESS = "0xc7Fde4ac6AfC7FEB554CBE8cFE3effbf75b8Ed57";
 
 // ============= Motion =============
@@ -219,12 +219,20 @@ export default function Academy() {
     }
   };
 
-  const handleMintBadge = async (questId: number) => {
-    if (!address || !signature) return;
+  const handleMintBadge = async () => {
+    if (!address || !signature || selectedQuest === null) {
+      toast({
+        title: "Error",
+        description: "Missing signature. Please complete the quiz first.",
+        status: "error",
+        duration: 4000,
+      });
+      return;
+    }
 
     try {
       const quest = questsData as any[];
-      const questData = quest?.find((q: any) => Number(q.id) === questId);
+      const questData = quest?.find((q: any) => Number(q.id) === selectedQuest);
       const fee = questData ? BigInt(questData.fee) : 0n;
 
       setTxOpen(true);
@@ -236,7 +244,7 @@ export default function Academy() {
         address: toHexAddress(AGENT_QUEST_ADDRESS),
         abi: AgentQuestABI,
         functionName: "mintBadge",
-        args: [BigInt(questId)],
+        args: [BigInt(selectedQuest), signature],
         value: fee,
       });
 
@@ -251,8 +259,8 @@ export default function Academy() {
         setTxDesc("Congratulations! You earned a quest badge!");
 
         confetti({
-          particleCount: 200,
-          spread: 80,
+          particleCount: 300,
+          spread: 100,
           origin: { y: 0.6 },
           colors: ["#8b5cf6", "#ec4899", "#3b82f6", "#22c55e", "#fbbf24"],
         });
@@ -267,10 +275,10 @@ export default function Academy() {
         // Update local state
         setUserProgress(prev => ({
           ...prev,
-          [questId]: {
-            ...prev[questId],
+          [selectedQuest]: {
+            completed: true,
             badgeMinted: true,
-            completed: true
+            completedAt: BigInt(Date.now())
           }
         }));
 
@@ -423,6 +431,17 @@ export default function Academy() {
 
   const hasUserMintedBadge = (questId: number): boolean => {
     return userProgress[questId]?.badgeMinted || false;
+  };
+
+  const canMint = (questId: number): boolean => {
+    // Userul a primit semnătură pentru acest quest
+    if (!signature || selectedQuest !== questId) return false;
+    // Userul nu are deja badge-ul
+    if (hasUserMintedBadge(questId)) return false;
+    // Quest-ul este activ
+    const quest = (questsData as any[])?.find((q: any) => Number(q.id) === questId);
+    if (!quest?.isActive) return false;
+    return true;
   };
 
   return (
@@ -815,7 +834,20 @@ export default function Academy() {
                                   transition="all 0.2s"
                                   onClick={() => {
                                     if (isCompleted) {
-                                      handleMintBadge(id);
+                                      // Dacă e completat dar nu mintuit, mergem direct la mint
+                                      setSelectedQuest(id);
+                                      setSignature(null);
+                                      setQuizCompleted(true);
+                                      setCurrentStep("result");
+                                      // Fetch signature dacă nu există
+                                      if (!signature) {
+                                        toast({
+                                          title: "Error",
+                                          description: "No signature found. Please take the quiz again.",
+                                          status: "error",
+                                          duration: 4000,
+                                        });
+                                      }
                                     } else {
                                       fetchQuestions(id);
                                     }
@@ -945,7 +977,7 @@ export default function Academy() {
           {/* ============================================================ */}
           {/* RESULT VIEW */}
           {/* ============================================================ */}
-          {currentStep === "result" && quizCompleted && signature && (
+          {currentStep === "result" && quizCompleted && signature && selectedQuest && (
             <MotionBox
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -985,19 +1017,20 @@ export default function Academy() {
                 <HStack spacing={4} justify="center" flexWrap="wrap">
                   <Button
                     size="lg"
-                    bgGradient="linear(135deg, #fbbf24, #ec4899)"
-                    color="white"
+                    bgGradient={canMint(selectedQuest) ? "linear(135deg, #fbbf24, #ec4899)" : "rgba(75,85,99,0.3)"}
+                    color={canMint(selectedQuest) ? "white" : "gray.500"}
                     fontWeight="700"
                     borderRadius="full"
                     px={8}
-                    onClick={() => selectedQuest && handleMintBadge(selectedQuest)}
+                    isDisabled={!canMint(selectedQuest)}
+                    onClick={handleMintBadge}
                     _hover={{
-                      transform: "scale(1.02)",
-                      boxShadow: "0 0 30px rgba(251,191,36,0.3)",
+                      transform: canMint(selectedQuest) ? "scale(1.02)" : "none",
+                      boxShadow: canMint(selectedQuest) ? "0 0 30px rgba(251,191,36,0.3)" : "none",
                     }}
                     transition="all 0.3s"
                   >
-                    🏅 Mint Badge
+                    {canMint(selectedQuest) ? "🏅 Mint Badge" : "⏳ Already Minted"}
                   </Button>
                   <Button
                     size="lg"

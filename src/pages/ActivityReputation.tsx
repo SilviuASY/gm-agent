@@ -260,8 +260,8 @@ const Footer = () => {
             <HStack key={label} spacing={0}>
               <VStack spacing={0} px={{ base: 4, md: 6 }} py={1}>
                 <Text
-                  fontSize="9px"
-                  color="gray.600"
+                  fontSize="10px"
+                  color="gray.500"
                   textTransform="uppercase"
                   letterSpacing="0.18em"
                   fontFamily="'Space Mono', monospace"
@@ -286,7 +286,7 @@ const Footer = () => {
 
         <VStack spacing={1}>
           <Text
-            fontSize="9px"
+            fontSize="12px"
             color="gray.500"
             fontFamily="'Space Mono', monospace"
             letterSpacing="0.12em"
@@ -295,8 +295,8 @@ const Footer = () => {
             © {currentYear} · Agent Protocol · Activity Reputation
           </Text>
           <Text
-            fontSize="9px"
-            color="gray.600"
+            fontSize="10px"
+            color="gray.500"
             fontFamily="'Space Mono', monospace"
             letterSpacing="0.08em"
           >
@@ -1057,7 +1057,7 @@ export default function ActivityReputation() {
                   </Badge>
                 </HStack>
                 <Text
-                  color="gray.600"
+                  color="gray.500"
                   fontSize={{ base: "9px", md: "10px" }}
                   letterSpacing="0.2em"
                   fontFamily="'Space Mono', monospace"
@@ -1721,7 +1721,7 @@ export default function ActivityReputation() {
                                 📜 View Badge Contract on Explorer
                               </Button>
 
-                              <Text fontSize="9px" color="gray.500" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                              <Text fontSize="10px" color="gray.500" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
                                 Soulbound Token (Non-Transferable) • Forever tied to your wallet
                               </Text>
                             </VStack>
@@ -2326,7 +2326,7 @@ export default function ActivityReputation() {
                                   <Badge
                                     bg={hasPaidForThisSession ? "rgba(34,197,94,0.12)" : isOnCooldown ? "rgba(251,191,36,0.10)" : "rgba(156,163,175,0.08)"}
                                     color={hasPaidForThisSession ? "#22c55e" : isOnCooldown ? "#fbbf24" : "rgba(156,163,175,0.6)"}
-                                    fontSize={{ base: "7px", md: "9px" }}
+                                    fontSize={{ base: "8px", md: "10px" }}
                                     px={2}
                                     py={0.8}
                                     borderRadius="full"
@@ -2338,7 +2338,7 @@ export default function ActivityReputation() {
                                     {hasPaidForThisSession ? "✓ Ready to Execute" : isOnCooldown ? "⏳ Cooldown" : "● Awaiting Payment"}
                                   </Badge>
                                   <HStack spacing={1}>
-                                    <Text fontSize={{ base: "7px", md: "9px" }} color="rgba(156,163,175,0.45)" fontWeight="500" fontFamily="'Space Mono', monospace">
+                                    <Text fontSize={{ base: "8px", md: "10px" }} color="rgba(156,163,175,0.45)" fontWeight="600" fontFamily="'Space Mono', monospace">
                                       done:
                                     </Text>
                                     <Text
@@ -2379,10 +2379,10 @@ export default function ActivityReputation() {
                                 {/* Fee info */}
                                 <HStack w="full" justify="space-between">
                                   <VStack spacing={0.5} align="start">
-                                    <Text fontSize={{ base: "7px", md: "9px" }} color="rgba(156,163,175,0.45)" fontWeight="500" fontFamily="'Space Mono', monospace">
+                                    <Text fontSize={{ base: "8px", md: "10px" }} color="rgba(156,163,175,0.45)" fontWeight="500" fontFamily="'Space Mono', monospace">
                                       Protocol: <Text as="span" color="#fbbf24" fontWeight="700">{formatFee(defaultFee)} ETH</Text>
                                     </Text>
-                                    <Text fontSize={{ base: "7px", md: "9px" }} color="rgba(156,163,175,0.45)" fontWeight="500" fontFamily="'Space Mono', monospace">
+                                    <Text fontSize={{ base: "8px", md: "10px" }} color="rgba(156,163,175,0.45)" fontWeight="500" fontFamily="'Space Mono', monospace">
                                       External:{" "}
                                       {action.externalFee > 0 ? (
                                         <Text as="span" color="#22c55e" fontWeight="700">{formatFee(BigInt(action.externalFee))} ETH</Text>
@@ -2392,7 +2392,7 @@ export default function ActivityReputation() {
                                     </Text>
                                   </VStack>
                                   <Text
-                                    fontSize={{ base: "8px", md: "10px" }}
+                                    fontSize={{ base: "9px", md: "11px" }}
                                     color={totalExecutedCount === 0 ? "#22c55e" : frontendCooldown === 0 ? "#22c55e" : "#fbbf24"}
                                     fontWeight="700"
                                     fontFamily="'Space Mono', monospace"
@@ -2439,10 +2439,10 @@ export default function ActivityReputation() {
 
                                 {!hasPaidForThisSession && !isOnCooldown && (
                                   <Text
-                                    fontSize={{ base: "7px", md: "9px" }}
+                                    fontSize={{ base: "8px", md: "10px" }}
                                     color="rgba(156,163,175,0.38)"
                                     textAlign="center"
-                                    fontWeight="500"
+                                    fontWeight="600"
                                     fontFamily="'Space Grotesk', sans-serif"
                                   >
                                     {totalExecutedCount === 0 ? "Pay to earn your first point" : "Pay again to earn more points"}

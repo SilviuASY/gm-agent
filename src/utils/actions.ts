@@ -27,6 +27,7 @@ import {
   redButtonABI,
   gmBoostABI,
   openSeaMintABI,
+  sweepClaimABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -57,6 +58,7 @@ export const getPartnerABI = (actionId: number) => {
     case 22: return redButtonABI;
     case 23: return gmBoostABI;
     case 24: return openSeaMintABI;
+    case 25: return sweepClaimABI;
     default: throw new Error("Unknown action id");
   }
 };
@@ -98,8 +100,10 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return ["cyber-roulette", "spin", 0n, 1n, 1000n];
     case 22: // Red Button - drawItem
       return [0, 1924992000, "0x"];
-    case 24:  // OpenSea Mint
+    case 24: // OpenSea Mint
       return ["0x1B3D12FE28FB2A80F89ecA7A0C1aE66BD975042d" as `0x${string}`, "0x0000a26b00c1F0DF003000390027140000fAa719" as `0x${string}`, address || zeroAddress, 1n];
+    case 25: // GM Sweep
+      return [address || zeroAddress, 0n, 1n, "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as `0x${string}`, 30000000000000n, [[], 0n, 115792089237316195423570985008687907853269984665640564039457584007913129639935n, "0x0000000000000000000000000000000000000000" as `0x${string}`], "0x" as `0x${string}`];
     default:
       return [];
   }

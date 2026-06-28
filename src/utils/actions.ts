@@ -26,6 +26,7 @@ import {
   harkanABI,
   redButtonABI,
   gmBoostABI,
+  openSeaMintABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -55,6 +56,7 @@ export const getPartnerABI = (actionId: number) => {
     case 21: return harkanABI;
     case 22: return redButtonABI;
     case 23: return gmBoostABI;
+    case 24: return openSeaMintABI;
     default: throw new Error("Unknown action id");
   }
 };
@@ -96,6 +98,8 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return ["cyber-roulette", "spin", 0n, 1n, 1000n];
     case 22: // Red Button - drawItem
       return [0, 1924992000, "0x"];
+    case 24:  // OpenSea Mint
+      return ["0x1B3D12FE28FB2A80F89ecA7A0C1aE66BD975042d" as `0x${string}`, "0x0000a26b00c1F0DF003000390027140000fAa719" as `0x${string}`, address || zeroAddress, 1n];
     default:
       return [];
   }

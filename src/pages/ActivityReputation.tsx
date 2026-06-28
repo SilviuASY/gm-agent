@@ -2233,15 +2233,19 @@ export default function ActivityReputation() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4, delay: index * 0.05 }}
                             whileHover={{ y: -5 }}
+                            style={{ width: '100%', height: '100%' }}
                           >
                             <Box
                               bg="rgba(0,0,0,0.35)"
                               borderRadius="18px"
-                              border={`1px solid ${hasPaidForThisSession ? `${action.color}50` : `${action.color}18`}`}
+                              border={`1px solid ${hasPaidForThisSession ? `${action.color}50` : `${action.color}30`}`}
                               p={{ base: "12px", md: "18px" }}
                               transition="all 0.3s cubic-bezier(0.4,0,0.2,1)"
                               position="relative"
                               overflow="hidden"
+                               h="100%"
+                               display="flex"
+                               flexDirection="column"
                               _before={{
                                 content: '""',
                                 position: "absolute",
@@ -2258,7 +2262,11 @@ export default function ActivityReputation() {
                                 bg: "rgba(0,0,0,0.50)",
                               }}
                             >
-                              <VStack spacing={{ base: 2, md: 2.5 }}>
+                              <VStack 
+                              spacing={{ base: 2, md: 2.5 }}
+                                flex="1" 
+                                justify="space-between"
+                              >
                                 {/* Header row */}
                                 <HStack w="full" justify="space-between">
                                   <HStack spacing={2}>

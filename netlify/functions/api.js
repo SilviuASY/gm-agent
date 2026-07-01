@@ -42,7 +42,7 @@ app.use((0, import_cors.default)({
 }));
 app.use(import_express.default.json());
 
-var BADGE_CONTRACT = "0xE6D5A673306A5cB2646b0727f9363e13FAC60c72";
+var BADGE_CONTRACT = "0x8002f1e37caEe0D739C298D31D7E1090c22264B0";
 
 // ============ AGENT ACADEMY QUESTIONS ============
 const QUEST_QUESTIONS = {

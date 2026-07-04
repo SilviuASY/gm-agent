@@ -100,6 +100,32 @@ interface SuccessModalData {
   totalCount?: number;
 }
 
+// ============= Extend badge ABI with buy functions =============
+const extendedBadgeABI = [
+  ...badgeABI,
+  {
+    inputs: [],
+    name: "buyPrice",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "buyActive",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "buy",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+] as const;
+
 // ============= Motion =============
 const MotionBox = motion(Box);
 
@@ -339,6 +365,7 @@ export default function ActivityReputation() {
   const [paymentData, setPaymentData] = useState<{ action: typeof PARTNER_ACTIONS[0]; txHash: string } | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<SuccessModalData | null>(null);
+  const [showBuyModal, setShowBuyModal] = useState(false);
 
   const isCorrectChain = chainId === SONEIUM_CHAIN_ID;
 
@@ -461,7 +488,7 @@ export default function ActivityReputation() {
   // ================= BADGE CONTRACT READS =================
   const { data: minReputationScoreData = 0n } = useReadContract({
     address: toHexAddress(BADGE_CONTRACT),
-    abi: badgeABI,
+    abi: extendedBadgeABI,
     functionName: "minReputationScore",
     query: { enabled: true },
   });
@@ -469,7 +496,7 @@ export default function ActivityReputation() {
 
   const { data: userBadgeBalance = 0n, refetch: refetchBadgeBalance } = useReadContract({
     address: toHexAddress(BADGE_CONTRACT),
-    abi: badgeABI,
+    abi: extendedBadgeABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
@@ -477,17 +504,40 @@ export default function ActivityReputation() {
 
   const { data: userNonce = 0n } = useReadContract({
     address: toHexAddress(BADGE_CONTRACT),
-    abi: badgeABI,
+    abi: extendedBadgeABI,
     functionName: "getNonce",
     args: address ? [address] : undefined,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
+
+  // ================= READ BUY PRICE & BUY ACTIVE =================
+  const { data: buyPriceData = 0n } = useReadContract({
+    address: toHexAddress(BADGE_CONTRACT),
+    abi: extendedBadgeABI,
+    functionName: "buyPrice",
+    query: { enabled: true },
+  });
+  const buyPrice = buyPriceData;
+
+  const { data: buyActiveData = false } = useReadContract({
+    address: toHexAddress(BADGE_CONTRACT),
+    abi: extendedBadgeABI,
+    functionName: "buyActive",
+    query: { enabled: true },
+  });
+  const buyActive = buyActiveData;
 
   const userTotalScore = Number(userGmCount) + Number(userVoteCount) + Number(userCheckInCount) + Number(userDeployCount) + Number(userAgentGmCount) + userPartnerTotal;
   const userBadge = getUserBadge(userTotalScore);
   const nextTierTarget = getNextTierTarget(userTotalScore);
   const reputationProgress = Math.min(100, (userTotalScore / nextTierTarget) * 100);
   const badgeProgress = Math.min(100, (userTotalScore / minReputationScore) * 100);
+
+  // Helper pentru formatare preț cu 4 zecimale
+  const formatPriceWithFourDecimals = (price: bigint): string => {
+    const ethValue = Number(price) / 1e18;
+    return ethValue.toFixed(4);
+  };
 
   // Refetch functions
   const refetchAllData = async () => {
@@ -531,7 +581,6 @@ export default function ActivityReputation() {
 
   // ================= MINT BADGE HANDLER =================
   const handleMintBadge = async () => {
-    // Verifică dacă utilizatorul are deja badge
     if (!address || !isCorrectChain || userBadgeBalance > 0n) {
       toast({
         title: "Badge Already Minted",
@@ -575,7 +624,7 @@ export default function ActivityReputation() {
       setTxDesc("Confirm mint on Soneium...");
       const hash = await writeContractAsync({
         address: toHexAddress(BADGE_CONTRACT),
-        abi: badgeABI,
+        abi: extendedBadgeABI,
         functionName: "mint",
         args: [BigInt(score), signature, BigInt(deadline)],
       });
@@ -601,6 +650,87 @@ export default function ActivityReputation() {
       const rejected = err?.message?.includes("rejected") || err?.code === 4001;
       setTxStatus(rejected ? "rejected" : "failed");
       setTxTitle(rejected ? "Mint Cancelled" : "Mint Failed");
+    } finally {
+      setIsTxPending(false);
+    }
+  };
+
+  // ================= BUY BADGE HANDLER =================
+  const handleBuyBadge = async () => {
+    if (!address || !isCorrectChain) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet and switch to Soneium network.",
+        status: "warning",
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
+    if (userBadgeBalance > 0n) {
+      toast({
+        title: "Badge Already Minted",
+        description: "You already have the Reputation Badge! 🏅",
+        status: "info",
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
+    if (!buyActive) {
+      toast({
+        title: "Purchase Not Available",
+        description: "The badge purchase is currently disabled.",
+        status: "warning",
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
+    setIsTxPending(true);
+    setTxOpen(true);
+    setTxStatus("wallet");
+    setTxTitle("🛒 Purchase Reputation Badge");
+    setTxDesc(`Confirm purchase of badge for ${formatPriceWithFourDecimals(buyPrice)} ETH...`);
+
+    try {
+      const hash = await writeContractAsync({
+        address: toHexAddress(BADGE_CONTRACT),
+        abi: extendedBadgeABI,
+        functionName: "buy",
+        value: buyPrice,
+      });
+
+      setTxStatus("pending");
+      setTxTitle("Purchase Sent");
+      setTxDesc("Waiting for blockchain confirmation...");
+
+      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+
+      if (receipt.status === "success") {
+        setTxStatus("success");
+        setTxTitle("🎉 Badge Purchased!");
+        setTxDesc("You successfully purchased the Reputation Badge!");
+        confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 } });
+        await refetchBadgeBalance();
+        await updateLeaderboardScore(0);
+        setShowBuyModal(false);
+        toast({
+          title: "🎉 Success!",
+          description: "Badge purchased successfully!",
+          status: "success",
+          duration: 6000,
+          position: "top-right",
+        });
+      }
+    } catch (err: any) {
+      const rejected = err?.message?.includes("rejected") || err?.code === 4001;
+      setTxStatus(rejected ? "rejected" : "failed");
+      setTxTitle(rejected ? "Purchase Cancelled" : "Purchase Failed");
+      setTxDesc(rejected ? "You cancelled the transaction." : err?.message || "Something went wrong.");
     } finally {
       setIsTxPending(false);
     }
@@ -931,6 +1061,9 @@ export default function ActivityReputation() {
   // Badge-ul a fost deja mintuit
   const hasBadge = userBadgeBalance > 0n;
 
+  // Verifică dacă utilizatorul poate cumpăra badge (este agent, nu are badge, și cumpărarea e activă)
+  const canBuyBadge = userIsAgent && !hasBadge && buyActive;
+
   return (
     <>
       <style>{pageStyles}</style>
@@ -1203,39 +1336,92 @@ export default function ActivityReputation() {
             </MotionBox>
           )}
 
-          {/* Campaign Status Banner */}
+          {/* ===== BANNER SECTION: Campaign + Buy Badge side by side ===== */}
           {isConnected && isCorrectChain && campaignStartTimeData !== undefined && (
-            <Alert
-              status="info"
-              borderRadius="xl"
-              mb={5}
-              bg={campaignActive ? "rgba(34,197,94,0.08)" : campaignScheduled ? "rgba(139,92,246,0.08)" : "rgba(156,163,175,0.08)"}
-              border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#6b7280"}30`}
-              backdropFilter="blur(8px)"
-              py={3}
-            >
-              <AlertIcon color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} />
-              <Box flex="1">
-                <HStack spacing={3} wrap="wrap">
-                  <Text fontWeight="bold" color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} fontSize="sm">
-                    {campaignActive ? "🎯 Campaign Active" : campaignScheduled ? "⏳ Campaign Scheduled" : "⏸️ Campaign Stopped"}
-                  </Text>
-                  {campaignScheduled && timeRemaining && (timeRemaining.days + timeRemaining.hours + timeRemaining.minutes + timeRemaining.seconds > 0) && (
-                    <HStack spacing={1}>
-                      <Text fontSize="xs" color="gray.400">Starts in:</Text>
-                      <Text fontSize="sm" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
-                        {timeRemaining.hours.toString().padStart(2, "0")}h {timeRemaining.minutes.toString().padStart(2, "0")}m
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5}>
+              {/* Campaign Status Card */}
+              <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Alert
+                  status="info"
+                  borderRadius="xl"
+                  bg={campaignActive ? "rgba(34,197,94,0.08)" : campaignScheduled ? "rgba(139,92,246,0.08)" : "rgba(156,163,175,0.08)"}
+                  border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#6b7280"}30`}
+                  backdropFilter="blur(8px)"
+                  py={3}
+                  h="100%"
+                >
+                  <AlertIcon color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} />
+                  <Box flex="1">
+                    <HStack spacing={3} wrap="wrap">
+                      <Text fontWeight="bold" color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} fontSize="sm">
+                        {campaignActive ? "🎯 Campaign Active" : campaignScheduled ? "⏳ Campaign Scheduled" : "⏸️ Campaign Stopped"}
                       </Text>
+                      {campaignScheduled && timeRemaining && (timeRemaining.days + timeRemaining.hours + timeRemaining.minutes + timeRemaining.seconds > 0) && (
+                        <HStack spacing={1}>
+                          <Text fontSize="xs" color="gray.400">Starts in:</Text>
+                          <Text fontSize="sm" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
+                            {timeRemaining.hours.toString().padStart(2, "0")}h {timeRemaining.minutes.toString().padStart(2, "0")}m
+                          </Text>
+                        </HStack>
+                      )}
+                      {campaignActive && (
+                        <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={0.5} borderRadius="full">
+                          ● LIVE
+                        </Badge>
+                      )}
                     </HStack>
-                  )}
-                  {campaignActive && (
-                    <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={0.5} borderRadius="full">
-                      ● LIVE
-                    </Badge>
-                  )}
-                </HStack>
-              </Box>
-            </Alert>
+                  </Box>
+                </Alert>
+              </MotionBox>
+
+              {/* Buy Badge Card - only show if user can buy */}
+              {canBuyBadge && (
+                <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                  <Box
+                    bg="rgba(251,191,36,0.06)"
+                    borderRadius="xl"
+                    border="1px solid rgba(251,191,36,0.2)"
+                    backdropFilter="blur(8px)"
+                    py={2.5}
+                    px={4}
+                    h="100%"
+                    transition="all 0.3s"
+                    _hover={{ borderColor: "rgba(251,191,36,0.4)", bg: "rgba(251,191,36,0.08)" }}
+                  >
+                    <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+                      <HStack spacing={2.5}>
+                        <Text fontSize="lg">💎</Text>
+                        <Box>
+                          <Text fontSize="sm" fontWeight="600" color="gray.200" fontFamily="'Space Grotesk', sans-serif">
+                            Skip the grind!
+                          </Text>
+                          <Text fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
+                            Buy badge directly for {formatPriceWithFourDecimals(buyPrice)} ETH
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <Button
+                        onClick={() => setShowBuyModal(true)}
+                        size="sm"
+                        bgGradient="linear(135deg, #fbbf24, #f59e0b)"
+                        color="white"
+                        fontWeight="700"
+                        fontSize="xs"
+                        fontFamily="'Space Grotesk', sans-serif"
+                        _hover={{ transform: "scale(1.02)", boxShadow: "0 0 20px rgba(251,191,36,0.2)" }}
+                        transition="all 0.3s"
+                        borderRadius="full"
+                        px={4}
+                        py={1.5}
+                        flexShrink={0}
+                      >
+                        🛒 Buy Now
+                      </Button>
+                    </Flex>
+                  </Box>
+                </MotionBox>
+              )}
+            </SimpleGrid>
           )}
 
           {/* Stats Header */}
@@ -2535,6 +2721,128 @@ export default function ActivityReputation() {
               <ModalFooter pt={0} pb={4}>
                 <Text fontSize="xs" color="gray.500" textAlign="center" w="full" fontFamily="'Space Grotesk', sans-serif">
                   You have paid the protocol fee. Now confirm the second transaction to complete the action.
+                </Text>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+
+          {/* ===== BUY BADGE MODAL ===== */}
+          <Modal isOpen={showBuyModal} onClose={() => { setShowBuyModal(false); restoreScrollPosition(); }} isCentered size="lg">
+            <ModalOverlay backdropFilter="blur(10px)" />
+            <ModalContent bg="rgba(4,4,14,0.98)" border="1px solid rgba(251,191,36,0.3)" borderRadius="2xl" mx={3}>
+              <ModalCloseButton color="gray.400" />
+              <ModalBody py={8}>
+                <VStack spacing={5}>
+                  <Box fontSize="56px">💎</Box>
+                  <Text fontSize="xl" fontWeight="800" bgGradient="linear(135deg, #fbbf24, #f59e0b)" bgClip="text" fontFamily="'Space Grotesk', sans-serif">
+                    Purchase Reputation Badge
+                  </Text>
+                  <Badge bg="rgba(251,191,36,0.15)" color="#fbbf24" px={4} py={2} borderRadius="full" fontSize="xs" fontFamily="'Space Mono', monospace">
+                    Skip the Grind • Instant Access
+                  </Badge>
+
+                  <Box
+                    position="relative"
+                    w="120px"
+                    h="120px"
+                    borderRadius="xl"
+                    overflow="hidden"
+                    border="2px solid #fbbf24"
+                    boxShadow="0 0 40px rgba(251,191,36,0.3)"
+                    transition="all 0.3s"
+                    _hover={{ transform: "scale(1.05)", boxShadow: "0 0 60px rgba(251,191,36,0.5)" }}
+                  >
+                    <Image
+                      src="/agentbadge.png"
+                      alt="Reputation Badge NFT"
+                      w="100%"
+                      h="100%"
+                      objectFit="cover"
+                      fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><text y='55%' x='50%' text-anchor='middle' font-size='64'>🏅</text></svg>"
+                    />
+                    <Badge
+                      position="absolute"
+                      bottom="4px"
+                      right="4px"
+                      bgGradient="linear(135deg, #fbbf24, #f59e0b)"
+                      color="white"
+                      fontSize="10px"
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                      fontFamily="'Space Mono', monospace"
+                      border="1px solid rgba(255,255,255,0.1)"
+                    >
+                      SBT
+                    </Badge>
+                  </Box>
+
+                  <Box w="full" bg="rgba(0,0,0,0.4)" borderRadius="lg" p={4}>
+                    <VStack spacing={2.5} align="stretch">
+                      <HStack justify="space-between">
+                        <Text color="gray.400" fontSize="xs" fontFamily="'Space Mono', monospace">Badge Type</Text>
+                        <Text fontWeight="600" color="white" fontSize="xs" fontFamily="'Space Grotesk', sans-serif">
+                          Reputation Badge
+                        </Text>
+                      </HStack>
+                      <Divider borderColor="rgba(139,92,246,0.15)" />
+                      <HStack justify="space-between">
+                        <Text color="gray.400" fontSize="xs" fontFamily="'Space Mono', monospace">Price</Text>
+                        <Text fontWeight="700" color="#fbbf24" fontSize="md" fontFamily="'Space Mono', monospace">
+                          {formatPriceWithFourDecimals(buyPrice)} ETH
+                        </Text>
+                      </HStack>
+                      <Divider borderColor="rgba(139,92,246,0.15)" />
+                      <HStack justify="space-between">
+                        <Text color="gray.400" fontSize="xs" fontFamily="'Space Mono', monospace">Network</Text>
+                        <Badge bg="#8b5cf6" color="white" fontSize="8px" fontFamily="'Space Mono', monospace">Soneium</Badge>
+                      </HStack>
+                      <Divider borderColor="rgba(139,92,246,0.15)" />
+                      <HStack justify="space-between">
+                        <Text color="gray.400" fontSize="xs" fontFamily="'Space Mono', monospace">Token Type</Text>
+                        <Badge bg="rgba(139,92,246,0.12)" color="#a855f7" fontSize="8px" fontFamily="'Space Mono', monospace">Soulbound (Non-Transferable)</Badge>
+                      </HStack>
+                    </VStack>
+                  </Box>
+
+                  <Text fontSize="xs" color="gray.400" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                    💡 This badge is a Soulbound Token (SBT) that will be permanently tied to your wallet.
+                    It proves your reputation and grants exclusive community benefits.
+                  </Text>
+
+                  <Button
+                    onClick={handleBuyBadge}
+                    isLoading={isTxPending}
+                    w="full"
+                    size="lg"
+                    bgGradient="linear(135deg, #fbbf24, #f59e0b)"
+                    color="white"
+                    fontWeight="700"
+                    fontSize="md"
+                    fontFamily="'Space Grotesk', sans-serif"
+                    _hover={{ transform: "scale(1.02)", boxShadow: "0 0 40px rgba(251,191,36,0.4)" }}
+                    transition="all 0.3s"
+                    borderRadius="full"
+                    isDisabled={!buyActive}
+                    leftIcon={<Text>🛒</Text>}
+                  >
+                    Buy Badge ({formatPriceWithFourDecimals(buyPrice)} ETH)
+                  </Button>
+
+                  {!buyActive && (
+                    <Text fontSize="xs" color="gray.500" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                      ⏳ Purchase is temporarily disabled by the contract owner
+                    </Text>
+                  )}
+
+                  <Text fontSize="9px" color="gray.500" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                    By purchasing, you agree that this is a non-refundable, non-transferable soulbound token.
+                  </Text>
+                </VStack>
+              </ModalBody>
+              <ModalFooter pt={0} pb={4}>
+                <Text fontSize="xs" color="gray.500" textAlign="center" w="full" fontFamily="'Space Grotesk', sans-serif">
+                  💎 Instant badge access • No reputation points required
                 </Text>
               </ModalFooter>
             </ModalContent>

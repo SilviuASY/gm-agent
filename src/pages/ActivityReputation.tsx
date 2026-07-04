@@ -1338,90 +1338,129 @@ export default function ActivityReputation() {
 
           {/* ===== BANNER SECTION: Campaign + Buy Badge side by side ===== */}
           {isConnected && isCorrectChain && campaignStartTimeData !== undefined && (
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5}>
-              {/* Campaign Status Card */}
-              <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Alert
-                  status="info"
-                  borderRadius="xl"
-                  bg={campaignActive ? "rgba(34,197,94,0.08)" : campaignScheduled ? "rgba(139,92,246,0.08)" : "rgba(156,163,175,0.08)"}
-                  border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#6b7280"}30`}
-                  backdropFilter="blur(8px)"
-                  py={3}
-                  h="100%"
-                >
-                  <AlertIcon color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} />
-                  <Box flex="1">
-                    <HStack spacing={3} wrap="wrap">
-                      <Text fontWeight="bold" color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} fontSize="sm">
-                        {campaignActive ? "🎯 Campaign Active" : campaignScheduled ? "⏳ Campaign Scheduled" : "⏸️ Campaign Stopped"}
-                      </Text>
-                      {campaignScheduled && timeRemaining && (timeRemaining.days + timeRemaining.hours + timeRemaining.minutes + timeRemaining.seconds > 0) && (
-                        <HStack spacing={1}>
-                          <Text fontSize="xs" color="gray.400">Starts in:</Text>
-                          <Text fontSize="sm" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
-                            {timeRemaining.hours.toString().padStart(2, "0")}h {timeRemaining.minutes.toString().padStart(2, "0")}m
-                          </Text>
-                        </HStack>
-                      )}
-                      {campaignActive && (
-                        <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={0.5} borderRadius="full">
-                          ● LIVE
-                        </Badge>
-                      )}
-                    </HStack>
-                  </Box>
-                </Alert>
-              </MotionBox>
-
-              {/* Buy Badge Card - only show if user can buy */}
-              {canBuyBadge && (
-                <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                  <Box
-                    bg="rgba(251,191,36,0.06)"
+            <>
+              {hasBadge ? (
+                /* If user has badge, show full width campaign card */
+                <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} mb={5}>
+                  <Alert
+                    status="info"
                     borderRadius="xl"
-                    border="1px solid rgba(251,191,36,0.2)"
+                    bg={campaignActive ? "rgba(34,197,94,0.08)" : campaignScheduled ? "rgba(139,92,246,0.08)" : "rgba(156,163,175,0.08)"}
+                    border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#6b7280"}30`}
                     backdropFilter="blur(8px)"
-                    py={2.5}
-                    px={4}
-                    h="100%"
-                    transition="all 0.3s"
-                    _hover={{ borderColor: "rgba(251,191,36,0.4)", bg: "rgba(251,191,36,0.08)" }}
+                    py={3}
                   >
-                    <Flex align="center" justify="space-between" gap={3} wrap="wrap">
-                      <HStack spacing={2.5}>
-                        <Text fontSize="lg">💎</Text>
-                        <Box>
-                          <Text fontSize="sm" fontWeight="600" color="gray.200" fontFamily="'Space Grotesk', sans-serif">
-                            Skip the grind!
-                          </Text>
-                          <Text fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
-                            Buy badge directly for {formatPriceWithFourDecimals(buyPrice)} ETH
-                          </Text>
-                        </Box>
+                    <AlertIcon color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} />
+                    <Box flex="1">
+                      <HStack spacing={3} wrap="wrap">
+                        <Text fontWeight="bold" color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} fontSize="sm">
+                          {campaignActive ? "🎯 Campaign Active" : campaignScheduled ? "⏳ Campaign Scheduled" : "⏸️ Campaign Stopped"}
+                        </Text>
+                        {campaignScheduled && timeRemaining && (timeRemaining.days + timeRemaining.hours + timeRemaining.minutes + timeRemaining.seconds > 0) && (
+                          <HStack spacing={1}>
+                            <Text fontSize="xs" color="gray.400">Starts in:</Text>
+                            <Text fontSize="sm" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
+                              {timeRemaining.hours.toString().padStart(2, "0")}h {timeRemaining.minutes.toString().padStart(2, "0")}m
+                            </Text>
+                          </HStack>
+                        )}
+                        {campaignActive && (
+                          <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={0.5} borderRadius="full">
+                            ● LIVE
+                          </Badge>
+                        )}
                       </HStack>
-                      <Button
-                        onClick={() => setShowBuyModal(true)}
-                        size="sm"
-                        bgGradient="linear(135deg, #fbbf24, #f59e0b)"
-                        color="white"
-                        fontWeight="700"
-                        fontSize="xs"
-                        fontFamily="'Space Grotesk', sans-serif"
-                        _hover={{ transform: "scale(1.02)", boxShadow: "0 0 20px rgba(251,191,36,0.2)" }}
-                        transition="all 0.3s"
-                        borderRadius="full"
-                        px={4}
-                        py={1.5}
-                        flexShrink={0}
-                      >
-                        🛒 Buy Now
-                      </Button>
-                    </Flex>
-                  </Box>
+                    </Box>
+                  </Alert>
                 </MotionBox>
+              ) : (
+                /* If user doesn't have badge, show two cards side by side */
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5}>
+                  {/* Campaign Status Card */}
+                  <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                    <Alert
+                      status="info"
+                      borderRadius="xl"
+                      bg={campaignActive ? "rgba(34,197,94,0.08)" : campaignScheduled ? "rgba(139,92,246,0.08)" : "rgba(156,163,175,0.08)"}
+                      border={`1px solid ${campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#6b7280"}30`}
+                      backdropFilter="blur(8px)"
+                      py={3}
+                      h="100%"
+                    >
+                      <AlertIcon color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} />
+                      <Box flex="1">
+                        <HStack spacing={3} wrap="wrap">
+                          <Text fontWeight="bold" color={campaignActive ? "#22c55e" : campaignScheduled ? "#a855f7" : "#9ca3af"} fontSize="sm">
+                            {campaignActive ? "🎯 Campaign Active" : campaignScheduled ? "⏳ Campaign Scheduled" : "⏸️ Campaign Stopped"}
+                          </Text>
+                          {campaignScheduled && timeRemaining && (timeRemaining.days + timeRemaining.hours + timeRemaining.minutes + timeRemaining.seconds > 0) && (
+                            <HStack spacing={1}>
+                              <Text fontSize="xs" color="gray.400">Starts in:</Text>
+                              <Text fontSize="sm" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
+                                {timeRemaining.hours.toString().padStart(2, "0")}h {timeRemaining.minutes.toString().padStart(2, "0")}m
+                              </Text>
+                            </HStack>
+                          )}
+                          {campaignActive && (
+                            <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={0.5} borderRadius="full">
+                              ● LIVE
+                            </Badge>
+                          )}
+                        </HStack>
+                      </Box>
+                    </Alert>
+                  </MotionBox>
+
+                  {/* Buy Badge Card - only show if user can buy */}
+                  {canBuyBadge && (
+                    <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                      <Box
+                        bg="rgba(251,191,36,0.06)"
+                        borderRadius="xl"
+                        border="1px solid rgba(251,191,36,0.2)"
+                        backdropFilter="blur(8px)"
+                        py={2.5}
+                        px={4}
+                        h="100%"
+                        transition="all 0.3s"
+                        _hover={{ borderColor: "rgba(251,191,36,0.4)", bg: "rgba(251,191,36,0.08)" }}
+                      >
+                        <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+                          <HStack spacing={2.5}>
+                            <Text fontSize="lg">💎</Text>
+                            <Box>
+                              <Text fontSize="sm" fontWeight="600" color="gray.200" fontFamily="'Space Grotesk', sans-serif">
+                                Skip the grind!
+                              </Text>
+                              <Text fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
+                                Buy badge directly for {formatPriceWithFourDecimals(buyPrice)} ETH
+                              </Text>
+                            </Box>
+                          </HStack>
+                          <Button
+                            onClick={() => setShowBuyModal(true)}
+                            size="sm"
+                            bgGradient="linear(135deg, #fbbf24, #f59e0b)"
+                            color="white"
+                            fontWeight="700"
+                            fontSize="xs"
+                            fontFamily="'Space Grotesk', sans-serif"
+                            _hover={{ transform: "scale(1.02)", boxShadow: "0 0 20px rgba(251,191,36,0.2)" }}
+                            transition="all 0.3s"
+                            borderRadius="full"
+                            px={4}
+                            py={1.5}
+                            flexShrink={0}
+                          >
+                            🛒 Buy Now
+                          </Button>
+                        </Flex>
+                      </Box>
+                    </MotionBox>
+                  )}
+                </SimpleGrid>
               )}
-            </SimpleGrid>
+           </>
           )}
 
           {/* Stats Header */}

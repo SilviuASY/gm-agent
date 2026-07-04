@@ -30,6 +30,7 @@ import {
   sweepClaimABI,
   hoppinABI,
   nfts2meABI,
+  resonanceABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -63,6 +64,8 @@ export const getPartnerABI = (actionId: number) => {
     case 25: return sweepClaimABI;
     case 26: return hoppinABI;
     case 27: return nfts2meABI;
+    case 28: return resonanceABI;
+
     default: throw new Error("Unknown action id");
   }
 };
@@ -112,6 +115,8 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return ["0x3624E1b406E92279f3e817Fa1AA832eF7d239f2c" as `0x${string}`, 1n];
     case 27: // NFTs2Me
       return [0n, []];
+    case 28: // Resonance - createCollection
+      return ["Agent Protocol", "https://gm-agent.xyz/twitter-image.png", 1n, 1n];
     default:
       return [];
   }

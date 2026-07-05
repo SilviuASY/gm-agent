@@ -89,8 +89,8 @@ const pageStyles = `
     50% { opacity: 1; }
   }
   @keyframes orbFloat {
-    0%, 100% { transform: scale(1) translateY(0px); opacity: 0.45; }
-    50% { transform: scale(1.1) translateY(-20px); opacity: 0.7; }
+    0%, 100% { transform: scale(1) translateY(0px); opacity: 0.35; }
+    50% { transform: scale(1.08) translateY(-18px); opacity: 0.6; }
   }
   @keyframes confettiDrop {
     0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
@@ -99,13 +99,40 @@ const pageStyles = `
   }
   @keyframes glowPulse {
     0%, 100% { box-shadow: 0 0 20px rgba(139,92,246,0.2); }
-    50% { box-shadow: 0 0 40px rgba(139,92,246,0.4); }
+    50% { box-shadow: 0 0 50px rgba(139,92,246,0.45); }
   }
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(400%); }
+  }
+  @keyframes fadeSlideUp {
+    0% { opacity: 0; transform: translateY(24px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes borderRotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
 `;
+
+// ============= Quest Meta =============
+const questMeta: { [key: number]: { icon: string; color: string; bg: string; accent: string; tag: string; difficulty: string; duration: string; xp: string; nftImage: string } } = {
+  1: { icon: "/soneium.png", color: "#06b6d4", bg: "rgba(6,182,212,0.08)", accent: "rgba(6,182,212,0.2)", tag: "Fundamentals", difficulty: "Beginner", duration: "~5 min", xp: "+50 XP", nftImage: "/agentquest.png" },
+  2: { icon: "/dex.png", color: "#3b82f6", bg: "rgba(59,130,246,0.08)", accent: "rgba(59,130,246,0.2)", tag: "DeFi", difficulty: "Intermediate", duration: "~8 min", xp: "+75 XP", nftImage: "/agentquest.png" },
+  3: { icon: "/deploy.png", color: "#ec4899", bg: "rgba(236,72,153,0.08)", accent: "rgba(236,72,153,0.2)", tag: "Smart Contracts", difficulty: "Advanced", duration: "~10 min", xp: "+100 XP", nftImage: "/agentquest.png" },
+  4: { icon: "/agent.png", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", accent: "rgba(139,92,246,0.2)", tag: "AI Agents", difficulty: "Advanced", duration: "~12 min", xp: "+125 XP", nftImage: "/agentquest.png" },
+};
+
+const getQuestMeta = (id: number) => questMeta[id] || questMeta[4];
 
 // ============= Main Page =============
 export default function Academy() {
@@ -151,7 +178,6 @@ export default function Academy() {
   const [lastMintedContract, setLastMintedContract] = useState<string | null>(null);
 
   // ============= Read Contracts =============
-
   const { data: questsData, refetch: refetchQuests } = useReadContract({
     address: toHexAddress(AGENT_QUEST_ADDRESS),
     abi: AgentQuestABI,
@@ -174,21 +200,17 @@ export default function Academy() {
     query: { enabled: isCorrectChain },
   });
 
-  // Get user balance
   const { data: balance, refetch: refetchBalance } = useBalance({
     address: address,
     query: { enabled: !!address && isConnected && isCorrectChain },
   });
 
   // ============= Helper Functions =============
-
-  // Verifică dacă userul are suficiente fonduri pentru o acțiune
   const hasSufficientBalance = (requiredAmount: bigint): boolean => {
     if (!balance) return false;
     return balance.value >= requiredAmount;
   };
 
-  // Formatează un bigint în ETH
   const formatEth = (amount: bigint): string => {
     return (Number(amount) / 1e18).toFixed(6);
   };
@@ -295,7 +317,6 @@ export default function Academy() {
     const questData = quest?.find((q: any) => Number(q.id) === selectedQuest);
     const fee = questData ? BigInt(questData.fee) : 0n;
 
-    // Verifică soldul utilizatorului
     if (!hasSufficientBalance(fee)) {
       toast({
         title: "Insufficient Balance",
@@ -383,11 +404,10 @@ export default function Academy() {
   const handleMintGraduate = async () => {
     if (!address) return;
 
-    // Verifică soldul utilizatorului
     if (!hasSufficientBalance(questMintFee)) {
       toast({
         title: "Insufficient Balance",
-        description: `You need at least ${formatEth(questMintFee)} ETH + gas fees to mint the Graduate badge. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
+        description: `You need at least ${formatEth(questMintFee)} ETH + gas fees. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
         status: "error",
         duration: 8000,
       });
@@ -425,28 +445,15 @@ export default function Academy() {
         setLastMintedTokenId(tokenId);
         setLastMintedContract(AGENT_GRADUATE_ADDRESS);
 
-        confetti({
-          particleCount: 300,
-          spread: 100,
-          origin: { y: 0.6 },
-          colors: ["#fbbf24", "#ec4899", "#8b5cf6", "#22c55e", "#3b82f6"],
-        });
+        confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 }, colors: ["#fbbf24", "#ec4899", "#8b5cf6", "#22c55e", "#3b82f6"] });
 
-        toast({
-          title: "🎓 Graduate Badge Minted!",
-          description: tokenId ? `Token ID: #${tokenId}` : "Your Graduate badge has been minted successfully!",
-          status: "success",
-          duration: 8000,
-        });
+        toast({ title: "🎓 Graduate Badge Minted!", description: tokenId ? `Token ID: #${tokenId}` : "Successfully minted!", status: "success", duration: 8000 });
 
         setHasGraduateBadge(true);
         refetchGraduateStatus();
         refetchGraduateConfig();
         refetchBalance();
-
-        setTimeout(() => {
-          setTxOpen(false);
-        }, 2000);
+        setTimeout(() => setTxOpen(false), 2000);
       }
     } catch (error: any) {
       const rejected = error?.message?.includes("rejected") || error?.code === 4001;
@@ -459,11 +466,10 @@ export default function Academy() {
   const handleBuyGraduate = async () => {
     if (!address) return;
 
-    // Verifică soldul utilizatorului
     if (!hasSufficientBalance(buyFee)) {
       toast({
         title: "Insufficient Balance",
-        description: `You need at least ${formatEth(buyFee)} ETH + gas fees to purchase the Graduate badge. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
+        description: `You need at least ${formatEth(buyFee)} ETH + gas. Current balance: ${balance ? Number(balance.formatted).toFixed(4) : '0'} ETH.`,
         status: "error",
         duration: 8000,
       });
@@ -500,28 +506,14 @@ export default function Academy() {
         setLastMintedTokenId(tokenId);
         setLastMintedContract(AGENT_GRADUATE_ADDRESS);
 
-        confetti({
-          particleCount: 300,
-          spread: 100,
-          origin: { y: 0.6 },
-          colors: ["#fbbf24", "#ec4899", "#8b5cf6", "#22c55e", "#3b82f6"],
-        });
-
-        toast({
-          title: "💎 Graduate Badge Purchased!",
-          description: tokenId ? `Token ID: #${tokenId}` : "Your Graduate badge has been purchased successfully!",
-          status: "success",
-          duration: 8000,
-        });
+        confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 }, colors: ["#fbbf24", "#ec4899", "#8b5cf6", "#22c55e", "#3b82f6"] });
+        toast({ title: "💎 Graduate Badge Purchased!", description: tokenId ? `Token ID: #${tokenId}` : "Purchased successfully!", status: "success", duration: 8000 });
 
         setHasGraduateBadge(true);
         refetchGraduateStatus();
         refetchGraduateConfig();
         refetchBalance();
-
-        setTimeout(() => {
-          setTxOpen(false);
-        }, 2000);
+        setTimeout(() => setTxOpen(false), 2000);
       }
     } catch (error: any) {
       const rejected = error?.message?.includes("rejected") || error?.code === 4001;
@@ -562,9 +554,7 @@ export default function Academy() {
   useEffect(() => {
     if (address && isConnected && isCorrectChain && questsData) {
       const quests = questsData as any[];
-      quests.forEach((quest: any) => {
-        fetchUserProgress(Number(quest.id));
-      });
+      quests.forEach((quest: any) => fetchUserProgress(Number(quest.id)));
     }
   }, [address, isConnected, isCorrectChain, questsData]);
 
@@ -585,40 +575,9 @@ export default function Academy() {
     }
   }, [graduateConfig]);
 
-  // ============= UI Helpers =============
-
-  const questIcons: { [key: number]: string } = {
-    1: "/soneium.png",
-    2: "/dex.png",
-    3: "/deploy.png",
-    4: "/agent.png",
-  };
-
-  const questColors: { [key: number]: string } = {
-    1: "#06b6d4",
-    2: "#3b82f6",
-    3: "#ec4899",
-    4: "#8b5cf6",
-  };
-
-  const questBgColors: { [key: number]: string } = {
-    1: "rgba(6,182,212,0.1)",
-    2: "rgba(59,130,246,0.1)",
-    3: "rgba(236,72,153,0.1)",
-    4: "rgba(139,92,246,0.1)",
-  };
-
-  const getQuestIcon = (id: number) => questIcons[id] || "/agent.png";
-  const getQuestColor = (id: number) => questColors[id] || "#6b7280";
-  const getQuestBg = (id: number) => questBgColors[id] || "rgba(139,92,246,0.05)";
-
-  const hasUserCompletedQuest = (questId: number): boolean => {
-    return userProgress[questId]?.completed || false;
-  };
-
-  const hasUserMintedBadge = (questId: number): boolean => {
-    return userProgress[questId]?.badgeMinted || false;
-  };
+  // ============= Derived helpers =============
+  const hasUserCompletedQuest = (questId: number): boolean => userProgress[questId]?.completed || false;
+  const hasUserMintedBadge = (questId: number): boolean => userProgress[questId]?.badgeMinted || false;
 
   const canMint = (questId: number): boolean => {
     if (!signature || selectedQuest !== questId) return false;
@@ -629,80 +588,50 @@ export default function Academy() {
     return true;
   };
 
-  const isSignatureExpired = (): boolean => {
-    return deadline > 0 && Date.now() / 1000 > deadline;
-  };
-
-  const allAnswersSelected = (): boolean => {
-    return answers.every(a => a !== undefined && a !== null);
-  };
+  const isSignatureExpired = (): boolean => deadline > 0 && Date.now() / 1000 > deadline;
+  const allAnswersSelected = (): boolean => answers.every(a => a !== undefined && a !== null);
 
   const getExplorerLink = (contract: string, tokenId: number | null): string => {
-    if (tokenId) {
-      return `${BLOCKSCOUT_URL}/token/${contract}/instance/${tokenId}`;
-    }
+    if (tokenId) return `${BLOCKSCOUT_URL}/token/${contract}/instance/${tokenId}`;
     return `${BLOCKSCOUT_URL}/token/${contract}`;
   };
+
+  const totalMinted = (questsData as any[])?.reduce((acc: number, q: any) => acc + (Number(q.totalCompleted) || 0), 0) || 0;
 
   return (
     <>
       <style>{pageStyles}</style>
 
       <Box minH="100vh" bg="#03030f" position="relative" fontFamily="'Space Grotesk', sans-serif">
-        {/* Ambient orbs */}
-        <Box
-          position="fixed"
-          top="-10%"
-          left="-10%"
-          w="650px"
-          h="650px"
-          borderRadius="full"
-          bg="radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 65%)"
-          filter="blur(90px)"
-          style={{ animation: "orbFloat 22s ease-in-out infinite" }}
-          zIndex={0}
-          pointerEvents="none"
-        />
-        <Box
-          position="fixed"
-          bottom="-10%"
-          right="-10%"
-          w="750px"
-          h="750px"
-          borderRadius="full"
-          bg="radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 65%)"
-          filter="blur(110px)"
-          style={{ animation: "orbFloat 30s ease-in-out infinite 8s" }}
-          zIndex={0}
-          pointerEvents="none"
-        />
+        {/* ── Ambient Background ── */}
+        <Box position="fixed" top="-15%" left="-10%" w="700px" h="700px" borderRadius="full"
+          bg="radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 65%)"
+          filter="blur(100px)" style={{ animation: "orbFloat 24s ease-in-out infinite" }} zIndex={0} pointerEvents="none" />
+        <Box position="fixed" bottom="-15%" right="-10%" w="800px" h="800px" borderRadius="full"
+          bg="radial-gradient(circle, rgba(236,72,153,0.05) 0%, transparent 65%)"
+          filter="blur(120px)" style={{ animation: "orbFloat 32s ease-in-out infinite 10s" }} zIndex={0} pointerEvents="none" />
+        <Box position="fixed" top="40%" left="50%" transform="translateX(-50%)" w="600px" h="400px" borderRadius="full"
+          bg="radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 65%)"
+          filter="blur(80px)" style={{ animation: "orbFloat 18s ease-in-out infinite 4s" }} zIndex={0} pointerEvents="none" />
+
+        {/* ── Grid texture overlay ── */}
+        <Box position="fixed" inset={0} zIndex={0} pointerEvents="none" opacity={0.025}
+          backgroundImage="linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)"
+          backgroundSize="60px 60px" />
 
         <Container maxW="1440px" position="relative" zIndex={1} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
-          {/* ─── Header ─── */}
-          <Flex
-            justify="space-between"
-            align="center"
-            mb={{ base: 6, md: 10 }}
-            direction={{ base: "column", md: "row" }}
-            gap={{ base: 3, md: 0 }}
-          >
+
+          {/* ══════════════════════════════════════════════════════════
+              HEADER
+          ══════════════════════════════════════════════════════════ */}
+          <Flex justify="space-between" align="center" mb={{ base: 6, md: 10 }}
+            direction={{ base: "column", md: "row" }} gap={{ base: 3, md: 0 }}>
             <HStack spacing={4}>
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                size={{ base: "sm", md: "md" }}
-                leftIcon={<ChevronLeftIcon />}
-                color="gray.500"
-                _hover={{
-                  color: "white",
-                  bg: "rgba(139,92,246,0.08)",
-                  borderColor: "rgba(139,92,246,0.25)",
-                }}
-                borderRadius="xl"
-                border="1px solid rgba(255,255,255,0.07)"
-                fontFamily="'Space Grotesk', sans-serif"
-                fontWeight="500"
-              >
+              <Button onClick={() => navigate("/")} variant="ghost" size={{ base: "sm", md: "md" }}
+                leftIcon={<ChevronLeftIcon />} color="gray.500"
+                _hover={{ color: "white", bg: "rgba(139,92,246,0.08)", borderColor: "rgba(139,92,246,0.25)" }}
+                borderRadius="xl" border="1px solid rgba(255,255,255,0.07)"
+                fontFamily="'Space Grotesk', sans-serif" fontWeight="500">
                 Back
               </Button>
 
@@ -710,61 +639,37 @@ export default function Academy() {
 
               <VStack align="start" spacing={0.5}>
                 <HStack spacing={3} align="center">
-                  <Box
-                    w="7px"
-                    h="7px"
-                    borderRadius="full"
-                    bg="#4ade80"
-                    boxShadow="0 0 8px rgba(74,222,128,0.8)"
-                    style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }}
-                  />
-                  <Heading
-                    fontSize={{ base: "xl", md: "2xl", lg: "3xl" }}
-                    fontWeight="800"
+                  <Box w="7px" h="7px" borderRadius="full" bg="#4ade80"
+                    boxShadow="0 0 10px rgba(74,222,128,1)"
+                    style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }} />
+                  <Heading fontSize={{ base: "xl", md: "2xl", lg: "3xl" }} fontWeight="800"
                     bgGradient="linear(135deg, #a855f7 0%, #ec4899 50%, #fbbf24 100%)"
-                    bgClip="text"
-                    letterSpacing="-0.03em"
-                  >
+                    bgClip="text" letterSpacing="-0.03em">
                     Agent Academy
                   </Heading>
-                  <Badge
-                    bg="rgba(139,92,246,0.1)"
-                    color="#a855f7"
-                    fontSize="9px"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    border="1px solid rgba(139,92,246,0.2)"
-                    fontFamily="'Space Mono', monospace"
-                  >
-                    Season 13
+                  <Badge bg="rgba(139,92,246,0.12)" color="#a855f7" fontSize="9px" px={2.5} py={0.5}
+                    borderRadius="full" border="1px solid rgba(139,92,246,0.25)"
+                    fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+                    S13
                   </Badge>
                 </HStack>
-                <Text
-                  color="gray.600"
-                  fontSize={{ base: "9px", md: "10px" }}
-                  letterSpacing="0.2em"
-                  fontFamily="'Space Mono', monospace"
-                  textTransform="uppercase"
-                >
-                  Learn & Earn · Soneium
+                <Text color="gray.500" fontSize={{ base: "9px", md: "10px" }} letterSpacing="0.2em"
+                  fontFamily="'Space Mono', monospace" textTransform="uppercase">
+                  Learn · Earn · Build on Soneium
                 </Text>
               </VStack>
             </HStack>
 
             <HStack spacing={3} display={{ base: "none", md: "flex" }}>
               {balance && (
-                <Badge
-                  bg="rgba(34,197,94,0.1)"
-                  color="#4ade80"
-                  px={3}
-                  py={1.5}
-                  borderRadius="full"
-                  fontSize="xs"
-                  fontFamily="'Space Mono', monospace"
-                >
-                  {Number(balance.formatted).toFixed(4)} ETH
-                </Badge>
+                <HStack spacing={2} bg="rgba(34,197,94,0.06)" border="1px solid rgba(34,197,94,0.15)"
+                  borderRadius="full" px={4} py={2}>
+                  <Box w="6px" h="6px" borderRadius="full" bg="#4ade80"
+                    style={{ animation: "pulseGlow 2s ease-in-out infinite" }} />
+                  <Text color="#4ade80" fontSize="xs" fontFamily="'Space Mono', monospace" fontWeight="700">
+                    {Number(balance.formatted).toFixed(4)} ETH
+                  </Text>
+                </HStack>
               )}
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
                 <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
@@ -782,42 +687,21 @@ export default function Academy() {
           {/* Network Warning */}
           {!isCorrectChain && isConnected && (
             <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} mb={5}>
-              <Box
-                bg="rgba(239,68,68,0.08)"
-                border="1px solid rgba(239,68,68,0.2)"
-                borderRadius="2xl"
-                p={4}
-                backdropFilter="blur(14px)"
-              >
+              <Box bg="rgba(239,68,68,0.06)" border="1px solid rgba(239,68,68,0.18)"
+                borderRadius="2xl" p={4} backdropFilter="blur(14px)">
                 <Flex align="center" gap={4} flexWrap="wrap">
-                  <Flex
-                    align="center"
-                    justify="center"
-                    w="40px"
-                    h="40px"
-                    borderRadius="full"
-                    bg="rgba(239,68,68,0.1)"
-                    border="1px solid rgba(239,68,68,0.2)"
-                    flexShrink={0}
-                  >
+                  <Flex align="center" justify="center" w="40px" h="40px" borderRadius="full"
+                    bg="rgba(239,68,68,0.1)" border="1px solid rgba(239,68,68,0.2)" flexShrink={0}>
                     <Text fontSize="xl">⚠️</Text>
                   </Flex>
                   <Box flex="1">
-                    <Text fontSize="sm" fontWeight="700" color="#f87171">
-                      Wrong Network
-                    </Text>
+                    <Text fontSize="sm" fontWeight="700" color="#f87171">Wrong Network Detected</Text>
                     <Text fontSize="xs" color="gray.500">
-                      Agent Academy requires Soneium Network.
+                      Agent Academy runs exclusively on Soneium Mainnet. Switch to continue.
                     </Text>
                   </Box>
-                  <Button
-                    size="sm"
-                    colorScheme="purple"
-                    borderRadius="full"
-                    fontWeight="700"
-                    px={6}
-                    onClick={() => switchChain?.({ chainId: SONEIUM_CHAIN_ID })}
-                  >
+                  <Button size="sm" colorScheme="purple" borderRadius="full" fontWeight="700" px={6}
+                    onClick={() => switchChain?.({ chainId: SONEIUM_CHAIN_ID })}>
                     Switch to Soneium
                   </Button>
                 </Flex>
@@ -825,701 +709,823 @@ export default function Academy() {
             </MotionBox>
           )}
 
-          {/* ============================================================ */}
-          {/* QUEST LIST VIEW */}
-          {/* ============================================================ */}
+          {/* ══════════════════════════════════════════════════════════
+              QUEST LIST VIEW
+          ══════════════════════════════════════════════════════════ */}
           {currentStep === "list" && (
             <>
-              {/* Graduate Badge Progress */}
+              {/* ── Hero Banner ── */}
+              {(!isConnected || !isCorrectChain) && (
+                <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} mb={8}>
+                  <Box bg="rgba(4,4,14,0.9)" backdropFilter="blur(24px)" borderRadius="3xl"
+                    border="1px solid rgba(139,92,246,0.2)" p={{ base: 7, md: 10 }}
+                    position="relative" overflow="hidden">
+                    {/* Top shimmer bar */}
+                    <Box position="absolute" top={0} left={0} right={0} h="2px"
+                      bgGradient="linear(90deg, transparent, #8b5cf6, #ec4899, #fbbf24, transparent)"
+                      style={{ animation: "shimmerBorder 4s linear infinite" }} />
+
+                    <Flex direction={{ base: "column", md: "row" }} align="center" gap={8}>
+                      <Box flexShrink={0} textAlign="center">
+                        <Text fontSize={{ base: "64px", md: "80px" }} lineHeight="1">🎓</Text>
+                        <Badge mt={2} bg="rgba(251,191,36,0.15)" color="#fbbf24" px={3} py={1}
+                          borderRadius="full" fontSize="9px" fontFamily="'Space Mono', monospace">
+                          SEASON 13 · LIVE
+                        </Badge>
+                      </Box>
+                      <Box flex={1}>
+                        <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="800" color="white" mb={3} lineHeight="1.2">
+                          Master the Soneium{" "}
+                          <Text as="span" bgGradient="linear(135deg, #a855f7, #ec4899)" bgClip="text">
+                            Ecosystem
+                          </Text>
+                        </Heading>
+                        <Text color="gray.400" fontSize="md" lineHeight="1.7" mb={4}>
+                          Agent Academy is a structured learning program on Soneium. Complete 4 curated quests covering
+                          fundamentals, DeFi, smart contract deployment, and AI agent development. Prove your knowledge
+                          on-chain and earn unique NFT badges that boost your Season 13 reputation.
+                        </Text>
+                        <HStack spacing={6} flexWrap="wrap">
+                          {[
+                            { label: "NFT Badges", value: "4 Quests" },
+                            { label: "Bonus Rep", value: "+2 pts" },
+                            { label: "Network", value: "Soneium" },
+                          ].map(({ label, value }) => (
+                            <VStack key={label} spacing={0} align="start">
+                              <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.12em">{label}</Text>
+                              <Text fontSize="sm" fontWeight="700" color="white" fontFamily="'Space Mono', monospace">{value}</Text>
+                            </VStack>
+                          ))}
+                        </HStack>
+                      </Box>
+                    </Flex>
+                  </Box>
+                </MotionBox>
+              )}
+
+              {/* ── Graduate Badge Progress Panel ── */}
               {isConnected && isCorrectChain && (
                 <Box mb={8}>
-                  <Box
-                    bg="rgba(4,4,14,0.85)"
-                    backdropFilter="blur(20px)"
-                    borderRadius="2xl"
-                    border="1px solid rgba(139,92,246,0.25)"
-                    p={{ base: 4, md: 6 }}
-                    transition="all 0.3s"
-                    _hover={{ borderColor: "rgba(139,92,246,0.5)" }}
-                  >
-                    <Flex
-                      direction={{ base: "column", md: "row" }}
-                      align={{ base: "stretch", md: "center" }}
-                      justify="space-between"
-                      gap={4}
-                    >
-                      <HStack spacing={4}>
-                        <Box
-                          w={{ base: "50px", md: "60px" }}
-                          h={{ base: "50px", md: "60px" }}
-                          borderRadius="full"
-                          bg={hasGraduateBadge ? "rgba(34,197,94,0.2)" : "rgba(139,92,246,0.1)"}
-                          border="2px solid"
-                          borderColor={hasGraduateBadge ? "#4ade80" : "rgba(139,92,246,0.3)"}
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          flexShrink={0}
-                          overflow="hidden"
-                        >
-                          <Image
-                            src="/agentgraduate.png"
-                            alt="Agent Graduate"
-                            w="100%"
-                            h="100%"
-                            objectFit="cover"
-                            fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><text y='50%' x='50%' text-anchor='middle' font-size='32'>🎓</text></svg>"
-                          />
+                  <Box bg="rgba(4,4,14,0.9)" backdropFilter="blur(24px)" borderRadius="2xl"
+                    border={hasGraduateBadge
+                      ? "1px solid rgba(74,222,128,0.3)"
+                      : isEligible
+                        ? "1px solid rgba(251,191,36,0.3)"
+                        : "1px solid rgba(139,92,246,0.2)"}
+                    p={{ base: 5, md: 7 }} position="relative" overflow="hidden"
+                    transition="all 0.35s"
+                    _hover={{ borderColor: hasGraduateBadge ? "rgba(74,222,128,0.5)" : "rgba(139,92,246,0.45)" }}>
+
+                    {/* Status glow top bar */}
+                    <Box position="absolute" top={0} left={0} right={0} h="2px"
+                      bgGradient={hasGraduateBadge
+                        ? "linear(90deg, transparent, #4ade80, transparent)"
+                        : isEligible
+                          ? "linear(90deg, transparent, #fbbf24, #ec4899, transparent)"
+                          : "linear(90deg, transparent, #8b5cf6, #ec4899, transparent)"}
+                      style={{ animation: "shimmerBorder 4s linear infinite" }} />
+
+                    <Flex direction={{ base: "column", lg: "row" }} align={{ base: "stretch", lg: "center" }}
+                      justify="space-between" gap={6}>
+
+                      {/* Left: Badge info */}
+                      <HStack spacing={5} align="start">
+                        <Box w={{ base: "56px", md: "68px" }} h={{ base: "56px", md: "68px" }} borderRadius="2xl"
+                          bg={hasGraduateBadge ? "rgba(34,197,94,0.15)" : "rgba(139,92,246,0.1)"}
+                          border="1.5px solid" borderColor={hasGraduateBadge ? "#4ade80" : "rgba(139,92,246,0.3)"}
+                          display="flex" alignItems="center" justifyContent="center" flexShrink={0}
+                          overflow="hidden" position="relative"
+                          style={{ animation: hasGraduateBadge ? "glowPulse 3s ease-in-out infinite" : "none" }}>
+                          <Image src="/agentgraduate.png" alt="Agent Graduate" w="100%" h="100%" objectFit="cover"
+                            fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='68' height='68'><text y='55%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='36'>🎓</text></svg>" />
                         </Box>
                         <Box>
-                          <HStack spacing={2}>
-                            <Text fontWeight="700" fontSize="lg" color="white">
-                              {hasGraduateBadge ? "🎓 Graduate Agent" : "Agent Graduate"}
+                          <HStack spacing={2} mb={1} flexWrap="wrap">
+                            <Text fontWeight="800" fontSize={{ base: "lg", md: "xl" }} color="white">
+                              Agent Graduate
                             </Text>
+                            <Badge bg="rgba(251,191,36,0.12)" color="#fbbf24" px={2.5} py={0.5}
+                              borderRadius="full" fontSize="9px" fontFamily="'Space Mono', monospace">
+                              ERC-721 NFT
+                            </Badge>
                             {hasGraduateBadge && (
                               <Tooltip label="View on Blockscout" hasArrow>
-                                <Link
-                                  href={`${BLOCKSCOUT_URL}/token/${AGENT_GRADUATE_ADDRESS}`}
-                                  isExternal
-                                  _hover={{ color: "#06b6d4" }}
-                                >
-                                  <ExternalLinkIcon boxSize={4} color="gray.400" />
+                                <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_GRADUATE_ADDRESS}`} isExternal _hover={{ color: "#06b6d4" }}>
+                                  <ExternalLinkIcon boxSize={3.5} color="gray.500" />
                                 </Link>
                               </Tooltip>
                             )}
                           </HStack>
-                          <Text fontSize="sm" color="gray.400">
-                            {hasGraduateBadge ? (
-                              "You have earned the ultimate Agent Graduate badge! 🏆"
-                            ) : (
-                              "Complete all 4 educational quests to earn +2 bonus reputation points for Season 13, or purchase the badge directly."
-                            )}
-                          </Text>
+                          {hasGraduateBadge ? (
+                            <Text fontSize="sm" color="#4ade80" fontWeight="600">
+                              ✅ You hold the Graduate badge — +2 bonus reputation for Season 13!
+                            </Text>
+                          ) : isEligible ? (
+                            <Text fontSize="sm" color="#fbbf24">
+                              🎯 All 4 quests complete! Claim your Graduate badge to receive +2 Season 13 reputation points.
+                            </Text>
+                          ) : (
+                            <Text fontSize="sm" color="gray.400" maxW="480px">
+                              Complete all 4 educational quests to unlock this badge and earn{" "}
+                              <Text as="span" color="#fbbf24" fontWeight="700">+2 bonus reputation points</Text>{" "}
+                              for Season 13. Alternatively, purchase the badge directly with ETH.
+                            </Text>
+                          )}
+
+                          {/* Stats row */}
+                          {!hasGraduateBadge && (
+                            <HStack spacing={4} mt={2} flexWrap="wrap">
+                              <HStack spacing={1.5}>
+                                <Box w="8px" h="8px" borderRadius="full" bg="#8b5cf6" />
+                                <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                                  {completedCount} / 4 quests done
+                                </Text>
+                              </HStack>
+                              <HStack spacing={1.5}>
+                                <Box w="8px" h="8px" borderRadius="full" bg="#fbbf24" />
+                                <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                                  Mint fee: {formatEth(questMintFee)} ETH
+                                </Text>
+                              </HStack>
+                              <HStack spacing={1.5}>
+                                <Box w="8px" h="8px" borderRadius="full" bg="#ec4899" />
+                                <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                                  Buy price: {Number(buyFee) / 1e18} ETH
+                                </Text>
+                              </HStack>
+                            </HStack>
+                          )}
                         </Box>
                       </HStack>
 
-                      <HStack spacing={4}>
-                        <VStack spacing={0} align="center">
-                          <Text fontSize="2xl" fontWeight="800" color="#fbbf24">
+                      {/* Right: Action */}
+                      <HStack spacing={4} flexShrink={0}>
+                        {/* Progress circle */}
+                        <VStack spacing={0} align="center"
+                          bg="rgba(0,0,0,0.3)" border="1px solid rgba(139,92,246,0.15)"
+                          borderRadius="2xl" px={5} py={3}>
+                          <Text fontSize="2xl" fontWeight="800"
+                            bgGradient={completedCount === 4 ? "linear(135deg, #fbbf24, #ec4899)" : "linear(135deg, #a855f7, #ec4899)"}
+                            bgClip="text">
                             {completedCount}/4
                           </Text>
-                          <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
-                            Quests Done
+                          <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.1em">
+                            Completed
                           </Text>
                         </VStack>
 
                         {hasGraduateBadge ? (
-                          <Badge bg="rgba(34,197,94,0.2)" color="#4ade80" px={4} py={2} borderRadius="full" fontSize="sm">
-                            ✅ Minted
+                          <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" px={5} py={3}
+                            borderRadius="xl" fontSize="sm" fontWeight="700">
+                            ✅ Graduated
                           </Badge>
                         ) : isEligible ? (
-                          <Button
-                            onClick={handleMintGraduate}
-                            bgGradient="linear(135deg, #fbbf24, #ec4899)"
-                            color="white"
-                            size="md"
-                            borderRadius="full"
-                            fontWeight="700"
+                          <Button onClick={handleMintGraduate}
+                            bgGradient="linear(135deg, #fbbf24, #ec4899)" color="white"
+                            size="md" borderRadius="xl" fontWeight="700" px={6}
                             isDisabled={!hasSufficientBalance(questMintFee)}
-                            _hover={{ transform: "scale(1.02)", boxShadow: "0 0 30px rgba(251,191,36,0.3)" }}
-                            transition="all 0.3s"
-                          >
-                            🎓 Mint ({formatEth(questMintFee)} ETH)
+                            _hover={{ transform: "scale(1.03)", boxShadow: "0 0 32px rgba(251,191,36,0.35)" }}
+                            _disabled={{ opacity: 0.5, cursor: "not-allowed", transform: "none" }}
+                            transition="all 0.3s">
+                            🎓 Mint Graduate ({formatEth(questMintFee)} ETH)
                           </Button>
                         ) : (
-                          <HStack spacing={2}>
-                            <Button
-                              onClick={handleBuyGraduate}
-                              bgGradient="linear(135deg, #8b5cf6, #ec4899)"
-                              color="white"
-                              size="md"
-                              borderRadius="full"
-                              fontWeight="700"
+                          <VStack spacing={2}>
+                            <Button onClick={handleBuyGraduate}
+                              bgGradient="linear(135deg, #8b5cf6, #ec4899)" color="white"
+                              size="md" borderRadius="xl" fontWeight="700" px={6} w="full"
                               isDisabled={!hasSufficientBalance(buyFee)}
-                              _hover={{ transform: "scale(1.02)", boxShadow: "0 0 30px rgba(139,92,246,0.3)" }}
-                              transition="all 0.3s"
-                            >
-                              💎 Buy ({Number(buyFee) / 1e18} ETH)
+                              _hover={{ transform: "scale(1.02)", boxShadow: "0 0 28px rgba(139,92,246,0.35)" }}
+                              _disabled={{ opacity: 0.5, cursor: "not-allowed", transform: "none" }}
+                              transition="all 0.3s">
+                              💎 Buy Badge ({Number(buyFee) / 1e18} ETH)
                             </Button>
-                            <Button
-                              isDisabled
-                              size="md"
-                              borderRadius="full"
-                              bg="rgba(75,85,99,0.3)"
-                              color="gray.500"
-                            >
-                              🔒 Locked
-                            </Button>
-                          </HStack>
+                            <Text fontSize="9px" color="gray.500" textAlign="center" fontFamily="'Space Mono', monospace">
+                              or complete all 4 quests to unlock the Graduate Mint.
+                            </Text>
+                          </VStack>
                         )}
                       </HStack>
                     </Flex>
 
-                    <Box mt={4}>
-                      <Progress
-                        value={(completedCount / 4) * 100}
-                        size="sm"
-                        borderRadius="full"
-                        bg="rgba(139,92,246,0.1)"
-                        sx={{
-                          "& > div": {
-                            bgGradient: "linear(90deg, #8b5cf6, #ec4899, #fbbf24)",
-                            borderRadius: "full",
-                          }
-                        }}
-                      />
-                    </Box>
+                    {/* Progress bar */}
+                    <Box mt={5}>
+                      <Flex justify="space-between" mb={1.5}>
+                        <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.1em">
+                          Progress toward Graduate
+                        </Text>
+                        <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">
+                          {Math.round((completedCount / 4) * 100)}%
+                        </Text>
+                      </Flex>
+                      <Progress value={(completedCount / 4) * 100} size="xs" borderRadius="full"
+                        bg="rgba(139,92,246,0.08)"
+                        sx={{ "& > div": { bgGradient: "linear(90deg, #8b5cf6, #ec4899, #fbbf24)", borderRadius: "full" } }} />
 
-                    <Text fontSize="xs" color="gray.500" mt={3} textAlign="center" fontFamily="'Space Mono', monospace">
-                      {hasGraduateBadge ? (
-                        "✅ Badge minted — +2 bonus reputation points for Season 13"
-                      ) : isEligible ? (
-                        "🎯 All quests complete! Mint your Graduate badge now."
-                      ) : (
-                        `📚 ${4 - completedCount} quest(s) remaining or 💎 buy directly for ${Number(buyFee) / 1e18} ETH`
-                      )}
-                    </Text>
+                      {/* Step dots */}
+                      <Flex mt={2} gap={2}>
+                        {[1, 2, 3, 4].map((n) => (
+                          <Box key={n} flex={1} h="2px" borderRadius="full"
+                            bg={n <= completedCount ? "rgba(251,191,36,0.6)" : "rgba(139,92,246,0.1)"} />
+                        ))}
+                      </Flex>
+                    </Box>
                   </Box>
                 </Box>
               )}
 
-              {/* Quests Grid */}
-              <Box mb={6}>
-                <HStack mb={4} spacing={2}>
-                  <Box w="4px" h="4px" borderRadius="full" bg="#a855f7" animation="pulseGlow 2s infinite" />
-                  <Heading size="sm" color="gray.300" fontWeight="600">
-                    📚 Educational Quests
-                  </Heading>
-                  <Badge
-                    bg="rgba(139,92,246,0.1)"
-                    color="#a855f7"
-                    fontSize="8px"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontFamily="'Space Mono', monospace"
-                  >
-                    Season 13
-                  </Badge>
-                </HStack>
+              {/* ── Stats Bar (only when connected) ── */}
+              {isConnected && isCorrectChain && (
+                <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3} mb={8}>
+                  {[
+                    { label: "Your Badges", value: `${completedCount}`, sub: "NFTs earned", color: "#a855f7" },
+                    { label: "Total Completions", value: `${totalMinted}`, sub: "across all quests", color: "#3b82f6" },
+                    { label: "Season", value: "13", sub: "currently active", color: "#ec4899" },
+                    { label: "Bonus Rep", value: hasGraduateBadge ? "+2 pts" : "Locked", sub: "on graduation", color: "#fbbf24" },
+                  ].map(({ label, value, sub, color }) => (
+                    <Box key={label} bg="rgba(4,4,14,0.8)" borderRadius="xl"
+                      border="1px solid rgba(255,255,255,0.05)"
+                      p={{ base: 4, md: 5 }}
+                      _hover={{ borderColor: `${color}30`, transform: "translateY(-2px)" }}
+                      transition="all 0.25s">
+                      <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace"
+                        textTransform="uppercase" letterSpacing="0.15em" mb={1}>{label}</Text>
+                      <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="800" color={color}
+                        fontFamily="'Space Mono', monospace">{value}</Text>
+                      <Text fontSize="10px" color="gray.500" mt={0.5}>{sub}</Text>
+                    </Box>
+                  ))}
+                </SimpleGrid>
+              )}
 
-                <Text fontSize="sm" color="gray.500" mb={4}>
-                  Complete each educational quest to learn about the Soneium ecosystem. 
-                  Finish all {4} quests to unlock the exclusive Agent Graduate badge and earn 
-                  <Text as="span" color="#fbbf24" fontWeight="600"> +2 bonus reputation points</Text> for Season 13.
-                  {!hasGraduateBadge && !isEligible && (
-                    <Text as="span" color="gray.500">
-                      {" "}Prefer to skip the learning? You can purchase the badge directly for {Number(buyFee) / 1e18} ETH using the "Buy" button above.
+              {/* ── Quests Grid ── */}
+              <Box mb={6}>
+                <Flex align="center" justify="space-between" mb={5}>
+                  <HStack spacing={3}>
+                    <Box w="3px" h="18px" borderRadius="full"
+                      bgGradient="linear(180deg, #a855f7, #ec4899)" />
+                    <Heading size="sm" color="gray.200" fontWeight="700" letterSpacing="-0.01em">
+                      Educational Quests
+                    </Heading>
+                    <Badge bg="rgba(139,92,246,0.1)" color="#a855f7" fontSize="8px" px={2.5} py={0.5}
+                      borderRadius="full" fontFamily="'Space Mono', monospace">
+                      4 AVAILABLE
+                    </Badge>
+                  </HStack>
+                  {isConnected && isCorrectChain && (
+                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
+                      {completedCount} of 4 complete
                     </Text>
                   )}
-                </Text>
+                </Flex>
 
                 {!isConnected ? (
-                  <Box textAlign="center" py={20} bg="rgba(4,4,14,0.6)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.15)">
-                    <Text fontSize="56px" mb={4}>🔌</Text>
-                    <Text color="gray.500" fontFamily="'Space Mono', monospace" fontSize="md">
-                      Connect your wallet to start learning
+                  <Box textAlign="center" py={24} bg="rgba(4,4,14,0.6)" borderRadius="3xl"
+                    border="1px dashed rgba(139,92,246,0.15)">
+                    <Text fontSize="56px" mb={5}>🔌</Text>
+                    <Text color="white" fontWeight="700" fontSize="lg" mb={2}>Connect Your Wallet</Text>
+                    <Text color="gray.500" fontSize="sm" maxW="320px" mx="auto">
+                      Connect your wallet to Soneium and begin your journey through Agent Academy.
                     </Text>
                   </Box>
                 ) : !isCorrectChain ? (
-                  <Box textAlign="center" py={20} bg="rgba(4,4,14,0.6)" borderRadius="3xl" border="1px solid rgba(139,92,246,0.15)">
-                    <Text fontSize="56px" mb={4}>⚠️</Text>
-                    <Text color="gray.500" fontFamily="'Space Mono', monospace" fontSize="md">
-                      Switch to Soneium network
+                  <Box textAlign="center" py={24} bg="rgba(4,4,14,0.6)" borderRadius="3xl"
+                    border="1px dashed rgba(239,68,68,0.15)">
+                    <Text fontSize="56px" mb={5}>⚠️</Text>
+                    <Text color="white" fontWeight="700" fontSize="lg" mb={2}>Switch to Soneium</Text>
+                    <Text color="gray.500" fontSize="sm">
+                      You're on the wrong network. Switch to Soneium Mainnet to view quests.
                     </Text>
                   </Box>
                 ) : (
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 5 }}>
                     {questsData ? (
                       (questsData as any[]).map((quest: any) => {
                         const id = Number(quest.id);
+                        const meta = getQuestMeta(id);
                         const isActive = quest.isActive;
                         const isCompleted = hasUserCompletedQuest(id);
                         const isMinted = hasUserMintedBadge(id);
                         const fee = BigInt(quest.fee);
 
                         return (
-                          <MotionBox
-                            key={id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: id * 0.1 }}
-                            whileHover={{ y: -4 }}
-                          >
-                            <Box
-                              bg="rgba(4,4,14,0.85)"
-                              backdropFilter="blur(20px)"
-                              borderRadius="2xl"
-                              border={`1px solid ${isMinted ? '#4ade80' : isCompleted ? 'rgba(251,191,36,0.3)' : 'rgba(139,92,246,0.2)'}`}
-                              p={{ base: 5, md: 6 }}
-                              transition="all 0.3s"
+                          <MotionBox key={id}
+                            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: id * 0.08 }}
+                            whileHover={{ y: -5 }}>
+                            <Box bg="rgba(4,4,14,0.9)" backdropFilter="blur(20px)" borderRadius="2xl"
+                              border={`1px solid ${isMinted ? 'rgba(74,222,128,0.35)' : isCompleted ? 'rgba(251,191,36,0.25)' : 'rgba(139,92,246,0.15)'}`}
+                              p={{ base: 5, md: 6 }} transition="all 0.3s"
                               _hover={{
-                                borderColor: isMinted ? '#4ade80' : 'rgba(139,92,246,0.5)',
-                                boxShadow: isMinted ? '0 0 30px rgba(74,222,128,0.1)' : '0 0 30px rgba(139,92,246,0.05)',
+                                borderColor: isMinted ? 'rgba(74,222,128,0.6)' : `${meta.color}60`,
+                                boxShadow: isMinted ? '0 8px 40px rgba(74,222,128,0.08)' : `0 8px 40px ${meta.color}10`,
                               }}
-                              opacity={isActive ? 1 : 0.5}
-                              position="relative"
-                              overflow="hidden"
-                            >
+                              opacity={isActive ? 1 : 0.45} position="relative" overflow="hidden"
+                              h="full">
+
+                              {/* Completion ribbon */}
                               {isMinted && (
-                                <Box
-                                  position="absolute"
-                                  top={0}
-                                  right={0}
-                                  px={3}
-                                  py={1}
-                                  bg="rgba(34,197,94,0.9)"
-                                  borderBottomLeftRadius="lg"
-                                >
+                                <Box position="absolute" top={0} right={0} px={3} py={1.5}
+                                  bg="rgba(34,197,94,0.85)" borderBottomLeftRadius="lg" backdropFilter="blur(8px)">
                                   <HStack spacing={1}>
                                     <CheckCircleIcon boxSize={3} color="white" />
-                                    <Text fontSize="8px" color="white" fontWeight="700" fontFamily="'Space Mono', monospace">
-                                      COMPLETED
+                                    <Text fontSize="8px" color="white" fontWeight="800" fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+                                      BADGE MINTED
                                     </Text>
                                   </HStack>
                                 </Box>
                               )}
+                              {isCompleted && !isMinted && (
+                                <Box position="absolute" top={0} right={0} px={3} py={1.5}
+                                  bg="rgba(251,191,36,0.8)" borderBottomLeftRadius="lg">
+                                  <Text fontSize="8px" color="black" fontWeight="800" fontFamily="'Space Mono', monospace">
+                                    ⏳ READY TO MINT
+                                  </Text>
+                                </Box>
+                              )}
 
-                              <HStack justify="space-between" align="start">
-                                <HStack spacing={4}>
-                                  <Box
-                                    w="48px"
-                                    h="48px"
-                                    borderRadius="full"
-                                    bg={getQuestBg(id)}
-                                    border={`1px solid ${getQuestColor(id)}30`}
-                                    display="flex"
-                                    alignItems="center"
-                                    justifyContent="center"
-                                    flexShrink={0}
-                                    overflow="hidden"
-                                  >
-                                    <Image
-                                      src={getQuestIcon(id)}
-                                      alt={quest.name}
-                                      w="32px"
-                                      h="32px"
-                                      objectFit="contain"
-                                      fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='50%' x='50%' text-anchor='middle' font-size='24'>📚</text></svg>"
-                                    />
-                                  </Box>
-                                  <Box>
-                                    <HStack spacing={2}>
-                                      <Text fontWeight="700" color="white" fontSize="md">
-                                        {quest.name}
-                                      </Text>
-                                      {isMinted && (
-                                        <Tooltip label="View on Blockscout" hasArrow>
-                                          <Link
-                                            href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`}
-                                            isExternal
-                                            _hover={{ color: "#06b6d4" }}
-                                          >
-                                            <ExternalLinkIcon boxSize={3} color="gray.400" />
-                                          </Link>
-                                        </Tooltip>
-                                      )}
-                                    </HStack>
-                                    <Text fontSize="xs" color="gray.400">
-                                      {Number(quest.totalCompleted) || 0} completed
+                              {/* Quest number + color strip */}
+                              <Box position="absolute" left={0} top={0} bottom={0} w="3px" borderRadius="full"
+                                bgGradient={`linear(180deg, ${meta.color}, transparent)`} />
+
+                              <HStack spacing={4} align="start" mb={4}>
+                                <Box w="52px" h="52px" borderRadius="xl" bg={meta.bg}
+                                  border={`1px solid ${meta.color}25`}
+                                  display="flex" alignItems="center" justifyContent="center"
+                                  flexShrink={0} overflow="hidden" position="relative">
+                                  <Image src={meta.icon} alt={quest.name} w="34px" h="34px" objectFit="contain"
+                                    fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><text y='55%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='22'>📚</text></svg>" />
+                                  {isMinted && (
+                                    <Box position="absolute" inset={0} bg="rgba(34,197,94,0.2)" borderRadius="xl" />
+                                  )}
+                                </Box>
+                                <Box flex={1} minW={0}>
+                                  <HStack spacing={2} mb={0.5} flexWrap="wrap">
+                                    <Text fontWeight="700" color="white" fontSize="md" noOfLines={1}>
+                                      {quest.name}
                                     </Text>
-                                  </Box>
-                                </HStack>
-                                {isMinted ? (
-                                  <Badge bg="rgba(34,197,94,0.2)" color="#4ade80" px={3} py={1} borderRadius="full" fontSize="xs">
-                                    ✅ Minted
-                                  </Badge>
-                                ) : isCompleted ? (
-                                  <Badge bg="rgba(251,191,36,0.15)" color="#fbbf24" px={3} py={1} borderRadius="full" fontSize="xs">
-                                    ⏳ Ready to Mint
-                                  </Badge>
-                                ) : null}
+                                    {isMinted && (
+                                      <Tooltip label="View badge on Blockscout" hasArrow>
+                                        <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`} isExternal>
+                                          <ExternalLinkIcon boxSize={3} color="gray.500" _hover={{ color: "#06b6d4" }} />
+                                        </Link>
+                                      </Tooltip>
+                                    )}
+                                  </HStack>
+                                  <HStack spacing={2} flexWrap="wrap">
+                                    <Badge bg={`${meta.color}15`} color={meta.color}
+                                      fontSize="8px" px={2} py={0.5} borderRadius="full"
+                                      fontFamily="'Space Mono', monospace">
+                                      {meta.tag}
+                                    </Badge>
+                                    <Badge bg="rgba(255,255,255,0.04)" color="gray.500"
+                                      fontSize="8px" px={2} py={0.5} borderRadius="full"
+                                      fontFamily="'Space Mono', monospace">
+                                      {meta.difficulty}
+                                    </Badge>
+                                    <Badge bg="rgba(255,255,255,0.04)" color="gray.500"
+                                      fontSize="8px" px={2} py={0.5} borderRadius="full"
+                                      fontFamily="'Space Mono', monospace">
+                                      {meta.duration}
+                                    </Badge>
+                                  </HStack>
+                                </Box>
                               </HStack>
 
-                              <Text fontSize="sm" color="gray.400" mt={3} lineHeight="1.6">
+                              <Text fontSize="sm" color="gray.400" lineHeight="1.65" mb={4}>
                                 {quest.description || `Complete this quest to earn a badge!`}
                               </Text>
 
-                              <Divider my={3} borderColor="rgba(139,92,246,0.1)" />
+                              {/* NFT Preview - shown when badge is minted */}
+                              {isMinted && (
+                                <Box mb={4} p={3} borderRadius="xl"
+                                  bg="rgba(34,197,94,0.05)" border="1px solid rgba(34,197,94,0.15)">
+                                  <Flex align="center" gap={4}>
+                                    <Box w="48px" h="48px" borderRadius="lg" overflow="hidden"
+                                      border="1px solid rgba(139,92,246,0.2)" flexShrink={0}>
+                                      <Image src={meta.nftImage} alt={`${quest.name} Badge`} w="100%" h="100%" objectFit="cover"
+                                        fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' rx='8' fill='%231a0a2e'/><text y='55%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='24'>🏅</text></svg>" />
+                                    </Box>
+                                    <Box flex={1}>
+                                      <Text fontSize="11px" fontWeight="600" color="#4ade80" fontFamily="'Space Grotesk', sans-serif">
+                                        NFT Badge Minted
+                                      </Text>
+                                      <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace">
+                                        {quest.name} · ERC-721
+                                      </Text>
+                                    </Box>
+                                  </Flex>
+                                </Box>
+                              )}
 
-                              <HStack mt={0} spacing={3} justify="space-between">
-                                <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
-                                  Fee: {formatEth(fee)} ETH
-                                </Text>
+                              <Divider borderColor="rgba(255,255,255,0.05)" mb={4} />
+
+                              <Flex align="center" justify="space-between">
+                                <VStack spacing={0} align="start">
+                                  <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.1em">
+                                    Mint Fee
+                                  </Text>
+                                  <Text fontSize="sm" fontWeight="700" color="gray.300" fontFamily="'Space Mono', monospace">
+                                    {formatEth(fee)} ETH
+                                  </Text>
+                                </VStack>
+
                                 <Tooltip
-                                  label={!hasSufficientBalance(fee) ? `Insufficient balance. Need ${formatEth(fee)} ETH` : ""}
-                                  hasArrow
-                                >
-                                  <Button
-                                    size="sm"
-                                    bg={isMinted ? "rgba(75,85,99,0.3)" : isCompleted ? "linear(135deg, #fbbf24, #ec4899)" : "linear(135deg, #8b5cf6, #ec4899)"}
-                                    color={isMinted ? "gray.500" : "white"}
+                                  label={!isActive ? "Quest not active" : !hasSufficientBalance(fee) ? `Need ${formatEth(fee)} ETH` : ""}
+                                  hasArrow isDisabled={isActive && hasSufficientBalance(fee)}>
+                                  <Button size="sm"
+                                    bg={isMinted
+                                      ? "rgba(74,222,128,0.1)"
+                                      : isCompleted
+                                        ? "linear-gradient(135deg, #fbbf24, #ec4899)"
+                                        : `linear-gradient(135deg, ${meta.color}cc, #ec4899aa)`}
+                                    color={isMinted ? "#4ade80" : "white"}
                                     isDisabled={isMinted || !isActive || (isCompleted && !hasSufficientBalance(fee))}
-                                    fontWeight="600"
-                                    borderRadius="full"
-                                    px={6}
+                                    fontWeight="700" borderRadius="xl" px={6}
+                                    border={isMinted ? "1px solid rgba(74,222,128,0.3)" : "none"}
                                     _hover={{
-                                      transform: isMinted ? "none" : "scale(1.02)",
-                                      boxShadow: isMinted ? "none" : "0 0 20px rgba(139,92,246,0.3)",
+                                      transform: isMinted ? "none" : "scale(1.04)",
+                                      boxShadow: isMinted ? "none" : `0 0 24px ${meta.color}40`,
                                     }}
+                                    _disabled={{ opacity: 0.5, cursor: "not-allowed", transform: "none" }}
                                     transition="all 0.2s"
                                     onClick={() => {
-                                      if (isCompleted) {
-                                        setSelectedQuest(id);
-                                        fetchQuestions(id);
-                                      } else {
-                                        fetchQuestions(id);
-                                      }
-                                    }}
-                                  >
-                                    {isMinted ? "Minted" : isCompleted ? "Mint Badge" : "Start Quiz"}
+                                      if (!isMinted) fetchQuestions(id);
+                                    }}>
+                                    {isMinted ? "✓ Minted" : isCompleted ? "Mint Badge →" : "Start Quiz →"}
                                   </Button>
                                 </Tooltip>
-                              </HStack>
+                              </Flex>
                             </Box>
                           </MotionBox>
                         );
                       })
                     ) : (
                       Array.from({ length: 4 }).map((_, i) => (
-                        <Skeleton key={i} height="220px" borderRadius="2xl" startColor="rgba(139,92,246,0.1)" endColor="rgba(139,92,246,0.05)" />
+                        <Skeleton key={i} height="260px" borderRadius="2xl"
+                          startColor="rgba(139,92,246,0.06)" endColor="rgba(139,92,246,0.02)" />
                       ))
                     )}
                   </SimpleGrid>
                 )}
               </Box>
+
+              {/* ── How It Works ── */}
+              {isConnected && isCorrectChain && (
+                <Box bg="rgba(4,4,14,0.7)" backdropFilter="blur(16px)" borderRadius="2xl"
+                  border="1px solid rgba(255,255,255,0.05)" p={{ base: 5, md: 7 }} mb={8}>
+                  <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace"
+                    textTransform="uppercase" letterSpacing="0.2em" mb={4}>
+                    How It Works
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={{ base: 3, md: 4 }}>
+                    {[
+                      { step: "01", title: "Pick a Quest", desc: "Choose from 4 topics covering the Soneium ecosystem, from basics to AI agents.", color: "#06b6d4" },
+                      { step: "02", title: "Answer Questions", desc: "Read through the material and answer True/False questions to verify your understanding.", color: "#8b5cf6" },
+                      { step: "03", title: "Get Signature", desc: "Pass the quiz and receive a cryptographic signature allowing you to mint your NFT badge.", color: "#ec4899" },
+                      { step: "04", title: "Mint & Earn", desc: "Mint your badge on Soneium. Complete all 4 to unlock Graduate and +2 rep points.", color: "#fbbf24" },
+                    ].map(({ step, title, desc, color }) => (
+                      <Box key={step} p={4} borderRadius="xl" bg="rgba(0,0,0,0.25)"
+                        border="1px solid rgba(255,255,255,0.04)"
+                        _hover={{ borderColor: `${color}25`, bg: "rgba(0,0,0,0.4)" }}
+                        transition="all 0.2s">
+                        <Text fontSize="9px" color={color} fontFamily="'Space Mono', monospace"
+                          fontWeight="700" letterSpacing="0.15em" mb={1}>{step}</Text>
+                        <Text fontSize="sm" fontWeight="700" color="white" mb={1.5}>{title}</Text>
+                        <Text fontSize="xs" color="gray.500" lineHeight="1.6">{desc}</Text>
+                      </Box>
+                    ))}
+                  </SimpleGrid>
+                </Box>
+              )}
             </>
           )}
 
-          {/* ============================================================ */}
-          {/* QUIZ VIEW */}
-          {/* ============================================================ */}
+          {/* ══════════════════════════════════════════════════════════
+              QUIZ VIEW
+          ══════════════════════════════════════════════════════════ */}
           {currentStep === "quiz" && !quizCompleted && (
-            <MotionBox
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <Box
-                bg="rgba(4,4,14,0.85)"
-                backdropFilter="blur(20px)"
-                borderRadius="3xl"
-                border="1px solid rgba(139,92,246,0.25)"
-                p={{ base: 5, md: 8 }}
-              >
-                <HStack mb={6} spacing={3}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    leftIcon={<ChevronLeftIcon />}
-                    onClick={() => {
-                      setCurrentStep("list");
-                      setQuizCompleted(false);
-                      setSignature(null);
-                      setDeadline(0);
-                      setAnswers([]);
-                    }}
-                    color="gray.400"
-                    _hover={{ color: "white" }}
-                  >
-                    Back
-                  </Button>
-                  <Badge bg="rgba(139,92,246,0.15)" color="#a855f7" px={3} py={1} borderRadius="full">
-                    Quiz
-                  </Badge>
-                  <Badge bg="rgba(251,191,36,0.1)" color="#fbbf24" px={3} py={1} borderRadius="full" fontSize="9px">
-                    {questQuestions.length} Questions
-                  </Badge>
-                </HStack>
+            <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <Box bg="rgba(4,4,14,0.9)" backdropFilter="blur(24px)" borderRadius="3xl"
+                border="1px solid rgba(139,92,246,0.2)" p={{ base: 5, md: 8 }} position="relative" overflow="hidden">
 
-                <Heading size="md" color="white" mb={2}>
-                  {questName}
-                </Heading>
-                <Text color="gray.400" fontSize="sm" mb={6}>
-                  Test your knowledge about {questName.replace('How to use ', '').replace('Deploy on ', '').replace('Agent ', '')}. Answer all questions correctly to earn your badge.
-                </Text>
+                <Box position="absolute" top={0} left={0} right={0} h="2px"
+                  bgGradient="linear(90deg, transparent, #8b5cf6, #ec4899, transparent)"
+                  style={{ animation: "shimmerBorder 3s linear infinite" }} />
+
+                {/* Quiz Header */}
+                <Flex align="center" justify="space-between" mb={7} flexWrap="wrap" gap={3}>
+                  <HStack spacing={3}>
+                    <Button variant="ghost" size="sm" leftIcon={<ChevronLeftIcon />}
+                      onClick={() => {
+                        setCurrentStep("list");
+                        setQuizCompleted(false);
+                        setSignature(null);
+                        setDeadline(0);
+                        setAnswers([]);
+                      }}
+                      color="gray.500" _hover={{ color: "white", bg: "rgba(139,92,246,0.08)" }}
+                      borderRadius="xl" border="1px solid rgba(255,255,255,0.07)">
+                      Back
+                    </Button>
+                    <Box h="28px" w="1px" bg="rgba(255,255,255,0.07)" />
+                    <VStack align="start" spacing={0}>
+                      <Heading size="md" color="white" fontWeight="800">{questName}</Heading>
+                      <Text fontSize="xs" color="gray.500">Answer all questions correctly to earn your badge</Text>
+                    </VStack>
+                  </HStack>
+                  <HStack spacing={2} flexWrap="wrap">
+                    <Badge bg="rgba(139,92,246,0.15)" color="#a855f7" px={3} py={1.5}
+                      borderRadius="full" fontFamily="'Space Mono', monospace" fontSize="10px">
+                      Quiz
+                    </Badge>
+                    <Badge bg="rgba(251,191,36,0.1)" color="#fbbf24" px={3} py={1.5}
+                      borderRadius="full" fontFamily="'Space Mono', monospace" fontSize="10px">
+                      {questQuestions.length} Questions
+                    </Badge>
+                    <Badge bg="rgba(34,197,94,0.08)" color="#4ade80" px={3} py={1.5}
+                      borderRadius="full" fontFamily="'Space Mono', monospace" fontSize="10px">
+                      {answers.filter(a => a !== null && a !== undefined).length}/{questQuestions.length} Answered
+                    </Badge>
+                  </HStack>
+                </Flex>
+
+                {/* Progress */}
+                <Box mb={7}>
+                  <Progress
+                    value={(answers.filter(a => a !== null && a !== undefined).length / Math.max(questQuestions.length, 1)) * 100}
+                    size="xs" borderRadius="full" bg="rgba(139,92,246,0.08)"
+                    sx={{ "& > div": { bgGradient: "linear(90deg, #8b5cf6, #ec4899)", borderRadius: "full", transition: "width 0.3s" } }} />
+                </Box>
 
                 {isLoading ? (
-                  <VStack py={10}>
-                    <Spinner color="#8b5cf6" size="xl" />
-                    <Text color="gray.500" fontSize="sm">Loading questions...</Text>
+                  <VStack py={16}>
+                    <Spinner color="#8b5cf6" size="xl" thickness="3px" />
+                    <Text color="gray.500" fontSize="sm" fontFamily="'Space Mono', monospace">Loading questions...</Text>
                   </VStack>
                 ) : (
-                  <VStack spacing={5} align="stretch">
-                    {questQuestions.map((q, index) => (
-                      <Box
-                        key={index}
-                        bg="rgba(0,0,0,0.3)"
-                        borderRadius="xl"
-                        p={4}
-                        border="1px solid rgba(139,92,246,0.1)"
-                        transition="border-color 0.2s"
-                        _hover={{ borderColor: "rgba(139,92,246,0.3)" }}
-                      >
-                        <Text fontWeight="600" color="white" mb={3}>
-                          {index + 1}. {q.question}
-                        </Text>
-                        <RadioGroup
-                          onChange={(value) => handleAnswerChange(index, value)}
-                          value={answers[index] !== undefined && answers[index] !== null ? (answers[index] ? "true" : "false") : ""}
-                        >
-                          <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
-                            <Radio value="true" colorScheme="green" size="md">
-                              <Text color="gray.300" fontSize="sm">True</Text>
-                            </Radio>
-                            <Radio value="false" colorScheme="red" size="md">
-                              <Text color="gray.300" fontSize="sm">False</Text>
-                            </Radio>
-                          </Stack>
-                        </RadioGroup>
-                      </Box>
-                    ))}
+                  <VStack spacing={4} align="stretch">
+                    {questQuestions.map((q, index) => {
+                      const answered = answers[index] !== undefined && answers[index] !== null;
+                      return (
+                        <Box key={index} bg="rgba(0,0,0,0.3)" borderRadius="xl" p={5}
+                          border="1px solid"
+                          borderColor={answered ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.08)"}
+                          transition="all 0.2s"
+                          _hover={{ borderColor: "rgba(139,92,246,0.35)", bg: "rgba(0,0,0,0.4)" }}>
 
-                    <Button
-                      size="lg"
-                      bgGradient="linear(135deg, #8b5cf6, #ec4899)"
-                      color="white"
-                      fontWeight="700"
-                      borderRadius="full"
-                      w="full"
-                      mt={4}
-                      isLoading={isSubmitting}
-                      isDisabled={!allAnswersSelected()}
-                      _hover={{
-                        transform: "scale(1.02)",
-                        boxShadow: "0 0 30px rgba(139,92,246,0.3)",
-                      }}
-                      transition="all 0.3s"
-                      onClick={handleSubmitQuiz}
-                    >
-                      {!allAnswersSelected() ? "Answer all questions" : "Submit Answers"}
-                    </Button>
+                          <Flex align="start" gap={4}>
+                            <Box w="26px" h="26px" borderRadius="lg" flexShrink={0}
+                              bg={answered ? "rgba(139,92,246,0.2)" : "rgba(139,92,246,0.08)"}
+                              border={`1px solid ${answered ? "rgba(139,92,246,0.4)" : "rgba(139,92,246,0.15)"}`}
+                              display="flex" alignItems="center" justifyContent="center">
+                              <Text fontSize="10px" fontWeight="800" color={answered ? "#a855f7" : "gray.500"}
+                                fontFamily="'Space Mono', monospace">
+                                {String(index + 1).padStart(2, "0")}
+                              </Text>
+                            </Box>
+                            <Box flex={1}>
+                              <Text fontWeight="600" color="white" mb={4} lineHeight="1.5" fontSize="sm">
+                                {q.question}
+                              </Text>
+                              <RadioGroup
+                                onChange={(value) => handleAnswerChange(index, value)}
+                                value={answered ? (answers[index] ? "true" : "false") : ""}>
+                                <Stack direction={{ base: "column", sm: "row" }} spacing={3}>
+                                  {[
+                                    { value: "true", label: "True", color: "green", icon: "✓" },
+                                    { value: "false", label: "False", color: "red", icon: "✗" },
+                                  ].map(({ value, label, color, icon }) => (
+                                    <Box key={value} flex={1} as="label" cursor="pointer">
+                                      <Box
+                                        p={3} borderRadius="xl" transition="all 0.2s"
+                                        bg={answers[index] !== null && answers[index] !== undefined && (answers[index] ? "true" : "false") === value
+                                          ? value === "true" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)"
+                                          : "rgba(255,255,255,0.02)"}
+                                        border="1px solid"
+                                        borderColor={answers[index] !== null && answers[index] !== undefined && (answers[index] ? "true" : "false") === value
+                                          ? value === "true" ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)"
+                                          : "rgba(255,255,255,0.07)"}
+                                        _hover={{ borderColor: value === "true" ? "rgba(34,197,94,0.25)" : "rgba(239,68,68,0.25)" }}>
+                                        <Radio value={value} colorScheme={color} size="md">
+                                          <Text color="gray.300" fontSize="sm" fontWeight="600" ml={1}>
+                                            {icon} {label}
+                                          </Text>
+                                        </Radio>
+                                      </Box>
+                                    </Box>
+                                  ))}
+                                </Stack>
+                              </RadioGroup>
+                            </Box>
+                          </Flex>
+                        </Box>
+                      );
+                    })}
+
+                    <Box pt={2}>
+                      <Button size="lg"
+                        bgGradient={allAnswersSelected() ? "linear(135deg, #8b5cf6, #ec4899)" : undefined}
+                        bg={!allAnswersSelected() ? "rgba(75,85,99,0.25)" : undefined}
+                        color={allAnswersSelected() ? "white" : "gray.500"}
+                        fontWeight="700" borderRadius="xl" w="full" h="56px"
+                        isLoading={isSubmitting} loadingText="Verifying answers..."
+                        isDisabled={!allAnswersSelected()}
+                        border={allAnswersSelected() ? "none" : "1px solid rgba(255,255,255,0.07)"}
+                        _hover={{
+                          transform: allAnswersSelected() ? "scale(1.01)" : "none",
+                          boxShadow: allAnswersSelected() ? "0 0 36px rgba(139,92,246,0.35)" : "none",
+                        }}
+                        _disabled={{ opacity: 1, cursor: "not-allowed" }}
+                        transition="all 0.3s"
+                        onClick={handleSubmitQuiz}>
+                        {!allAnswersSelected()
+                          ? `Answer all ${questQuestions.length - answers.filter(a => a !== null && a !== undefined).length} remaining question(s)`
+                          : "Submit Answers →"}
+                      </Button>
+                      <Text fontSize="xs" color="gray.500" textAlign="center" mt={3} fontFamily="'Space Mono', monospace">
+                        All questions must be answered correctly to proceed
+                      </Text>
+                    </Box>
                   </VStack>
                 )}
               </Box>
             </MotionBox>
           )}
 
-          {/* ============================================================ */}
-          {/* RESULT VIEW */}
-          {/* ============================================================ */}
+          {/* ══════════════════════════════════════════════════════════
+              RESULT VIEW
+          ══════════════════════════════════════════════════════════ */}
           {currentStep === "result" && quizCompleted && signature && selectedQuest && (
-            <MotionBox
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <Box
-                bg="rgba(4,4,14,0.85)"
-                backdropFilter="blur(20px)"
-                borderRadius="3xl"
-                border="1px solid rgba(34,197,94,0.3)"
-                p={{ base: 5, md: 8 }}
-                textAlign="center"
-                position="relative"
-                overflow="hidden"
-              >
-                <Box
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  right={0}
-                  h="3px"
-                  bgGradient="linear(90deg, #22c55e, #4ade80, #22c55e)"
-                  animation="shimmerBorder 3s infinite"
-                />
+            <MotionBox initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+              <Box bg="rgba(4,4,14,0.9)" backdropFilter="blur(24px)" borderRadius="3xl"
+                border="1px solid rgba(34,197,94,0.25)" p={{ base: 5, md: 8 }}
+                position="relative" overflow="hidden">
 
-                <Box fontSize="64px" mb={4} animation="confettiDrop 1.5s ease-in-out">
-                  🎉
-                </Box>
-                <Heading size="lg" color="#4ade80" mb={2}>
-                  All Answers Correct!
-                </Heading>
-                <Text color="gray.400" fontSize="md" mb={6}>
-                  You've successfully completed the quiz! You can now mint your badge.
-                </Text>
+                <Box position="absolute" top={0} left={0} right={0} h="2px"
+                  bgGradient="linear(90deg, transparent, #22c55e, #4ade80, #22c55e, transparent)"
+                  style={{ animation: "shimmerBorder 3s infinite" }} />
 
-                <Flex
-                  direction={{ base: "column", md: "row" }}
-                  gap={6}
-                  align="center"
-                  justify="center"
-                  mb={6}
-                >
-                  {/* NFT Preview */}
-                  <Box
-                    w={{ base: "150px", md: "180px" }}
-                    h={{ base: "150px", md: "180px" }}
-                    borderRadius="2xl"
-                    overflow="hidden"
-                    border="2px solid rgba(139,92,246,0.3)"
-                    boxShadow="0 0 30px rgba(139,92,246,0.2)"
-                    animation="glowPulse 3s ease-in-out infinite"
-                    flexShrink={0}
-                    bg="rgba(0,0,0,0.3)"
-                    position="relative"
-                  >
-                    <Image
-                      src="/agentquest.png"
-                      alt="Quest Badge NFT"
-                      w="100%"
-                      h="100%"
-                      objectFit="cover"
-                      fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><rect width='180' height='180' rx='16' fill='%231a0a2e'/><text y='50%' x='50%' text-anchor='middle' font-size='40'>🏅</text></svg>"
-                    />
-                    <Box
-                      position="absolute"
-                      bottom={2}
-                      right={2}
-                      bg="rgba(0,0,0,0.7)"
-                      px={2}
-                      py={0.5}
-                      borderRadius="full"
-                      border="1px solid rgba(139,92,246,0.3)"
-                    >
-                      <Text fontSize="8px" color="gray.400" fontFamily="'Space Mono', monospace">
-                        ERC-721
-                      </Text>
-                    </Box>
-                    <Box
-                      position="absolute"
-                      bottom={2}
-                      left={2}
-                      bg="rgba(0,0,0,0.7)"
-                      px={2}
-                      py={0.5}
-                      borderRadius="full"
-                      border="1px solid rgba(139,92,246,0.3)"
-                    >
-                      <Text fontSize="8px" color="#4ade80" fontFamily="'Space Mono', monospace">
-                        ✓ Ready
-                      </Text>
+                {/* Success hero */}
+                <VStack spacing={3} mb={8} textAlign="center">
+                  <Box fontSize="72px" style={{ animation: "confettiDrop 1.2s ease-out" }} lineHeight="1">🎉</Box>
+                  <VStack spacing={1}>
+                    <Heading size="lg" color="#4ade80" fontWeight="800">Quiz Passed!</Heading>
+                    <Text color="gray.400" fontSize="md">
+                      You answered all questions correctly for{" "}
+                      <Text as="span" color="white" fontWeight="600">{questName}</Text>.
+                      Your badge is ready to mint.
+                    </Text>
+                  </VStack>
+                  <HStack spacing={3} flexWrap="wrap" justify="center">
+                    <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" px={3} py={1.5}
+                      borderRadius="full" fontSize="xs" fontFamily="'Space Mono', monospace">
+                      ✓ Quiz Verified
+                    </Badge>
+                    <Badge bg="rgba(139,92,246,0.15)" color="#a855f7" px={3} py={1.5}
+                      borderRadius="full" fontSize="xs" fontFamily="'Space Mono', monospace">
+                      🔐 Signature Ready
+                    </Badge>
+                    <Badge bg="rgba(251,191,36,0.1)" color="#fbbf24" px={3} py={1.5}
+                      borderRadius="full" fontSize="xs" fontFamily="'Space Mono', monospace">
+                      ⏰ {new Date(deadline * 1000).toLocaleTimeString()} Expires
+                    </Badge>
+                  </HStack>
+                </VStack>
+
+                {/* NFT Preview + Details */}
+                <Flex direction={{ base: "column", md: "row" }} gap={7} align="stretch" mb={8}>
+                  {/* NFT Card */}
+                  <Box flexShrink={0} mx={{ base: "auto", md: 0 }}>
+                    <Box w={{ base: "180px", md: "200px" }} h={{ base: "180px", md: "200px" }}
+                      borderRadius="2xl" overflow="hidden"
+                      border="1.5px solid rgba(139,92,246,0.35)"
+                      boxShadow="0 0 40px rgba(139,92,246,0.2)"
+                      style={{ animation: "glowPulse 3s ease-in-out infinite" }}
+                      bg="rgba(0,0,0,0.4)" position="relative">
+                      <Image src="/agentquest.png" alt="Quest Badge NFT" w="100%" h="100%" objectFit="cover"
+                        fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' rx='16' fill='%231a0a2e'/><text y='50%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='48'>🏅</text></svg>" />
+                      <Box position="absolute" bottom={0} left={0} right={0} p={2.5}
+                        bg="linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%)">
+                        <Text fontSize="9px" color="#a855f7" fontFamily="'Space Mono', monospace" fontWeight="700">
+                          {questName}
+                        </Text>
+                        <Text fontSize="8px" color="gray.400" fontFamily="'Space Mono', monospace">
+                          ERC-721 · Soneium
+                        </Text>
+                      </Box>
+                      <Box position="absolute" top={2} right={2} bg="rgba(34,197,94,0.9)"
+                        borderRadius="full" px={2} py={0.5}>
+                        <Text fontSize="8px" color="white" fontFamily="'Space Mono', monospace" fontWeight="700">
+                          READY
+                        </Text>
+                      </Box>
                     </Box>
                   </Box>
 
-                  {/* Details */}
-                  <Box flex={1} textAlign="left" w="full">
-                    <HStack spacing={2} mb={2} flexWrap="wrap">
-                      <Badge bg="rgba(139,92,246,0.2)" color="#a855f7" px={3} py={1} borderRadius="full" fontSize="10px">
-                        {questName}
-                      </Badge>
-                      <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" px={3} py={1} borderRadius="full" fontSize="10px">
-                        ✓ Ready to Mint
-                      </Badge>
-                    </HStack>
-
-                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" mb={3}>
-                      🔐 Signature Generated
+                  {/* Badge Details */}
+                  <Box flex={1} bg="rgba(0,0,0,0.25)" borderRadius="xl"
+                    border="1px solid rgba(255,255,255,0.05)" p={5}>
+                    <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace"
+                      textTransform="uppercase" letterSpacing="0.15em" mb={4}>
+                      Badge Details
                     </Text>
 
-                    <Box
-                      bg="rgba(0,0,0,0.3)"
-                      borderRadius="lg"
-                      p={3}
-                      border="1px solid rgba(34,197,94,0.1)"
-                      mb={2}
-                    >
-                      <Text fontSize="xs" color="#4ade80" fontFamily="'Space Mono', monospace" wordBreak="break-all">
-                        {signature.slice(0, 30)}...{signature.slice(-20)}
-                      </Text>
-                    </Box>
+                    <VStack spacing={3} align="stretch">
+                      {[
+                        { label: "Quest", value: questName },
+                        { label: "Network", value: "Soneium Mainnet" },
+                        { label: "Standard", value: "ERC-721 NFT" },
+                        { label: "Expires", value: new Date(deadline * 1000).toLocaleString() },
+                      ].map(({ label, value }) => (
+                        <Flex key={label} justify="space-between" align="center">
+                          <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">{label}</Text>
+                          <Text fontSize="xs" color="gray.300" fontWeight="600" fontFamily="'Space Mono', monospace"
+                            textAlign="right" maxW="200px" noOfLines={1}>
+                            {value}
+                          </Text>
+                        </Flex>
+                      ))}
 
-                    {lastMintedTokenId && lastMintedContract === AGENT_QUEST_ADDRESS && (
-                      <Box
-                        bg="rgba(251,191,36,0.1)"
-                        borderRadius="lg"
-                        p={2}
-                        border="1px solid rgba(251,191,36,0.2)"
-                        mb={2}
-                      >
-                        <HStack spacing={2} justify="center">
-                          <Text fontSize="xs" color="gray.400" fontFamily="'Space Mono', monospace">
-                            🆔 Token ID:
+                      <Divider borderColor="rgba(255,255,255,0.05)" />
+
+                      <Box>
+                        <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace" mb={1.5}>
+                          Signature
+                        </Text>
+                        <Box bg="rgba(139,92,246,0.06)" border="1px solid rgba(139,92,246,0.15)"
+                          borderRadius="lg" px={3} py={2.5}>
+                          <Text fontSize="10px" color="#a855f7" fontFamily="'Space Mono', monospace"
+                            wordBreak="break-all" letterSpacing="0.02em">
+                            {signature.slice(0, 28)}...{signature.slice(-18)}
                           </Text>
-                          <Text fontSize="sm" color="#fbbf24" fontFamily="'Space Mono', monospace" fontWeight="700">
-                            #{lastMintedTokenId}
-                          </Text>
-                          <Tooltip label="View on Blockscout" hasArrow>
-                            <Link
-                              href={getExplorerLink(AGENT_QUEST_ADDRESS, lastMintedTokenId)}
-                              isExternal
-                              _hover={{ color: "#06b6d4" }}
-                            >
-                              <ExternalLinkIcon boxSize={3} color="gray.400" />
-                            </Link>
-                          </Tooltip>
-                        </HStack>
+                        </Box>
                       </Box>
-                    )}
 
-                    <HStack spacing={4} flexWrap="wrap">
-                      <HStack spacing={1}>
-                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
-                          ⏰ Valid:
-                        </Text>
-                        <Text fontSize="xs" color="#fbbf24" fontFamily="'Space Mono', monospace">
-                          {new Date(deadline * 1000).toLocaleString()}
-                        </Text>
-                      </HStack>
-                      <HStack spacing={1}>
-                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace">
-                          🔗 Chain:
-                        </Text>
-                        <Text fontSize="xs" color="#06b6d4" fontFamily="'Space Mono', monospace">
-                          Soneium
-                        </Text>
-                      </HStack>
-                    </HStack>
+                      {lastMintedTokenId && lastMintedContract === AGENT_QUEST_ADDRESS && (
+                        <Box bg="rgba(251,191,36,0.08)" border="1px solid rgba(251,191,36,0.2)"
+                          borderRadius="lg" px={3} py={2.5}>
+                          <Flex justify="space-between" align="center">
+                            <HStack spacing={2}>
+                              <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">Token ID</Text>
+                              <Text fontSize="sm" color="#fbbf24" fontFamily="'Space Mono', monospace" fontWeight="800">
+                                #{lastMintedTokenId}
+                              </Text>
+                            </HStack>
+                            <Tooltip label="View on Blockscout" hasArrow>
+                              <Link href={getExplorerLink(AGENT_QUEST_ADDRESS, lastMintedTokenId)} isExternal>
+                                <ExternalLinkIcon boxSize={3.5} color="gray.500" _hover={{ color: "#06b6d4" }} />
+                              </Link>
+                            </Tooltip>
+                          </Flex>
+                        </Box>
+                      )}
+                    </VStack>
                   </Box>
                 </Flex>
 
                 {isSignatureExpired() && (
-                  <Box bg="rgba(239,68,68,0.1)" borderRadius="lg" p={3} mb={4} border="1px solid rgba(239,68,68,0.2)">
-                    <HStack spacing={2} justify="center">
-                      <SmallCloseIcon color="#f87171" />
-                      <Text fontSize="sm" color="#f87171" fontWeight="600">
-                        Signature expired. Please retake the quiz.
-                      </Text>
+                  <Box bg="rgba(239,68,68,0.08)" borderRadius="xl" p={4} mb={5}
+                    border="1px solid rgba(239,68,68,0.2)">
+                    <HStack spacing={3} justify="center">
+                      <SmallCloseIcon color="#f87171" boxSize={4} />
+                      <VStack spacing={0} align="start">
+                        <Text fontSize="sm" color="#f87171" fontWeight="700">Signature Expired</Text>
+                        <Text fontSize="xs" color="gray.500">
+                          Your verification window has closed. Please retake the quiz to get a new signature.
+                        </Text>
+                      </VStack>
                     </HStack>
                   </Box>
                 )}
 
+                {/* Action Buttons */}
                 <HStack spacing={4} justify="center" flexWrap="wrap">
                   <Tooltip
-                    label={!hasSufficientBalance(
-                      (questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n
-                    ) ? `Insufficient balance. Need ${formatEth(
-                      (questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n
-                    )} ETH` : ""}
-                    hasArrow
-                  >
-                    <Button
-                      size="lg"
-                      bgGradient={canMint(selectedQuest) ? "linear(135deg, #fbbf24, #ec4899)" : "rgba(75,85,99,0.3)"}
+                    label={!hasSufficientBalance((questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n)
+                      ? `Need ${formatEth((questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n)} ETH`
+                      : ""} hasArrow>
+                    <Button size="lg"
+                      bgGradient={canMint(selectedQuest) ? "linear(135deg, #fbbf24, #ec4899)" : undefined}
+                      bg={!canMint(selectedQuest) ? "rgba(75,85,99,0.2)" : undefined}
                       color={canMint(selectedQuest) ? "white" : "gray.500"}
-                      fontWeight="700"
-                      borderRadius="full"
-                      px={8}
+                      fontWeight="700" borderRadius="xl" px={10} h="56px"
                       isDisabled={!canMint(selectedQuest) || !hasSufficientBalance(
                         (questsData as any[])?.find((q: any) => Number(q.id) === selectedQuest)?.fee || 0n
                       )}
                       onClick={handleMintBadge}
+                      border={!canMint(selectedQuest) ? "1px solid rgba(255,255,255,0.07)" : "none"}
                       _hover={{
                         transform: canMint(selectedQuest) ? "scale(1.02)" : "none",
-                        boxShadow: canMint(selectedQuest) ? "0 0 30px rgba(251,191,36,0.3)" : "none",
+                        boxShadow: canMint(selectedQuest) ? "0 0 36px rgba(251,191,36,0.35)" : "none",
                       }}
-                      transition="all 0.3s"
-                    >
-                      {isSignatureExpired() ? "⏳ Expired" : canMint(selectedQuest) ? "🏅 Mint Badge" : "⏳ Already Minted"}
+                      _disabled={{ opacity: 1, cursor: "not-allowed" }}
+                      transition="all 0.3s">
+                      {isSignatureExpired() ? "⏳ Signature Expired" : canMint(selectedQuest) ? "🏅 Mint Badge →" : "⏳ Already Minted"}
                     </Button>
                   </Tooltip>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    borderColor="rgba(139,92,246,0.3)"
-                    color="gray.400"
-                    borderRadius="full"
-                    px={8}
+                  <Button size="lg" variant="outline"
+                    borderColor="rgba(139,92,246,0.2)" color="gray.500" borderRadius="xl" px={8} h="56px"
                     onClick={() => {
                       setCurrentStep("list");
                       setQuizCompleted(false);
@@ -1527,85 +1533,55 @@ export default function Academy() {
                       setDeadline(0);
                       setAnswers([]);
                     }}
-                    _hover={{
-                      borderColor: "rgba(139,92,246,0.6)",
-                      color: "white",
-                    }}
-                  >
-                    Back to Quests
+                    _hover={{ borderColor: "rgba(139,92,246,0.5)", color: "white", bg: "rgba(139,92,246,0.06)" }}>
+                    ← Back to Quests
                   </Button>
                 </HStack>
 
-                {/* Contract Explorer Link */}
-                <Box mt={4}>
-                  <Tooltip label="View contract on Blockscout" hasArrow>
-                    <Link
-                      href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`}
-                      isExternal
-                      fontSize="xs"
-                      color="gray.500"
-                      _hover={{ color: "#06b6d4" }}
-                      fontFamily="'Space Mono', monospace"
-                    >
-                      📜 View Contract on Blockscout <ExternalLinkIcon mx={1} boxSize={3} />
-                    </Link>
-                  </Tooltip>
+                <Box mt={5} textAlign="center">
+                  <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`} isExternal
+                    fontSize="xs" color="gray.500" _hover={{ color: "#06b6d4" }}
+                    fontFamily="'Space Mono', monospace">
+                    📜 View contract on Blockscout <ExternalLinkIcon mx={1} boxSize={3} />
+                  </Link>
                 </Box>
               </Box>
             </MotionBox>
           )}
 
-          {/* Footer */}
-          <Box pt={10} pb={6} position="relative">
-            <Box
-              h="1px"
-              mb={8}
-              bg="linear-gradient(90deg, transparent, rgba(139,92,246,0.2), rgba(236,72,153,0.2), transparent)"
-            />
-            <VStack spacing={4}>
-              <HStack
-                spacing={0}
-                justify="center"
-                flexWrap="wrap"
-                bg="rgba(255,255,255,0.02)"
-                border="1px solid rgba(255,255,255,0.04)"
-                borderRadius="2xl"
-                px={6}
-                py={3}
-                gap={0}
-              >
+          {/* ── Footer ── */}
+          <Box pt={12} pb={8} position="relative">
+            <Box h="1px" mb={8}
+              bg="linear-gradient(90deg, transparent, rgba(139,92,246,0.15), rgba(236,72,153,0.15), transparent)" />
+
+            <VStack spacing={5}>
+              <HStack spacing={0} justify="center" flexWrap="wrap"
+                bg="rgba(255,255,255,0.015)" border="1px solid rgba(255,255,255,0.04)"
+                borderRadius="2xl" px={6} py={3} gap={0}>
                 {[
                   { label: "Season", value: "13" },
                   { label: "Chain", value: "Soneium" },
                   { label: "Status", value: "Live ✓" },
                   { label: "Quests", value: "4" },
+                  { label: "Bonus Rep", value: "+2 pts" },
                 ].map(({ label, value }, i, arr) => (
                   <HStack key={label} spacing={0}>
-                    <VStack spacing={0} px={{ base: 4, md: 6 }} py={1}>
-                      <Text
-                        fontSize="9px"
-                        color="gray.600"
-                        textTransform="uppercase"
-                        letterSpacing="0.18em"
-                        fontFamily="'Space Mono', monospace"
-                      >
-                        {label}
-                      </Text>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="700"
-                        color="gray.300"
-                        fontFamily="'Space Mono', monospace"
-                      >
-                        {value}
-                      </Text>
+                    <VStack spacing={0} px={{ base: 4, md: 6 }} py={1.5}>
+                      <Text fontSize="8px" color="gray.600" textTransform="uppercase"
+                        letterSpacing="0.18em" fontFamily="'Space Mono', monospace">{label}</Text>
+                      <Text fontSize="xs" fontWeight="700" color="gray.400"
+                        fontFamily="'Space Mono', monospace">{value}</Text>
                     </VStack>
                     {i < arr.length - 1 && (
-                      <Box w="1px" h="28px" bg="rgba(255,255,255,0.06)" flexShrink={0} />
+                      <Box w="1px" h="28px" bg="rgba(255,255,255,0.05)" flexShrink={0} />
                     )}
                   </HStack>
                 ))}
               </HStack>
+
+              <Text fontSize="9px" color="gray.600" fontFamily="'Space Mono', monospace" textAlign="center" letterSpacing="0.1em">
+                AGENT ACADEMY · POWERED BY SONEIUM · SEASON 13
+              </Text>
             </VStack>
           </Box>
         </Container>

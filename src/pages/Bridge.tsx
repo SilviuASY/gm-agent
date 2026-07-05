@@ -9,7 +9,6 @@ import {
   HStack,
   Badge,
   Button,
-  useColorMode,
   useToast,
   Link,
   SimpleGrid,
@@ -353,7 +352,6 @@ const Footer = () => {
 // ============= Main Page =============
 export default function Bridge() {
   const navigate = useNavigate();
-  useColorMode();
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();

@@ -121,12 +121,13 @@ export const xdcChain = {
 
 export const bscChain = {
   id: 56,
-  name: 'BSC',
+  name: 'BNB Chain',
   nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://binance-smart-chain-public.nodies.app'] },
     public: { http: ['https://binance-smart-chain-public.nodies.app'] },
   },
+  iconUrl: '/bnb.png',
 } as const
 
 export const victionChain = {
@@ -395,9 +396,10 @@ export const abstractChain = {
   name: 'Abstract',
   nativeCurrency: { name: 'Abstract', symbol: 'ABS', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.abstract.xyz'] },
-    public: { http: ['https://rpc.abstract.xyz'] },
+    default: { http: ['https://api.mainnet.abs.xyz'] },
+    public: { http: ['https://api.mainnet.abs.xyz'] },
   },
+  iconUrl: '/abstract.png',
 } as const
 
 export const morphChain = {

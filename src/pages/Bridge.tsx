@@ -1,0 +1,1171 @@
+// src/pages/Bridge.tsx
+import {
+  Box,
+  Container,
+  Flex,
+  Heading,
+  Text,
+  VStack,
+  HStack,
+  Badge,
+  Button,
+  useColorMode,
+  useToast,
+  Link,
+  SimpleGrid,
+  Spinner,
+} from "@chakra-ui/react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { ChevronLeftIcon, ExternalLinkIcon } from "@chakra-ui/icons";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { LiFiWidget, useAvailableChains } from "@lifi/widget";
+import { useSyncWagmiConfig } from "@lifi/wallet-management";
+import {
+  useMemo,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  Component,
+  type ReactNode,
+} from "react";
+import { useFixScroll } from "../hooks/useFixScroll";
+
+// ============= Import wagmi config =============
+import { config } from "../wagmi";
+
+// ============= Motion =============
+const MotionBox = motion(Box);
+
+// ============= LI.FI Config =============
+const LIFI_API_KEY =
+  (import.meta as any).env?.VITE_LIFI_API_KEY ||
+  "7b415723-cfa7-4d4e-b58d-4dea6e36b71a.be9467a8-914e-4511-8d07-01987626c5ed";
+
+const DEFAULT_FROM_CHAIN = 1868; // Soneium
+const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+
+// ============= Styles =============
+const pageStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+  @keyframes floatCard {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-7px); }
+  }
+  @keyframes shimmerBorder {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: scale(1)   translateY(0px);   opacity: 0.45; }
+    50%      { transform: scale(1.1) translateY(-20px);  opacity: 0.7; }
+  }
+  @keyframes shimmerBtn {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  @keyframes spinFade {
+    0%   { opacity: 0.4; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.4; }
+  }
+
+  .lifi-widget-container {
+    width: 100% !important;
+    max-width: 480px !important;
+    margin: 0 auto !important;
+    min-height: 500px !important;
+    position: relative !important;
+  }
+
+  .lifi-widget-container > div {
+    border-radius: 24px !important;
+    border: 1px solid rgba(139,92,246,0.2) !important;
+    background: rgba(4,4,14,0.85) !important;
+    backdrop-filter: blur(24px) !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3) !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    min-height: 500px !important;
+  }
+
+  .lifi-widget-container > div:hover {
+    border-color: rgba(139,92,246,0.4) !important;
+    box-shadow: 0 8px 60px rgba(139,92,246,0.1) !important;
+  }
+`;
+
+// =====================================================================
+// PageErrorBoundary
+// =====================================================================
+interface PageErrorBoundaryState {
+  hasError: boolean;
+}
+
+class PageErrorBoundary extends Component<
+  { children: ReactNode },
+  PageErrorBoundaryState
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, info: unknown) {
+    console.error("Page-level error (Bridge):", error, info);
+  }
+
+  handleReload = () => {
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box
+          minH="100vh"
+          bg="#03030f"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          fontFamily="'Space Grotesk', sans-serif"
+          px={4}
+        >
+          <VStack spacing={4} maxW="420px" textAlign="center">
+            <Text fontSize="48px">⚠️</Text>
+            <Text color="white" fontSize="lg" fontWeight="700">
+              Something went wrong
+            </Text>
+            <Text color="gray.400" fontSize="sm">
+              An unexpected error occurred. Please reload and check if the transaction has already been processed in your wallet.
+            </Text>
+            <Button
+              onClick={this.handleReload}
+              bg="rgba(139,92,246,0.15)"
+              color="#c4b5fd"
+              border="1px solid rgba(139,92,246,0.3)"
+              _hover={{ bg: "rgba(139,92,246,0.25)" }}
+              borderRadius="lg"
+            >
+              Reload page
+            </Button>
+          </VStack>
+        </Box>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// =====================================================================
+// WidgetErrorBoundary
+// =====================================================================
+interface WidgetErrorBoundaryProps {
+  children: ReactNode;
+  onRetry: () => void;
+}
+interface WidgetErrorBoundaryState {
+  hasError: boolean;
+}
+
+class WidgetErrorBoundary extends Component<
+  WidgetErrorBoundaryProps,
+  WidgetErrorBoundaryState
+> {
+  constructor(props: WidgetErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, info: unknown) {
+    console.error("LiFi widget error:", error, info);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false });
+    this.props.onRetry();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box
+          textAlign="center"
+          py={10}
+          px={4}
+          bg="rgba(0,0,0,0.3)"
+          borderRadius="xl"
+          border="1px solid rgba(239,68,68,0.25)"
+        >
+          <Text fontSize="40px" mb={3}>⚠️</Text>
+          <Text color="gray.300" fontSize="sm" fontFamily="'Space Grotesk', sans-serif" mb={1}>
+            The bridge widget encountered an error
+          </Text>
+          <Text color="gray.500" fontSize="xs" fontFamily="'Space Grotesk', sans-serif" mb={4}>
+            This can happen temporarily when switching networks. Please try again.
+          </Text>
+          <Button
+            size="sm"
+            onClick={this.handleRetry}
+            bg="rgba(139,92,246,0.15)"
+            color="#c4b5fd"
+            border="1px solid rgba(139,92,246,0.3)"
+            _hover={{ bg: "rgba(139,92,246,0.25)" }}
+            borderRadius="lg"
+            fontFamily="'Space Grotesk', sans-serif"
+          >
+            Try again
+          </Button>
+        </Box>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ============= Footer =============
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <Box pt={10} pb={6} position="relative">
+      <Box
+        h="1px"
+        mb={8}
+        bg="linear-gradient(90deg, transparent, rgba(139,92,246,0.2), rgba(236,72,153,0.2), transparent)"
+      />
+
+      <VStack spacing={4}>
+        <HStack
+          spacing={0}
+          justify="center"
+          flexWrap="wrap"
+          bg="rgba(255,255,255,0.02)"
+          border="1px solid rgba(255,255,255,0.04)"
+          borderRadius="2xl"
+          px={6}
+          py={3}
+          gap={0}
+        >
+          {[
+            { label: "Protocol", value: "ERC-8004" },
+            { label: "Bridge", value: "LI.FI ✓" },
+            { label: "Chains", value: "70+" },
+          ].map(({ label, value }, i, arr) => (
+            <HStack key={label} spacing={0}>
+              <VStack spacing={0} px={{ base: 4, md: 6 }} py={1}>
+                <Text
+                  fontSize="10px"
+                  color="gray.500"
+                  textTransform="uppercase"
+                  letterSpacing="0.18em"
+                  fontFamily="'Space Mono', monospace"
+                >
+                  {label}
+                </Text>
+                <Text
+                  fontSize="xs"
+                  fontWeight="700"
+                  color="gray.300"
+                  fontFamily="'Space Mono', monospace"
+                >
+                  {value}
+                </Text>
+              </VStack>
+              {i < arr.length - 1 && (
+                <Box w="1px" h="28px" bg="rgba(255,255,255,0.06)" flexShrink={0} />
+              )}
+            </HStack>
+          ))}
+        </HStack>
+
+        <VStack spacing={1}>
+          <Text
+            fontSize="12px"
+            color="gray.500"
+            fontFamily="'Space Mono', monospace"
+            letterSpacing="0.12em"
+            textAlign="center"
+          >
+            © {currentYear} · Agent Protocol · Cross-Chain Bridge
+          </Text>
+          <Text
+            fontSize="10px"
+            color="gray.500"
+            fontFamily="'Space Mono', monospace"
+            letterSpacing="0.08em"
+          >
+            Powered by LI.FI · Built on Soneium
+          </Text>
+        </VStack>
+      </VStack>
+    </Box>
+  );
+};
+
+// ============= Main Page =============
+export default function Bridge() {
+  const navigate = useNavigate();
+  const { colorMode } = useColorMode();
+  const { isConnected, address } = useAccount();
+  const chainId = useChainId();
+  const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();
+  const toast = useToast();
+
+  const routeParams = useParams<{ tokens?: string }>();
+  const [searchParams] = useSearchParams();
+
+  const [widgetKey, setWidgetKey] = useState(0);
+  const [isSwitchingChain, setIsSwitchingChain] = useState(false);
+
+  const isSwitchingRef = useRef(false);
+  const lastAddressRef = useRef<string | undefined>(address);
+
+  useFixScroll();
+
+  // =====================================================================
+  // Global safety net for uncaught errors
+  // =====================================================================
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error("Uncaught error (bridge widget):", event.reason);
+      event.preventDefault();
+    };
+    const handleGlobalError = (event: ErrorEvent) => {
+      console.error("Uncaught global error (bridge widget):", event.error || event.message);
+    };
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+    window.addEventListener("error", handleGlobalError);
+    return () => {
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+      window.removeEventListener("error", handleGlobalError);
+    };
+  }, []);
+
+  // =====================================================================
+  // Token pre-selection from URL
+  // =====================================================================
+  const tokenPrefill = useMemo(() => {
+    let fromToken: string | undefined;
+    let toToken: string | undefined;
+
+    if (routeParams.tokens) {
+      const parts = routeParams.tokens.split(/[-/]/).filter(Boolean);
+      if (parts[0] && EVM_ADDRESS_RE.test(parts[0])) fromToken = parts[0];
+      if (parts[1] && EVM_ADDRESS_RE.test(parts[1])) toToken = parts[1];
+    }
+
+    const qFromToken = searchParams.get("fromToken");
+    const qToToken = searchParams.get("toToken");
+    if (qFromToken && EVM_ADDRESS_RE.test(qFromToken)) fromToken = qFromToken;
+    if (qToToken && EVM_ADDRESS_RE.test(qToToken)) toToken = qToToken;
+
+    const qFromChain = searchParams.get("fromChain");
+    const qToChain = searchParams.get("toChain");
+
+    return {
+      fromToken,
+      toToken,
+      fromChain: qFromChain ? Number(qFromChain) : undefined,
+      toChain: qToChain ? Number(qToChain) : undefined,
+    };
+  }, [routeParams.tokens, searchParams]);
+
+  const { chains: availableChainsRaw } = useAvailableChains();
+
+  // =====================================================================
+  // Use chains directly from wagmi config
+  // =====================================================================
+  const wagmiChains = useMemo(() => {
+    return config.chains as any[];
+  }, []);
+
+  // Combine wagmi chains with LiFi chains
+  const combinedChains = useMemo(() => {
+    const wagmiIds = wagmiChains.map((c) => c.id);
+    const others = (availableChainsRaw ?? []).filter(
+      (c) => !wagmiIds.includes(c.id)
+    );
+    return [...wagmiChains, ...others];
+  }, [wagmiChains, availableChainsRaw]);
+
+  // Sync wagmi config with LiFi
+  useSyncWagmiConfig(config, [], combinedChains);
+
+  // List of supported chains for bridging
+  const supportedChainIds = useMemo(
+    () => combinedChains.map((c) => c.id),
+    [combinedChains]
+  );
+
+  // =====================================================================
+  // Remount widget ONLY when account changes
+  // =====================================================================
+  useEffect(() => {
+    const addressChanged = lastAddressRef.current !== address;
+    lastAddressRef.current = address;
+
+    if (!addressChanged) return;
+
+    setWidgetKey((prev) => prev + 1);
+  }, [address]);
+
+  // =====================================================================
+  // Handler for chain switch
+  // =====================================================================
+  const handleBridgeChainSwitch = useCallback(async (
+    targetChainId: number
+  ): Promise<boolean> => {
+    if (isSwitchingRef.current) {
+      return false;
+    }
+
+    const isSupported = supportedChainIds.includes(targetChainId);
+    if (!isSupported) {
+      toast({
+        title: "Unsupported network",
+        description: "Please select a supported network for bridging",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      return false;
+    }
+
+    if (chainId === targetChainId) {
+      return true;
+    }
+
+    isSwitchingRef.current = true;
+    setIsSwitchingChain(true);
+
+    toast({
+      title: "Switching network...",
+      description: "Please approve the network switch in your wallet",
+      status: "info",
+      duration: 4000,
+      isClosable: true,
+      position: "top-right",
+    });
+
+    try {
+      await switchChainAsync({ chainId: targetChainId });
+
+      const chainName =
+        combinedChains.find((c) => c.id === targetChainId)?.name ||
+        "selected network";
+
+      toast({
+        title: "Network switched ✅",
+        description: `Successfully connected to ${chainName}`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+
+      return true;
+    } catch (err: any) {
+      const message: string = err?.message?.toLowerCase?.() || "";
+      const isRejection =
+        err?.name === "UserRejectedRequestError" ||
+        err?.code === 4001 ||
+        message.includes("user rejected") ||
+        message.includes("denied");
+
+      if (isRejection) {
+        toast({
+          title: "Network switch required",
+          description: "Please approve the network switch in your wallet to continue bridging.",
+          status: "warning",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
+      } else {
+        toast({
+          title: "Network switch failed",
+          description: err?.shortMessage || err?.message?.split("\n")[0] || "Please manually switch the network in your wallet",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
+      }
+      return false;
+    } finally {
+      isSwitchingRef.current = false;
+      setIsSwitchingChain(false);
+    }
+  }, [chainId, combinedChains, supportedChainIds, switchChainAsync, toast]);
+
+  // Find current chain to display its name
+  const currentChain = combinedChains.find((c) => c.id === chainId);
+
+  // =====================================================================
+  // Widget configuration
+  // =====================================================================
+  const lifiConfig = useMemo(() => {
+    const cfg: any = {
+      apiKey: LIFI_API_KEY,
+      appearance: colorMode,
+      fromChain: tokenPrefill.fromChain || chainId || DEFAULT_FROM_CHAIN,
+      fee: 0.001,
+      theme: {
+        shape: { borderRadius: 16 },
+        typography: {
+          fontFamily: "'Space Grotesk', sans-serif",
+        },
+        palette: {
+          mode: colorMode === "dark" ? "dark" : "light",
+          primary: { main: "#8b5cf6" },
+          secondary: { main: "#ec4899" },
+          background: {
+            default: colorMode === "dark" ? "#0a0a1a" : "#f8f9fa",
+            paper: colorMode === "dark" ? "rgba(4,4,14,0.95)" : "#ffffff",
+          },
+          text: {
+            primary: colorMode === "dark" ? "#ffffff" : "#1a1a2e",
+            secondary: colorMode === "dark" ? "#9ca3af" : "#6b7280",
+          },
+        },
+      },
+      walletManagement: {
+        switchChain: handleBridgeChainSwitch,
+      },
+    };
+
+    if (tokenPrefill.toChain) cfg.toChain = tokenPrefill.toChain;
+    if (tokenPrefill.fromToken) cfg.fromToken = tokenPrefill.fromToken;
+    if (tokenPrefill.toToken) cfg.toToken = tokenPrefill.toToken;
+
+    return cfg;
+  }, [colorMode, chainId, tokenPrefill, handleBridgeChainSwitch]);
+
+  // =====================================================================
+  // Stats
+  // =====================================================================
+  const bridgeStats = [
+    {
+      label: "Supported Chains",
+      value: "70+",
+      icon: "⛓️",
+      color: "#8b5cf6",
+      description: "Ethereum, Arbitrum, Optimism & more",
+      glowColor: "rgba(139,92,246,0.3)",
+    },
+    {
+      label: "Bridge Routes",
+      value: "500+",
+      icon: "🔄",
+      color: "#ec4899",
+      description: "Optimal routes for your assets",
+      glowColor: "rgba(236,72,153,0.3)",
+    },
+    {
+      label: "Protocols",
+      value: "30+",
+      icon: "🔗",
+      color: "#22c55e",
+      description: "Leading bridge protocols",
+      glowColor: "rgba(34,197,94,0.3)",
+    },
+    {
+      label: "Status",
+      value: isSwitchingChain ? "🟡 Switching" : "🟢 Live",
+      icon: "📡",
+      color: "#fbbf24",
+      description: "Cross-chain bridge active",
+      glowColor: "rgba(251,191,36,0.3)",
+    },
+  ];
+
+  // Stat Card
+  const BridgeStatCard = ({ stat, index }: { stat: any; index: number }) => (
+    <MotionBox
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
+      position="relative"
+      h="full"
+      _hover={{ transform: "translateY(-5px)" }}
+      sx={{ transition: "transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275)" }}
+    >
+      <Box
+        bg="rgba(4,4,14,0.85)"
+        backdropFilter="blur(20px)"
+        borderRadius="2xl"
+        p={{ base: 3.5, md: 5 }}
+        border={`1px solid ${stat.color}20`}
+        overflow="hidden"
+        position="relative"
+        h="full"
+        _hover={{
+          borderColor: `${stat.color}55`,
+          boxShadow: `0 0 40px ${stat.glowColor}, inset 0 1px 0 rgba(255,255,255,0.04)`,
+        }}
+        transition="all 0.35s ease"
+      >
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          h="1px"
+          bg={`linear-gradient(90deg, transparent, ${stat.color}60, transparent)`}
+        />
+        <Box
+          position="absolute"
+          top={0}
+          right={0}
+          w="80px"
+          h="80px"
+          bg={`radial-gradient(circle at top right, ${stat.color}15, transparent 70%)`}
+        />
+
+        <HStack spacing={3} align="center" position="relative" zIndex={1}>
+          <Flex
+            align="center"
+            justify="center"
+            w={{ base: "40px", md: "52px" }}
+            h={{ base: "40px", md: "52px" }}
+            bg={`${stat.color}10`}
+            border={`1px solid ${stat.color}22`}
+            borderRadius="xl"
+            flexShrink={0}
+            fontSize={{ base: "18px", md: "24px" }}
+            style={{ animation: "floatCard 5s ease-in-out infinite" }}
+          >
+            {stat.icon}
+          </Flex>
+          <Box flex="1" minW="0">
+            <Text
+              fontSize="9px"
+              color="gray.500"
+              textTransform="uppercase"
+              letterSpacing="0.2em"
+              fontFamily="'Space Mono', monospace"
+              fontWeight="700"
+              mb={0.5}
+            >
+              {stat.label}
+            </Text>
+            <Text
+              fontSize={{ base: "lg", md: "xl" }}
+              fontWeight="800"
+              color="white"
+              fontFamily="'Space Mono', monospace"
+              letterSpacing="-0.02em"
+              lineHeight="1.1"
+            >
+              {stat.value}
+            </Text>
+            <Text fontSize="9px" color="gray.400" mt={1} fontFamily="'Space Grotesk', sans-serif" fontWeight="500">
+              {stat.description}
+            </Text>
+          </Box>
+        </HStack>
+      </Box>
+    </MotionBox>
+  );
+
+  // =====================================================================
+  // Render
+  // =====================================================================
+  return (
+    <PageErrorBoundary>
+      <style>{pageStyles}</style>
+
+      <Box minH="100vh" bg="#03030f" position="relative" fontFamily="'Space Grotesk', sans-serif">
+        {/* Ambient orbs */}
+        <Box
+          position="fixed"
+          top="-10%"
+          left="-10%"
+          w="650px"
+          h="650px"
+          borderRadius="full"
+          bg="radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 65%)"
+          filter="blur(90px)"
+          style={{ animation: "orbFloat 22s ease-in-out infinite" }}
+          zIndex={0}
+          pointerEvents="none"
+        />
+        <Box
+          position="fixed"
+          bottom="-10%"
+          right="-10%"
+          w="750px"
+          h="750px"
+          borderRadius="full"
+          bg="radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 65%)"
+          filter="blur(110px)"
+          style={{ animation: "orbFloat 30s ease-in-out infinite 8s" }}
+          zIndex={0}
+          pointerEvents="none"
+        />
+        <Box
+          position="fixed"
+          top="45%"
+          left="30%"
+          w="450px"
+          h="450px"
+          borderRadius="full"
+          bg="radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 65%)"
+          filter="blur(70px)"
+          style={{ animation: "orbFloat 18s ease-in-out infinite reverse 4s" }}
+          zIndex={0}
+          pointerEvents="none"
+        />
+
+        <Box
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={0}
+          pointerEvents="none"
+          opacity={0.018}
+          bgImage="radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)"
+          bgSize="32px 32px"
+        />
+
+        <Container maxW="1440px" position="relative" zIndex={1} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
+          {/* ─── Header ─── */}
+          <Flex
+            justify="space-between"
+            align="center"
+            mb={{ base: 6, md: 10 }}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 3, md: 0 }}
+          >
+            <HStack spacing={4}>
+              <Button
+                onClick={() => navigate("/")}
+                variant="ghost"
+                size={{ base: "sm", md: "md" }}
+                leftIcon={<ChevronLeftIcon />}
+                color="gray.500"
+                _hover={{
+                  color: "white",
+                  bg: "rgba(139,92,246,0.08)",
+                  borderColor: "rgba(139,92,246,0.25)",
+                }}
+                borderRadius="xl"
+                border="1px solid rgba(255,255,255,0.07)"
+                fontFamily="'Space Grotesk', sans-serif"
+                fontWeight="500"
+                transition="all 0.2s"
+              >
+                Back
+              </Button>
+
+              <Box h="36px" w="1px" bg="rgba(255,255,255,0.05)" display={{ base: "none", md: "block" }} />
+
+              <VStack align="start" spacing={0.5}>
+                <HStack spacing={3} align="center">
+                  <Box
+                    w="7px"
+                    h="7px"
+                    borderRadius="full"
+                    bg={isSwitchingChain ? "#fbbf24" : "#4ade80"}
+                    boxShadow={
+                      isSwitchingChain
+                        ? "0 0 8px rgba(251,191,36,0.8)"
+                        : "0 0 8px rgba(74,222,128,0.8)"
+                    }
+                    style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }}
+                  />
+                  <Heading
+                    fontSize={{ base: "xl", md: "2xl", lg: "3xl" }}
+                    fontWeight="800"
+                    bgGradient="linear(135deg, #8b5cf6 0%, #ec4899 50%, #fbbf24 100%)"
+                    bgClip="text"
+                    letterSpacing="-0.03em"
+                    fontFamily="'Space Grotesk', sans-serif"
+                  >
+                    Cross-Chain Bridge
+                  </Heading>
+                  <Badge
+                    bg="rgba(139,92,246,0.1)"
+                    color="#8b5cf6"
+                    fontSize="9px"
+                    px={2}
+                    py={0.5}
+                    borderRadius="full"
+                    border="1px solid rgba(139,92,246,0.2)"
+                    fontFamily="'Space Mono', monospace"
+                  >
+                    LI.FI
+                  </Badge>
+                </HStack>
+                <Text
+                  color="gray.500"
+                  fontSize={{ base: "9px", md: "10px" }}
+                  letterSpacing="0.2em"
+                  fontFamily="'Space Mono', monospace"
+                  textTransform="uppercase"
+                >
+                  Seamless · Fast · Secure · 70+ Chains
+                </Text>
+              </VStack>
+            </HStack>
+
+            <HStack spacing={3} display={{ base: "none", md: "flex" }}>
+              <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+              </Box>
+            </HStack>
+          </Flex>
+
+          {/* Mobile wallet */}
+          <VStack spacing={3} display={{ base: "flex", md: "none" }} w="full" mb={5}>
+            <Box w="full" display="flex" justifyContent="center">
+              <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+            </Box>
+          </VStack>
+
+          {/* Current Network Indicator */}
+          {isConnected && currentChain && (
+            <Flex justify="center" mb={4}>
+              <Badge
+                variant="subtle"
+                colorScheme={isSwitchingChain ? "yellow" : "green"}
+                fontSize="xs"
+                px={4}
+                py={2}
+                borderRadius="full"
+                display="flex"
+                alignItems="center"
+                gap={2}
+                bg={
+                  isSwitchingChain
+                    ? "rgba(251,191,36,0.08)"
+                    : "rgba(34,197,94,0.08)"
+                }
+                border={
+                  isSwitchingChain
+                    ? "1px solid rgba(251,191,36,0.2)"
+                    : "1px solid rgba(34,197,94,0.2)"
+                }
+              >
+                {isSwitchingChain || isSwitchPending ? (
+                  <Spinner size="xs" color="#fbbf24" />
+                ) : (
+                  <Box
+                    w="8px"
+                    h="8px"
+                    borderRadius="full"
+                    bg="#22c55e"
+                    animation="pulse 1.5s infinite"
+                  />
+                )}
+                {isSwitchingChain || isSwitchPending
+                  ? "Switching network..."
+                  : `Connected to ${currentChain.name}`}
+              </Badge>
+            </Flex>
+          )}
+
+          {/* Bridge Stats */}
+          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2.5, md: 5 }} mb={{ base: 6, md: 10 }}>
+            {bridgeStats.map((stat, i) => (
+              <BridgeStatCard key={stat.label} stat={stat} index={i} />
+            ))}
+          </SimpleGrid>
+
+          {/* Main Content */}
+          <Flex justify="center" align="flex-start" gap={8} direction={{ base: "column", lg: "row" }}>
+            {/* LiFi Widget */}
+            <Box flex="1" maxW="560px" w="full" mx="auto">
+              <MotionBox
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Box
+                  position="relative"
+                  borderRadius="2xl"
+                  overflow="hidden"
+                  border="1px solid rgba(139,92,246,0.15)"
+                  bg="rgba(4,4,14,0.6)"
+                  backdropFilter="blur(20px)"
+                  p={{ base: 3, md: 5 }}
+                  transition="all 0.3s"
+                  _hover={{
+                    borderColor: "rgba(139,92,246,0.3)",
+                    boxShadow: "0 0 40px rgba(139,92,246,0.05)",
+                  }}
+                >
+                  <VStack spacing={4} align="stretch">
+                    <HStack spacing={2} justify="space-between">
+                      <HStack spacing={2}>
+                        <Text fontSize="sm" fontWeight="600" color="gray.300" fontFamily="'Space Grotesk', sans-serif">
+                          🌉 Bridge Assets
+                        </Text>
+                        <Badge
+                          bg={
+                            isSwitchingChain
+                              ? "rgba(251,191,36,0.12)"
+                              : "rgba(34,197,94,0.12)"
+                          }
+                          color={isSwitchingChain ? "#fbbf24" : "#22c55e"}
+                          fontSize="8px"
+                          px={2}
+                          py={0.5}
+                          borderRadius="full"
+                          border={
+                            isSwitchingChain
+                              ? "1px solid rgba(251,191,36,0.2)"
+                              : "1px solid rgba(34,197,94,0.2)"
+                          }
+                          fontFamily="'Space Mono', monospace"
+                        >
+                          {isSwitchingChain ? "● Switching" : "● Live"}
+                        </Badge>
+                      </HStack>
+                      <Link
+                        href="https://li.fi"
+                        isExternal
+                        fontSize="xs"
+                        color="gray.500"
+                        _hover={{ color: "#8b5cf6" }}
+                        fontFamily="'Space Grotesk', sans-serif"
+                      >
+                        Powered by LI.FI <ExternalLinkIcon mx={1} boxSize={3} />
+                      </Link>
+                    </HStack>
+
+                    {!isConnected ? (
+                      <Box
+                        textAlign="center"
+                        py={10}
+                        px={4}
+                        bg="rgba(0,0,0,0.3)"
+                        borderRadius="xl"
+                        border="1px solid rgba(139,92,246,0.1)"
+                      >
+                        <Text fontSize="48px" mb={3}>🔌</Text>
+                        <Text color="gray.400" fontSize="sm" fontFamily="'Space Grotesk', sans-serif">
+                          Connect your wallet to start bridging
+                        </Text>
+                        <Text color="gray.500" fontSize="xs" mt={2} fontFamily="'Space Grotesk', sans-serif">
+                          Supports 70+ chains and 30+ bridge protocols
+                        </Text>
+                      </Box>
+                    ) : (
+                      <Box className="lifi-widget-container" position="relative">
+                        {isSwitchingChain && (
+                          <HStack
+                            position="absolute"
+                            top="10px"
+                            left="50%"
+                            transform="translateX(-50%)"
+                            zIndex={10}
+                            bg="rgba(251,191,36,0.15)"
+                            border="1px solid rgba(251,191,36,0.3)"
+                            borderRadius="full"
+                            px={3}
+                            py={1}
+                            spacing={2}
+                            backdropFilter="blur(8px)"
+                          >
+                            <Spinner size="xs" color="#fbbf24" />
+                            <Text
+                              fontSize="10px"
+                              color="#fbbf24"
+                              fontFamily="'Space Mono', monospace"
+                            >
+                              Switching network...
+                            </Text>
+                          </HStack>
+                        )}
+                        <WidgetErrorBoundary
+                          onRetry={() => setWidgetKey((prev) => prev + 1)}
+                        >
+                          <LiFiWidget
+                            key={widgetKey}
+                            integrator="PulseVault"
+                            config={lifiConfig as any}
+                          />
+                        </WidgetErrorBoundary>
+                      </Box>
+                    )}
+                  </VStack>
+                </Box>
+              </MotionBox>
+            </Box>
+
+            {/* Info Sidebar */}
+            <Box w={{ base: "full", lg: "320px" }} flexShrink={0}>
+              <MotionBox
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <VStack spacing={4} align="stretch">
+                  <Box
+                    bg="rgba(4,4,14,0.85)"
+                    backdropFilter="blur(24px)"
+                    borderRadius="2xl"
+                    border="1px solid rgba(139,92,246,0.2)"
+                    p={5}
+                    transition="all 0.3s"
+                    _hover={{ borderColor: "rgba(139,92,246,0.4)" }}
+                  >
+                    <Text fontSize="sm" fontWeight="700" color="white" fontFamily="'Space Grotesk', sans-serif" mb={3}>
+                      ✨ Why Bridge with LI.FI?
+                    </Text>
+                    <VStack spacing={3} align="start">
+                      <HStack spacing={3}>
+                        <Box w="28px" h="28px" bg="rgba(34,197,94,0.1)" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
+                          <Text fontSize="14px">⚡</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="xs" fontWeight="600" color="gray.300" fontFamily="'Space Grotesk', sans-serif">
+                            Fastest Routes
+                          </Text>
+                          <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                            Optimal paths for every bridge
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <HStack spacing={3}>
+                        <Box w="28px" h="28px" bg="rgba(139,92,246,0.1)" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
+                          <Text fontSize="14px">🛡️</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="xs" fontWeight="600" color="gray.300" fontFamily="'Space Grotesk', sans-serif">
+                            Secure & Audited
+                          </Text>
+                          <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                            Top security standards
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <HStack spacing={3}>
+                        <Box w="28px" h="28px" bg="rgba(251,191,36,0.1)" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
+                          <Text fontSize="14px">💎</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="xs" fontWeight="600" color="gray.300" fontFamily="'Space Grotesk', sans-serif">
+                            Best Rates
+                          </Text>
+                          <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                            Competitive fees & rates
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <HStack spacing={3}>
+                        <Box w="28px" h="28px" bg="rgba(236,72,153,0.1)" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
+                          <Text fontSize="14px">🌐</Text>
+                        </Box>
+                        <Box>
+                          <Text fontSize="xs" fontWeight="600" color="gray.300" fontFamily="'Space Grotesk', sans-serif">
+                            70+ Chains
+                          </Text>
+                          <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                            Ethereum, Arbitrum, Optimism & more
+                          </Text>
+                        </Box>
+                      </HStack>
+                    </VStack>
+                  </Box>
+
+                  <Box
+                    bg="rgba(4,4,14,0.85)"
+                    backdropFilter="blur(24px)"
+                    borderRadius="2xl"
+                    border="1px solid rgba(251,191,36,0.15)"
+                    p={4}
+                    transition="all 0.3s"
+                    _hover={{ borderColor: "rgba(251,191,36,0.3)" }}
+                  >
+                    <Text fontSize="xs" fontWeight="600" color="gray.400" fontFamily="'Space Mono', monospace" mb={2}>
+                      💡 Quick Tips
+                    </Text>
+                    <VStack spacing={2} align="start">
+                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                        • Bridge from ANY chain to ANY chain
+                      </Text>
+                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                        • Ensure you have enough gas for fees
+                      </Text>
+                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                        • Bridge times vary by protocol
+                      </Text>
+                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                        • LI.FI aggregates 30+ bridge protocols
+                      </Text>
+                    </VStack>
+                  </Box>
+
+                  <Box
+                    bg="rgba(4,4,14,0.85)"
+                    backdropFilter="blur(24px)"
+                    borderRadius="2xl"
+                    border="1px solid rgba(139,92,246,0.12)"
+                    p={4}
+                    transition="all 0.3s"
+                    _hover={{ borderColor: "rgba(139,92,246,0.25)" }}
+                  >
+                    <Text fontSize="xs" fontWeight="600" color="gray.400" fontFamily="'Space Mono', monospace" mb={2}>
+                      📊 Bridge Status
+                    </Text>
+                    <VStack spacing={1.5} align="start">
+                      <HStack spacing={2}>
+                        <Box
+                          w="6px"
+                          h="6px"
+                          borderRadius="full"
+                          bg={isSwitchingChain ? "#fbbf24" : "#22c55e"}
+                        />
+                        <Text fontSize="10px" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
+                          {isSwitchingChain
+                            ? "Switching network..."
+                            : "All bridges operational"}
+                        </Text>
+                      </HStack>
+                      <HStack spacing={2}>
+                        <Box w="6px" h="6px" borderRadius="full" bg="#22c55e" />
+                        <Text fontSize="10px" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
+                          Low latency
+                        </Text>
+                      </HStack>
+                      <HStack spacing={2}>
+                        <Box w="6px" h="6px" borderRadius="full" bg="#fbbf24" />
+                        <Text fontSize="10px" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
+                          High volume traffic
+                        </Text>
+                      </HStack>
+                    </VStack>
+                  </Box>
+                </VStack>
+              </MotionBox>
+            </Box>
+          </Flex>
+
+          {/* Footer */}
+          <Footer />
+        </Container>
+      </Box>
+    </PageErrorBoundary>
+  );
+}

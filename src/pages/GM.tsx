@@ -176,9 +176,9 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     glowColor: 'rgba(78, 13, 231, 0.35)',
   },
   [liteforgeChain.id]: {
-    color: '#04217e',
-    gradient: 'linear(135deg, #353547, #493e85, #7f7bb1)',
-    glowColor: 'rgba(29, 8, 150, 0.35)',
+    color: '#21336e',
+    gradient: 'linear(135deg, #575774, #665ba8, #a7a3db)',
+    glowColor: 'rgba(89, 74, 173, 0.35)',
   },
 };
 

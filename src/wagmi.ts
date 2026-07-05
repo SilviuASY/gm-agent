@@ -394,7 +394,7 @@ export const roninChain = {
 export const abstractChain = {
   id: 2741,
   name: 'Abstract',
-  nativeCurrency: { name: 'Abstract', symbol: 'ABS', decimals: 18 },
+  nativeCurrency: { name: 'Abstract', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://api.mainnet.abs.xyz'] },
     public: { http: ['https://api.mainnet.abs.xyz'] },

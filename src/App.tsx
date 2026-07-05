@@ -1,5 +1,4 @@
 // src/App.tsx
-
 import {
   Box,
   Button,
@@ -18,6 +17,9 @@ import {
   Skeleton,
   Progress,
   Image,
+  Alert,
+  AlertIcon,
+  AlertDescription,
 } from "@chakra-ui/react";
 
 import { keyframes } from "@emotion/react";
@@ -48,6 +50,10 @@ import {
 import TransactionModal from "./components/TransactionModal";
 import { IdentityRegistryABI } from "./abi/IdentityRegistryABI";
 import { DailyAgentABI } from "./abi/DailyAgentABI";
+
+// ================= SUPPORTED CHAINS =================
+const SUPPORTED_CHAIN_IDS = [1868, 57073, 10, 8453, 130];
+const DEFAULT_SWITCH_CHAIN = 1868; // Soneium
 
 // ================= CONTRACT ADDRESSES =================
 const CONTRACTS = {
@@ -229,6 +235,11 @@ const getChainAccent = (chainKey: keyof typeof CONTRACTS) => {
   }
 };
 
+// ================= CHECK IF CHAIN IS SUPPORTED =================
+const isChainSupported = (chainId: number): boolean => {
+  return SUPPORTED_CHAIN_IDS.includes(chainId);
+};
+
 export default function App() {
   const { address, isConnected, status: accountStatus } = useAccount();
   const chainId = useChainId();
@@ -379,6 +390,10 @@ export default function App() {
   const chainAccent = getChainAccent(selectedChainKey);
 
   const isCorrectChain = chainId === targetChainId;
+  const isSupportedChain = isChainSupported(chainId);
+
+  // Check if connected but on unsupported chain
+  const isUnsupportedChain = isConnected && !isSupportedChain && chainId !== undefined;
 
   const { identityRegistry: currentIdentityRegistry, dailyGM: currentDailyGM } = CONTRACTS[selectedChainKey];
 
@@ -598,7 +613,11 @@ export default function App() {
   let buttonGradient = "linear(135deg, #8b5cf6, #ec4899)";
 
   if (isConnected) {
-    if (!isCorrectChain) {
+    if (isUnsupportedChain) {
+      mainButtonLabel = "Switch to Soneium";
+      isMainDisabled = false;
+      buttonGradient = "linear(135deg, #06b6d4, #3b82f6)";
+    } else if (!isCorrectChain) {
       mainButtonLabel = `Switch to ${currentChainName}`;
       isMainDisabled = false;
       buttonGradient = "linear(135deg, #3b82f6, #8b5cf6)";
@@ -638,6 +657,11 @@ export default function App() {
       document.removeEventListener('click', handleClick);
     };
   }, []);
+
+  // ===== Switch to Soneium =====
+  const handleSwitchToSoneium = () => {
+    switchChain?.({ chainId: DEFAULT_SWITCH_CHAIN });
+  };
 
   return (
     <Box
@@ -845,7 +869,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/tools/vault");
+                        navigate("/tools/bridge");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -857,11 +881,11 @@ export default function App() {
                       fontWeight="600"
                       fontSize="sm"
                       color="gray.700"
-                      _hover={{ bg: "rgba(45,212,191,0.06)", color: "#2dd4bf" }}
+                      _hover={{ bg: "rgba(59,130,246,0.06)", color: "#3b82f6" }}
                       transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">💰</Text>}
+                      leftIcon={<Text fontSize="16px">🌉</Text>}
                     >
-                      Vault · Agent Vault
+                      Cross-Chain Bridge
                     </Button>
                     <Box h="1px" bg="gray.100" />
                     <Button
@@ -1276,12 +1300,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/tools/vault");
+                          navigate("/tools/bridge");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/tools/vault");
+                            navigate("/tools/bridge");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1293,13 +1317,13 @@ export default function App() {
                         fontWeight="600"
                         fontSize="sm"
                         color="gray.700"
-                        _hover={{ bg: "rgba(45,212,191,0.08)", color: "#2dd4bf" }}
-                        _active={{ bg: "rgba(45,212,191,0.12)" }}
-                        leftIcon={<Text fontSize="16px">💰</Text>}
+                        _hover={{ bg: "rgba(59,130,246,0.08)", color: "#3b82f6" }}
+                        _active={{ bg: "rgba(59,130,246,0.12)" }}
+                        leftIcon={<Text fontSize="16px">🌉</Text>}
                         width="100%"
-                        _focus={{ bg: "rgba(45,212,191,0.12)" }}
+                        _focus={{ bg: "rgba(59,130,246,0.12)" }}
                       >
-                        Vault · Agent Vault
+                        Cross-Chain Bridge
                       </Button>
                       <Box h="1px" bg="gray.100" />
                       <Button
@@ -1468,6 +1492,35 @@ export default function App() {
           </VStack>
         </Flex>
 
+        {/* ===== UNSUPPORTED CHAIN WARNING ===== */}
+        {isUnsupportedChain && (
+          <Alert
+            status="warning"
+            borderRadius="2xl"
+            mb={8}
+            bg="rgba(239,68,68,0.08)"
+            border="1px solid rgba(239,68,68,0.2)"
+            backdropFilter="blur(10px)"
+            px={6}
+            py={4}
+          >
+            <AlertIcon color="#f87171" />
+            <AlertDescription>
+              <Text color="white" fontWeight="600" fontSize="sm">
+                ⚠️ Unsupported Network
+              </Text>
+              <Text color="gray.400" fontSize="sm">
+                The Agent GM Protocol is currently deployed on <Text as="span" fontWeight="600" color="#fbbf24">Soneium</Text>,{' '}
+                <Text as="span" fontWeight="600" color="#fbbf24">Ink</Text>,{' '}
+                <Text as="span" fontWeight="600" color="#fbbf24">Optimism</Text>,{' '}
+                <Text as="span" fontWeight="600" color="#fbbf24">Base</Text>, and{' '}
+                <Text as="span" fontWeight="600" color="#fbbf24">Unichain</Text>.
+                Please switch to one of the supported networks to interact with the protocol.
+              </Text>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* HERO — cleaner, more direct */}
         <VStack spacing={4} textAlign="center" mb={12} animation={`${slideUp} 0.8s ease-out`}>
           <HStack spacing={3} wrap="wrap" justify="center">
@@ -1483,7 +1536,7 @@ export default function App() {
               boxShadow={`0 0 30px ${chainAccent.primary}40`}
               animation={`${glowPulse} 3s ease-in-out infinite`}
             >
-              {currentChainName} · Live
+              {isUnsupportedChain ? "⚠️ Unsupported" : `${currentChainName} · Live`}
             </Badge>
           </HStack>
 
@@ -1527,19 +1580,19 @@ export default function App() {
               backdropFilter="blur(20px)"
               borderRadius={{ base: "2xl", md: "3xl" }}
               border="1px solid"
-              borderColor={`${chainAccent.primary}40`}
+              borderColor={isUnsupportedChain ? "rgba(239,68,68,0.3)" : `${chainAccent.primary}40`}
               overflow="hidden"
               transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
               w="full"
               _hover={{
-                borderColor: `${chainAccent.primary}80`,
+                borderColor: isUnsupportedChain ? "rgba(239,68,68,0.5)" : `${chainAccent.primary}80`,
                 transform: { base: "none", md: "translateY(-4px)" },
-                boxShadow: `0 20px 40px rgba(0,0,0,0.3), 0 0 30px ${chainAccent.primary}20`
+                boxShadow: isUnsupportedChain ? "0 0 30px rgba(239,68,68,0.1)" : `0 20px 40px rgba(0,0,0,0.3), 0 0 30px ${chainAccent.primary}20`
               }}
             >
               <Box
                 h="4px"
-                bgGradient={chainAccent.gradient}
+                bgGradient={isUnsupportedChain ? "linear(90deg, #ef4444, #dc2626, #ef4444)" : chainAccent.gradient}
                 backgroundSize="300% 100%"
                 animation={`${shimmer} 4s ease infinite`}
               />
@@ -1592,7 +1645,7 @@ export default function App() {
                       alignItems="center"
                       justifyContent="center"
                       backdropFilter="blur(10px)"
-                      border={`2px solid ${chainAccent.primary}50`}
+                      border={`2px solid ${isUnsupportedChain ? "#ef4444" : chainAccent.primary}50`}
                       transition="all 0.3s"
                       _hover={{ transform: "scale(1.05)" }}
                       animation={isRegistered ? `${breathe} 3s ease-in-out infinite` : "none"}
@@ -1667,9 +1720,9 @@ export default function App() {
                       Network
                     </Text>
                     <HStack spacing={1}>
-                      <Box w="8px" h="8px" borderRadius="full" bg={chainAccent.primary} animation={`${pulseGlow} 2s ease-in-out infinite`} />
+                      <Box w="8px" h="8px" borderRadius="full" bg={isUnsupportedChain ? "#ef4444" : chainAccent.primary} animation={`${pulseGlow} 2s ease-in-out infinite`} />
                       <Text color="white" fontWeight="bold" fontSize="lg" fontFamily="mono">
-                        {currentChainName}
+                        {isUnsupportedChain ? "Unsupported" : currentChainName}
                       </Text>
                     </HStack>
                   </Box>
@@ -1699,24 +1752,26 @@ export default function App() {
               backdropFilter="blur(20px)"
               borderRadius={{ base: "2xl", md: "3xl" }}
               border="1px solid"
-              borderColor={isRegistered && canSendGM ? "rgba(34, 197, 94, 0.5)" : `${chainAccent.primary}40`}
+              borderColor={isUnsupportedChain ? "rgba(239,68,68,0.3)" : isRegistered && canSendGM ? "rgba(34, 197, 94, 0.5)" : `${chainAccent.primary}40`}
               overflow="hidden"
               transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
               w="full"
               position="relative"
               _hover={{
                 transform: { base: "none", md: "translateY(-4px)" },
-                borderColor: isRegistered && canSendGM ? "rgba(34, 197, 94, 0.8)" : `${chainAccent.primary}80`,
-                boxShadow: isRegistered && canSendGM ? "0 0 30px rgba(34,197,94,0.15)" : `0 0 30px ${chainAccent.primary}20`
+                borderColor: isUnsupportedChain ? "rgba(239,68,68,0.5)" : isRegistered && canSendGM ? "rgba(34, 197, 94, 0.8)" : `${chainAccent.primary}80`,
+                boxShadow: isUnsupportedChain ? "0 0 30px rgba(239,68,68,0.1)" : isRegistered && canSendGM ? "0 0 30px rgba(34,197,94,0.15)" : `0 0 30px ${chainAccent.primary}20`
               }}
             >
               <Box
                 h="4px"
-                bgGradient={isRegistered && canSendGM
-                  ? "linear(90deg, #22c55e, #4ade80, #22c55e)"
-                  : isRegistered
-                    ? chainAccent.gradient
-                    : "linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)"
+                bgGradient={isUnsupportedChain
+                  ? "linear(90deg, #ef4444, #dc2626, #ef4444)"
+                  : isRegistered && canSendGM
+                    ? "linear(90deg, #22c55e, #4ade80, #22c55e)"
+                    : isRegistered
+                      ? chainAccent.gradient
+                      : "linear(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)"
                 }
                 backgroundSize="300% 100%"
                 animation={`${shimmer} 4s ease infinite`}
@@ -1731,7 +1786,7 @@ export default function App() {
 
                 <VStack spacing={4}>
                   <Box position="relative" w={{ base: "150px", md: "200px" }} h={{ base: "150px", md: "200px" }}>
-                    {isRegistered && !canSendGM && (
+                    {isRegistered && !canSendGM && !isUnsupportedChain && (
                       <Box
                         position="absolute"
                         top="-2px"
@@ -1748,16 +1803,23 @@ export default function App() {
                       w="100%"
                       h="100%"
                       borderRadius="full"
-                      bg={isRegistered && canSendGM
-                        ? "linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.08))"
-                        : `linear-gradient(135deg, ${chainAccent.primary}20, rgba(236,72,153,0.12))`
+                      bg={isUnsupportedChain
+                        ? "linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.05))"
+                        : isRegistered && canSendGM
+                          ? "linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.08))"
+                          : `linear-gradient(135deg, ${chainAccent.primary}20, rgba(236,72,153,0.12))`
                       }
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
                       backdropFilter="blur(10px)"
                       border="2px solid"
-                      borderColor={isRegistered && canSendGM ? "#22c55e" : `${chainAccent.primary}50`}
+                      borderColor={isUnsupportedChain
+                        ? "#ef4444"
+                        : isRegistered && canSendGM
+                          ? "#22c55e"
+                          : `${chainAccent.primary}50`
+                      }
                       transition="all 0.3s"
                       _hover={{ transform: "scale(1.02)" }}
                       animation={isRegistered && canSendGM ? `${breathe} 2.5s ease-in-out infinite` : "none"}
@@ -1769,13 +1831,55 @@ export default function App() {
                         w="100%"
                         h="100%"
                         objectFit="cover"
-                        fallbackSrc={`data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50%' x='50%' text-anchor='middle' font-size='48'>${isRegistered ? '📨' : '🔒'}</text></svg>`}
-                        opacity={isRegistered ? (canSendGM ? 1 : 0.6) : 1}
+                        fallbackSrc={`data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><text y='50%' x='50%' text-anchor='middle' font-size='48'>${isUnsupportedChain ? '⚠️' : isRegistered ? '📨' : '🔒'}</text></svg>`}
+                        opacity={isUnsupportedChain ? 1 : isRegistered ? (canSendGM ? 1 : 0.6) : 1}
                       />
                     </Box>
                   </Box>
 
-                  {isRegistered && (
+                  {isUnsupportedChain ? (
+                    <VStack spacing={3} w="full" minH="130px">
+                      <HStack spacing={2} wrap="wrap" justify="center">
+                        <Box
+                          w="10px"
+                          h="10px"
+                          borderRadius="full"
+                          bg="#ef4444"
+                          animation={`${pulseGold} 1.5s ease-in-out infinite`}
+                          boxShadow="0 0 20px rgba(239,68,68,0.3)"
+                        />
+                        <Heading
+                          size="md"
+                          color="#ef4444"
+                          fontWeight="700"
+                          letterSpacing="0.01em"
+                        >
+                          Unsupported Chain
+                        </Heading>
+                      </HStack>
+                      <Text color="gray.400" fontSize="sm" textAlign="center" maxW="320px" mx="auto">
+                        Please switch to one of the supported networks:
+                      </Text>
+                      <HStack spacing={2} wrap="wrap" justify="center">
+                        <Badge bg="rgba(251,191,36,0.12)" color="#fbbf24" px={2} py={1} borderRadius="full" fontSize="10px">
+                          Soneium
+                        </Badge>
+                        <Badge bg="rgba(251,191,36,0.12)" color="#fbbf24" px={2} py={1} borderRadius="full" fontSize="10px">
+                          Ink
+                        </Badge>
+                        <Badge bg="rgba(251,191,36,0.12)" color="#fbbf24" px={2} py={1} borderRadius="full" fontSize="10px">
+                          Optimism
+                        </Badge>
+                        <Badge bg="rgba(251,191,36,0.12)" color="#fbbf24" px={2} py={1} borderRadius="full" fontSize="10px">
+                          Base
+                        </Badge>
+                        <Badge bg="rgba(251,191,36,0.12)" color="#fbbf24" px={2} py={1} borderRadius="full" fontSize="10px">
+                          Unichain
+                        </Badge>
+                      </HStack>
+                      <Box h="24px" />
+                    </VStack>
+                  ) : isRegistered ? (
                     <VStack spacing={3} w="full" minH="130px">
                       {canSendGM ? (
                         <>
@@ -1873,15 +1977,11 @@ export default function App() {
                         </>
                       )}
                     </VStack>
-                  )}
-
-                  {!isRegistered && !loadingRegistered && (
+                  ) : !loadingRegistered ? (
                     <Text color="gray.400" fontSize="sm" textAlign="center">
                       Register to start your daily streak
                     </Text>
-                  )}
-
-                  {loadingRegistered && (
+                  ) : (
                     <Skeleton height="40px" w="full" borderRadius="lg" startColor="rgba(139,92,246,0.15)" endColor="rgba(139,92,246,0.05)" />
                   )}
 
@@ -1895,28 +1995,35 @@ export default function App() {
                     isLoading={isTxPending || switching}
                     isDisabled={isMainDisabled}
                     onClick={() => {
-                      if (!isCorrectChain) {
+                      if (isUnsupportedChain) {
+                        handleSwitchToSoneium();
+                      } else if (!isCorrectChain) {
                         switchChain?.({ chainId: targetChainId });
                       } else if (mainActionType) {
                         handleAction(mainActionType);
                       }
                     }}
-                    bgGradient={buttonGradient}
+                    bgGradient={isUnsupportedChain ? "linear(135deg, #06b6d4, #3b82f6)" : buttonGradient}
                     color="white"
-                    boxShadow={canSendGM
-                      ? "0 0 25px rgba(34, 197, 94, 0.5), 0 0 50px rgba(34, 197, 94, 0.2)"
-                      : `0 0 25px ${chainAccent.primary}50, 0 0 50px ${chainAccent.primary}20`
+                    boxShadow={isUnsupportedChain
+                      ? "0 0 25px rgba(6,182,212,0.5)"
+                      : canSendGM
+                        ? "0 0 25px rgba(34, 197, 94, 0.5), 0 0 50px rgba(34, 197, 94, 0.2)"
+                        : `0 0 25px ${chainAccent.primary}50, 0 0 50px ${chainAccent.primary}20`
                     }
                     _hover={{
-                      transform: "translateY(-3px)",
-                      boxShadow: canSendGM
-                        ? "0 0 40px rgba(34, 197, 94, 0.7), 0 0 80px rgba(34, 197, 94, 0.3)"
-                        : `0 0 40px ${chainAccent.primary}70, 0 0 80px ${chainAccent.primary}30`
+                      transform: isUnsupportedChain ? "translateY(-3px)" : "translateY(-3px)",
+                      boxShadow: isUnsupportedChain
+                        ? "0 0 40px rgba(6,182,212,0.7), 0 0 80px rgba(6,182,212,0.3)"
+                        : canSendGM
+                          ? "0 0 40px rgba(34, 197, 94, 0.7), 0 0 80px rgba(34, 197, 94, 0.3)"
+                          : `0 0 40px ${chainAccent.primary}70, 0 0 80px ${chainAccent.primary}30`
                     }}
                     transition="all 0.35s cubic-bezier(0.4, 0, 0.2, 1)"
-                    _active={{ transform: "translateY(0px)" }}
+                    _active={{ transform: isUnsupportedChain ? "translateY(0px)" : "translateY(0px)" }}
+                    cursor={isUnsupportedChain ? "pointer" : "pointer"}
                   >
-                    {mainButtonLabel}
+                    {isUnsupportedChain ? "Switch to Soneium" : mainButtonLabel}
                   </Button>
                 </VStack>
               </VStack>
@@ -2018,7 +2125,7 @@ export default function App() {
               { label: "Agents", value: Number(totalAgents).toLocaleString(), icon: "👥", color: chainAccent.primary },
               { label: "Total GM", value: Number(totalGM).toLocaleString(), icon: "💬", color: "#ec4899" },
               { label: "Your streak", value: `${Number(userStreak)}d`, icon: "🔥", color: "#f59e0b" },
-              { label: "Network", value: currentChainName, icon: "⛓️", color: chainAccent.primary },
+              { label: "Network", value: isUnsupportedChain ? "Unsupported" : currentChainName, icon: isUnsupportedChain ? "⚠️" : "⛓️", color: isUnsupportedChain ? "#ef4444" : chainAccent.primary },
             ].map((stat, idx) => (
               <Box
                 key={idx}

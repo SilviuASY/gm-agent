@@ -39,7 +39,22 @@ import confetti from "canvas-confetti";
 import { useFixScroll } from "../hooks/useFixScroll";
 import { useNavigate } from "react-router-dom";
 
-import { soneiumChain, inkChain, optimismChain, baseChain, unichainChain, robinhoodChain, monadChain, megaethChain, plumeChain, somniaChain, katanaChain, liteforgeChain } from "../wagmi";
+import { 
+  soneiumChain,
+  inkChain,
+  optimismChain,
+  baseChain,
+  unichainChain,
+  robinhoodChain,
+  monadChain,
+  megaethChain,
+  lineaChain, 
+  plumeChain, 
+  somniaChain, 
+  katanaChain,
+  liteforgeChain,
+  ecochainChain
+} from "../wagmi";
 
 // ============= ABIs =============
 const DailyGMABI = [
@@ -71,7 +86,8 @@ const SBT_CONTRACT_ADDRESS = '0x13DBC40aB0695a7c392BB6447f972995A71527f9';
 
 // List of testnet chain IDs
 const TESTNET_CHAIN_IDS: number[] = [
-  liteforgeChain.id, // 4441
+  liteforgeChain.id,
+  ecochainChain.id 
 ];
 
 // Function to check if a chain is testnet
@@ -79,7 +95,21 @@ const isTestnetChain = (chainId: number): boolean => {
   return TESTNET_CHAIN_IDS.includes(chainId);
 };
 
-const chains = [soneiumChain, inkChain, optimismChain, baseChain, unichainChain, robinhoodChain, monadChain, megaethChain, plumeChain, somniaChain, katanaChain, liteforgeChain ];
+const chains = [soneiumChain, 
+  inkChain, 
+  optimismChain, 
+  baseChain, 
+  unichainChain, 
+  robinhoodChain, 
+  monadChain, 
+  megaethChain,
+  lineaChain,
+  plumeChain, 
+  somniaChain, 
+  katanaChain, 
+  liteforgeChain,
+  ecochainChain
+];
 
 const EXPLORER_URLS: Record<number, string> = {
   [soneiumChain.id]: 'https://soneium.blockscout.com/tx/',
@@ -90,10 +120,12 @@ const EXPLORER_URLS: Record<number, string> = {
   [robinhoodChain.id]: 'https://robinhoodchain.blockscout.com/tx/',
   [monadChain.id]: 'https://monadscan.com/tx/',
   [megaethChain.id]: 'https://megaeth.blockscout.com/tx/',
+  [lineaChain.id]: 'https://lineascan.build/tx/',
   [plumeChain.id]: 'https://explorer.plume.org/tx/',
   [somniaChain.id]: 'https://explorer.somnia.network/tx/',
   [katanaChain.id]: 'https://explorer.katanarpc.com/tx/',
   [liteforgeChain.id]: 'https://liteforge.explorer.caldera.xyz/tx/',
+  [ecochainChain.id]: 'https://maculatus-scan.x1eco.com/tx/',
 };
 
 const GM_CONTRACTS: Record<number, `0x${string}`> = {
@@ -105,10 +137,12 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [robinhoodChain.id]: '0x4A14077d1fa77dE42217EE48DED2099b83D714E1',
   [monadChain.id]: '0x992f77E78052Bc35a9209F5f153d1DA921A75Cd8',
   [megaethChain.id]: '0x01E5caF3235B8128C13c93c8F170d6fdF6F86a70',
+  [lineaChain.id]: '0xa0866b3D535985ea7d8e925a7A03cDDD37aB1a94',
   [plumeChain.id]: '0x10A1106a1597421ec0DF1709C13826611797C9b3',
   [somniaChain.id]: '0x8C4486b0Aa5AB4Fe1a1E7dCdacD45098D224899A',
   [katanaChain.id]: '0xc09349baBedf46CcbA46cB1F4C14d0b8f2fd5726',
   [liteforgeChain.id]: '0x53d3cFEf87fBC62b7f91e2577E8409a545814587',
+  [ecochainChain.id]: '0x8f5F899667E301645491116ea2B79Be299c60cE4',
 };
 
 const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
@@ -120,10 +154,12 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [robinhoodChain.id]: '0x6573bc9090BbCae309d2A3D95fDAC05617914000',
   [monadChain.id]: '0x6B126c96E5187d71EbB6EaA4d6cd225f382752cf',
   [megaethChain.id]: '0xabd30e8C2298F390e08Fe49E24917C6eC4542DD3',
+  [lineaChain.id]: '0xada9f6A0AD0c4605b6F59C2AE99d395DA0198A23',
   [plumeChain.id]: '0xCafaD4695AAa566e23464afd7F9602249B0aB02C',
   [somniaChain.id]: '0x323A89Ce7Af62299F586419938FB4a84c4C30f67',
   [katanaChain.id]: '0x64B41a111645a85eDD7cC8587BA5261053aE58A2',
   [liteforgeChain.id]: '0xC8538F3b792D58d8D829fAfFC3AfFf3D8F410047',
+  [ecochainChain.id]: '0x55231Bc7686c280f9EA6d7ddf963B2606E3D93aF',
 };
 
 // Cards Colour
@@ -168,6 +204,11 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     gradient: 'linear(135deg, #899297, #818586, #b8c0c2)',
     glowColor: 'rgba(110, 112, 114, 0.35)',
   },
+  [lineaChain.id]: {
+    color: '#0fc4e4',
+    gradient: 'linear(135deg, #0bb8b8, #0dcfe9, #09e7e7)',
+    glowColor: 'rgba(7, 193, 240, 0.35)',
+  },
   [plumeChain.id]: {
     color: '#e26b0a',
     gradient: 'linear(135deg, #d4660b, #ce800c, #e29609)',
@@ -187,6 +228,11 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#051b63',
     gradient: 'linear(135deg, #05057e, #230caa, #1709da)',
     glowColor: 'rgba(89, 74, 173, 0.35)',
+  },
+  [ecochainChain.id]: {
+    color: '#099b21',
+    gradient: 'linear(135deg, #057c05, #06c43f, #51e70c)',
+    glowColor: 'rgba(27, 187, 12, 0.35)',
   },
 };
 

@@ -879,7 +879,6 @@ const Footer = () => {
         <HStack spacing={2} justify="center" flexWrap="wrap">
           {chains.map((chain) => {
             const color = chainMetadata[chain.id]?.color || '#6b7280';
-            const isTestnet = isTestnetChain(chain.id);
             return (
               <Box
                 key={chain.id}
@@ -888,25 +887,9 @@ const Footer = () => {
                 _hover={{ bg: `${color}18`, borderColor: `${color}45`, transform: 'translateY(-1px)' }}
                 transition="all 0.2s"
               >
-                <HStack spacing={1.5}>
-                  <Text fontSize="10px" fontWeight="700" color={color} fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
-                    {chain.name}
-                  </Text>
-                  {isTestnet && (
-                    <Badge
-                      bg="rgba(251,191,36,0.12)"
-                      color="#fbbf24"
-                      fontSize="7px"
-                      px={1.5}
-                      py={0.5}
-                      borderRadius="full"
-                      border="1px solid rgba(251,191,36,0.15)"
-                      fontFamily="'Space Mono', monospace"
-                    >
-                      🧪
-                    </Badge>
-                  )}
-                </HStack>
+                <Text fontSize="10px" fontWeight="700" color={color} fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+                  {chain.name}
+                </Text>
               </Box>
             );
           })}

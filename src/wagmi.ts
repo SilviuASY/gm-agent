@@ -548,9 +548,10 @@ export const arbitrumChain = {
   name: 'Arbitrum',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://arb1.arbitrum.io/rpc'] },
+    default: { http: ['https://arbitrum-one-public.nodies.app'] },
     public: { http: ['https://arb1.arbitrum.io/rpc'] },
   },
+  iconUrl: '/arbitrum.png',
 } as const
 
 export const arbitrumNovaChain = {

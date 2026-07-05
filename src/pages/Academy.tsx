@@ -981,10 +981,10 @@ export default function Academy() {
                     {/* Progress bar */}
                     <Box mt={5}>
                       <Flex justify="space-between" mb={1.5}>
-                        <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.1em">
+                        <Text fontSize="12px" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.1em">
                           Progress toward Graduate
                         </Text>
-                        <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">
+                        <Text fontSize="12px" color="gray.500" fontFamily="'Space Mono', monospace">
                           {Math.round((completedCount / 4) * 100)}%
                         </Text>
                       </Flex>
@@ -1018,11 +1018,11 @@ export default function Academy() {
                       p={{ base: 4, md: 5 }}
                       _hover={{ borderColor: `${color}30`, transform: "translateY(-2px)" }}
                       transition="all 0.25s">
-                      <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace"
+                      <Text fontSize="12px" color="gray.500" fontFamily="'Space Mono', monospace"
                         textTransform="uppercase" letterSpacing="0.15em" mb={1}>{label}</Text>
                       <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="800" color={color}
                         fontFamily="'Space Mono', monospace">{value}</Text>
-                      <Text fontSize="10px" color="gray.500" mt={0.5}>{sub}</Text>
+                      <Text fontSize="12px" color="gray.500" mt={0.5}>{sub}</Text>
                     </Box>
                   ))}
                 </SimpleGrid>
@@ -1167,35 +1167,6 @@ export default function Academy() {
                                 {quest.description || `Complete this quest to earn a badge!`}
                               </Text>
 
-                              {/* NFT Preview - shown when badge is minted */}
-                              {isMinted && (
-                                <Box mb={4} p={3} borderRadius="xl"
-                                  bg="rgba(34,197,94,0.05)" border="1px solid rgba(34,197,94,0.15)">
-                                  <Flex align="center" gap={4}>
-                                    <Box w="48px" h="48px" borderRadius="lg" overflow="hidden"
-                                      border="1px solid rgba(139,92,246,0.2)" flexShrink={0}>
-                                      <Image src={meta.nftImage} alt={`${quest.name} Badge`} w="100%" h="100%" objectFit="cover"
-                                        fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' rx='8' fill='%231a0a2e'/><text y='55%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='24'>🏅</text></svg>" />
-                                    </Box>
-                                    <Box flex={1}>
-                                      <Text fontSize="11px" fontWeight="600" color="#4ade80" fontFamily="'Space Grotesk', sans-serif">
-                                        NFT Badge Minted
-                                      </Text>
-                                      <Text fontSize="9px" color="gray.400" fontFamily="'Space Mono', monospace">
-                                        {quest.name} · ERC-721
-                                      </Text>
-                                      <Tooltip label="View on Blockscout" hasArrow>
-                                        <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`} isExternal
-                                          fontSize="8px" color="gray.500" _hover={{ color: "#06b6d4" }}
-                                          fontFamily="'Space Mono', monospace">
-                                          View on Blockscout <ExternalLinkIcon mx={0.5} boxSize={2.5} />
-                                        </Link>
-                                      </Tooltip>
-                                    </Box>
-                                  </Flex>
-                                </Box>
-                              )}
-
                               <Divider borderColor="rgba(255,255,255,0.05)" mb={4} />
 
                               <Flex align="center" justify="space-between">
@@ -1208,31 +1179,61 @@ export default function Academy() {
                                   </Text>
                                 </VStack>
 
-                                <Tooltip
-                                  label={!isActive ? "Quest not active" : !hasSufficientBalance(fee) ? `Need ${formatEth(fee)} ETH` : ""}
-                                  hasArrow isDisabled={isActive && hasSufficientBalance(fee)}>
-                                  <Button size="sm"
-                                    bg={isMinted
-                                      ? "rgba(74,222,128,0.1)"
-                                      : isCompleted
-                                        ? "linear-gradient(135deg, #fbbf24, #ec4899)"
-                                        : `linear-gradient(135deg, ${meta.color}cc, #ec4899aa)`}
-                                    color={isMinted ? "#4ade80" : "white"}
-                                    isDisabled={isMinted || !isActive || (isCompleted && !hasSufficientBalance(fee))}
-                                    fontWeight="700" borderRadius="xl" px={6}
-                                    border={isMinted ? "1px solid rgba(74,222,128,0.3)" : "none"}
-                                    _hover={{
-                                      transform: isMinted ? "none" : "scale(1.04)",
-                                      boxShadow: isMinted ? "none" : `0 0 24px ${meta.color}40`,
-                                    }}
-                                    _disabled={{ opacity: 0.5, cursor: "not-allowed", transform: "none" }}
-                                    transition="all 0.2s"
-                                    onClick={() => {
-                                      if (!isMinted) fetchQuestions(id);
-                                    }}>
-                                    {isMinted ? "✓ Minted" : isCompleted ? "Mint Badge →" : "Start Quiz →"}
-                                  </Button>
-                                </Tooltip>
+                                <VStack align="end" spacing={2}>
+                                  {/* Minted-badge preview — sits right above the button, sized for legibility without stretching the card */}
+                                  {isMinted && (
+                                    <Tooltip label="View on Blockscout" hasArrow>
+                                      <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`} isExternal
+                                        _hover={{ "& > div:first-of-type": { borderColor: "rgba(74,222,128,0.55)" }, "& .aa-view-link": { color: "#06b6d4" } }}>
+                                        <HStack spacing={2.5}>
+                                          <Box w="45px" h="45px" borderRadius="lg" overflow="hidden" flexShrink={0}
+                                            border="1.5px solid rgba(74,222,128,0.3)" transition="border-color 0.2s"
+                                            boxShadow="0 0 12px rgba(74,222,128,0.15)">
+                                            <Image src={meta.nftImage} alt={`${quest.name} Badge`} w="100%" h="100%" objectFit="cover"
+                                              fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><rect width='34' height='34' rx='6' fill='%231a0a2e'/><text y='55%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='18'>🏅</text></svg>" />
+                                          </Box>
+                                          <VStack spacing={0} align="end">
+                                            <Text fontSize="10.5px" fontWeight="700" color="#4ade80" whiteSpace="nowrap">
+                                              NFT Quests Minted
+                                            </Text>
+                                            <HStack className="aa-view-link" spacing={1} transition="color 0.2s">
+                                              <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace" whiteSpace="nowrap">
+                                                View on Blockscout
+                                              </Text>
+                                              <ExternalLinkIcon boxSize={2.5} color="gray.600" />
+                                            </HStack>
+                                          </VStack>
+                                        </HStack>
+                                      </Link>
+                                    </Tooltip>
+                                  )}
+
+                                  <Tooltip
+                                    label={!isActive ? "Quest not active" : !hasSufficientBalance(fee) ? `Need ${formatEth(fee)} ETH` : ""}
+                                    hasArrow isDisabled={isActive && hasSufficientBalance(fee)}>
+                                    <Button size="sm"
+                                      bg={isMinted
+                                        ? "rgba(74,222,128,0.1)"
+                                        : isCompleted
+                                          ? "linear-gradient(135deg, #fbbf24, #ec4899)"
+                                          : `linear-gradient(135deg, ${meta.color}cc, #ec4899aa)`}
+                                      color={isMinted ? "#4ade80" : "white"}
+                                      isDisabled={isMinted || !isActive || (isCompleted && !hasSufficientBalance(fee))}
+                                      fontWeight="700" borderRadius="xl" px={6}
+                                      border={isMinted ? "1px solid rgba(74,222,128,0.3)" : "none"}
+                                      _hover={{
+                                        transform: isMinted ? "none" : "scale(1.04)",
+                                        boxShadow: isMinted ? "none" : `0 0 24px ${meta.color}40`,
+                                      }}
+                                      _disabled={{ opacity: 0.5, cursor: "not-allowed", transform: "none" }}
+                                      transition="all 0.2s"
+                                      onClick={() => {
+                                        if (!isMinted) fetchQuestions(id);
+                                      }}>
+                                      {isMinted ? "✓ Minted" : isCompleted ? "Mint Badge →" : "Start Quiz →"}
+                                    </Button>
+                                  </Tooltip>
+                                </VStack>
                               </Flex>
                             </Box>
                           </MotionBox>
@@ -1257,7 +1258,7 @@ export default function Academy() {
                       textTransform="uppercase" letterSpacing="0.2em">
                       How It Works
                     </Text>
-                    <Text fontSize="10px" color="gray.600" fontFamily="'Space Mono', monospace" display={{ base: "none", md: "block" }}>
+                    <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace" display={{ base: "none", md: "block" }}>
                       4-STEP SEQUENCE
                     </Text>
                   </Flex>
@@ -1296,7 +1297,7 @@ export default function Academy() {
                         <Flex w="40px" h="40px" borderRadius="lg" align="center" justify="center" mb={3} mx="auto"
                           bg={`${color}15`} border={`1px solid ${color}40`}
                           boxShadow={`0 0 14px ${color}20`}>
-                          <Text fontSize="12px" color={color} fontFamily="'Space Mono', monospace"
+                          <Text fontSize="15px" color={color} fontFamily="'Space Mono', monospace"
                             fontWeight="800" letterSpacing="0.05em">{step}</Text>
                         </Flex>
                         <Text fontSize="sm" fontWeight="700" color="white" mb={1.5}>{title}</Text>
@@ -1675,7 +1676,7 @@ export default function Academy() {
                 ].map(({ label, value }, i, arr) => (
                   <HStack key={label} spacing={0}>
                     <VStack spacing={0} px={{ base: 4, md: 6 }} py={1.5}>
-                      <Text fontSize="8px" color="gray.600" textTransform="uppercase"
+                      <Text fontSize="10px" color="gray.600" textTransform="uppercase"
                         letterSpacing="0.18em" fontFamily="'Space Mono', monospace">{label}</Text>
                       <Text fontSize="xs" fontWeight="700" color="gray.400"
                         fontFamily="'Space Mono', monospace">{value}</Text>
@@ -1687,7 +1688,7 @@ export default function Academy() {
                 ))}
               </HStack>
 
-              <Text fontSize="9px" color="gray.600" fontFamily="'Space Mono', monospace" textAlign="center" letterSpacing="0.1em">
+              <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace" textAlign="center" letterSpacing="0.1em">
                 AGENT ACADEMY · POWERED BY SONEIUM · SEASON 13
               </Text>
             </VStack>

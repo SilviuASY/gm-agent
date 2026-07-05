@@ -676,7 +676,7 @@ export const baseSepoliaChain = {
 export const plumeChain = {
   id: 98866,
   name: 'Plume',
-  nativeCurrency: { name: 'Plume', symbol: 'PLU', decimals: 18 },
+  nativeCurrency: { name: 'Plume', symbol: 'PLUME', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://rpc.plume.org'] },
     public: { http: ['https://rpc.plume.org'] },
@@ -717,11 +717,12 @@ export const scrollChain = {
 export const katanaChain = {
   id: 747474,
   name: 'Katana',
-  nativeCurrency: { name: 'Katana', symbol: 'KAT', decimals: 18 },
+  nativeCurrency: { name: 'Katana', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.katana.xyz'] },
-    public: { http: ['https://rpc.katana.xyz'] },
+    default: { http: ['https://rpc.katanarpc.com'] },
+    public: { http: ['https://rpc.katanarpc.com'] },
   },
+  iconUrl: '/katana.png',
 } as const
 
 export const lighterChain = {

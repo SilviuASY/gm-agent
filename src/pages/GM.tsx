@@ -39,7 +39,7 @@ import confetti from "canvas-confetti";
 import { useFixScroll } from "../hooks/useFixScroll";
 import { useNavigate } from "react-router-dom";
 
-import { soneiumChain, inkChain, optimismChain, baseChain, unichainChain } from "../wagmi";
+import { soneiumChain, inkChain, optimismChain, baseChain, unichainChain, robinhoodChain, monadChain, megaethChain, plumeChain, somniaChain, liteforgeChain } from "../wagmi";
 
 // ============= ABIs =============
 const DailyGMABI = [
@@ -56,7 +56,7 @@ const DeployABI = [
   { anonymous: false, inputs: [{ indexed: false, internalType: "address", name: "contractAddress", type: "address" }, { indexed: false, internalType: "address", name: "owner", type: "address" }], name: "ContractDeployed", type: "event" },
   { anonymous: false, inputs: [{ indexed: true, internalType: "address", name: "previousOwner", type: "address" }, { indexed: true, internalType: "address", name: "newOwner", type: "address" }], name: "OwnershipTransferred", type: "event" },
   { inputs: [], name: "deploy", outputs: [], stateMutability: "payable", type: "function" },
-  { inputs: [], name: "deploymentFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "gmFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "getUserDeploymentCount", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [], name: "totalDeployments", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
 ] as const;
@@ -68,16 +68,21 @@ const SBT_ABI = [
 // ============= Constants =============
 const SONEIUM_CHAIN_ID = 1868;
 const SBT_CONTRACT_ADDRESS = '0x13DBC40aB0695a7c392BB6447f972995A71527f9';
-const FEE_PER_ACTION = 0.000015;
 
-const chains = [soneiumChain, inkChain, optimismChain, baseChain, unichainChain];
+const chains = [soneiumChain, inkChain, optimismChain, baseChain, unichainChain, robinhoodChain, monadChain, megaethChain, plumeChain, somniaChain, liteforgeChain];
 
 const EXPLORER_URLS: Record<number, string> = {
-  [soneiumChain.id]: 'https://explorer.soneium.org/tx/',
+  [soneiumChain.id]: 'https://soneium.blockscout.com/tx/',
   [inkChain.id]: 'https://explorer.inkonchain.com/tx/',
   [optimismChain.id]: 'https://optimistic.etherscan.io/tx/',
   [baseChain.id]: 'https://basescan.org/tx/',
   [unichainChain.id]: 'https://uniscan.xyz/tx/',
+  [robinhoodChain.id]: 'https://robinhoodchain.blockscout.com/tx/',
+  [monadChain.id]: 'https://monadscan.com/tx/',
+  [megaethChain.id]: 'https://megaeth.blockscout.com/tx/',
+  [plumeChain.id]: 'https://explorer.plume.org/tx/',
+  [somniaChain.id]: 'https://explorer.somnia.network/tx/',
+  [liteforgeChain.id]: 'https://liteforge.explorer.caldera.xyz/tx/',
 };
 
 const GM_CONTRACTS: Record<number, `0x${string}`> = {
@@ -86,6 +91,12 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [optimismChain.id]: '0x489D39fF70e8ED45261D5353C0e999c2Da2FE132',
   [baseChain.id]: '0xbDf4dce745F5D945DF7Ed88681Df31bb17631692',
   [unichainChain.id]: '0xea36D3Ce511F3f91cfef12497DB3bd9611072314',
+  [robinhoodChain.id]: '0x4A14077d1fa77dE42217EE48DED2099b83D714E1',
+  [monadChain.id]: '0x992f77E78052Bc35a9209F5f153d1DA921A75Cd8',
+  [megaethChain.id]: '0x01E5caF3235B8128C13c93c8F170d6fdF6F86a70',
+  [plumeChain.id]: '0x10A1106a1597421ec0DF1709C13826611797C9b3',
+  [somniaChain.id]: '0x6d479a185e5c443ed83710146dfA4036D141EC81',
+  [liteforgeChain.id]: '0x53d3cFEf87fBC62b7f91e2577E8409a545814587',
 };
 
 const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
@@ -94,6 +105,12 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [optimismChain.id]: '0x56C4615c640773D6832CF27b6Dd37825Db267a70',
   [baseChain.id]: '0xd7DE83f3Be7e75dfF4e3cBA4cB64a6394a0E6299',
   [unichainChain.id]: '0x1e1322Deed86cC53031843f323F16415Ba0e9152',
+  [robinhoodChain.id]: '0x6573bc9090BbCae309d2A3D95fDAC05617914000',
+  [monadChain.id]: '0x6B126c96E5187d71EbB6EaA4d6cd225f382752cf',
+  [megaethChain.id]: '0xabd30e8C2298F390e08Fe49E24917C6eC4542DD3',
+  [plumeChain.id]: '0xCafaD4695AAa566e23464afd7F9602249B0aB02C',
+  [somniaChain.id]: '0x28EB4dE93D4375873323093A9cD3450e5395f8Fe',
+  [liteforgeChain.id]: '0xC8538F3b792D58d8D829fAfFC3AfFf3D8F410047',
 };
 
 // Cards Colour
@@ -122,6 +139,36 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#f72585',
     gradient: 'linear(135deg, #c2185b, #f72585, #ff6eb4)',
     glowColor: 'rgba(247,37,133,0.35)',
+  },
+  [robinhoodChain.id]: {
+    color: '#7ef014',
+    gradient: 'linear(135deg, #6cd814, #78eb0c, #96ec0c)',
+    glowColor: 'rgba(32, 233, 42, 0.35)',
+  },
+  [monadChain.id]: {
+    color: '#640fec',
+    gradient: 'linear(135deg, #5f0fe0, #6b1fe4, #6607d3)',
+    glowColor: 'rgba(106, 29, 194, 0.35)',
+  },
+  [megaethChain.id]: {
+    color: '#737a7e',
+    gradient: 'linear(135deg, #899297, #818586, #b8c0c2)',
+    glowColor: 'rgba(110, 112, 114, 0.35)',
+  },
+  [plumeChain.id]: {
+    color: '#e26b0a',
+    gradient: 'linear(135deg, #d4660b, #ce800c, #e29609)',
+    glowColor: 'rgba(211, 117, 11, 0.35)',
+  },
+  [somniaChain.id]: {
+    color: '#620aee',
+    gradient: 'linear(135deg, #440ae4, #6a07db, #9d09e2)',
+    glowColor: 'rgba(78, 13, 231, 0.35)',
+  },
+  [liteforgeChain.id]: {
+    color: '#04217e',
+    gradient: 'linear(135deg, #191a57, #211179, #140aaa)',
+    glowColor: 'rgba(29, 8, 150, 0.35)',
   },
 };
 
@@ -414,13 +461,15 @@ const SBTBadge = ({ hasSBT }: { hasSBT: boolean }) => {
 };
 
 // ============= Fee Display =============
-const FeeDisplay = ({ fee, isExempt }: { fee: bigint; isExempt: boolean }) => {
+const FeeDisplay = ({ fee, isExempt, chainId }: { fee: bigint; isExempt: boolean; chainId: number }) => {
   const formatted = (Number(fee) / 1e18).toFixed(6);
+  const symbol = chains.find(c => c.id === chainId)?.nativeCurrency?.symbol || 'ETH';
+  
   if (isExempt) {
     return (
       <Tooltip label="Free for SBT holders on Soneium" hasArrow>
         <HStack spacing={1} justify="center">
-          <Text as="del" fontSize="xs" color="gray.700" fontFamily="'Space Mono', monospace">{formatted}</Text>
+          <Text as="del" fontSize="xs" color="gray.700" fontFamily="'Space Mono', monospace">{formatted} {symbol}</Text>
           <Badge colorScheme="teal" fontSize="9px" px={1.5} py={0.5} borderRadius="full" fontFamily="'Space Mono', monospace" bg="#2dd4bf" color="white">
             FREE
           </Badge>
@@ -431,7 +480,7 @@ const FeeDisplay = ({ fee, isExempt }: { fee: bigint; isExempt: boolean }) => {
   return (
     <Text fontSize="sm" fontWeight="700" fontFamily="'Space Mono', monospace" color="white">
       {formatted}{' '}
-      <Text as="span" color="gray.600" fontSize="10px">ETH</Text>
+      <Text as="span" color="gray.600" fontSize="10px">{symbol}</Text>
     </Text>
   );
 };
@@ -459,7 +508,6 @@ const ActionCard = ({
   totalCount: number;
   hasSBT: boolean;
   isConnected: boolean;
-  chainId: number;
 }) => {
   const meta = chainMetadata[chain.id] || chainMetadata[soneiumChain.id];
   const isSoneium = chain.id === SONEIUM_CHAIN_ID;
@@ -577,7 +625,7 @@ const ActionCard = ({
               >
                 <Text fontSize="9px" color="gray.600" fontWeight="700" textTransform="uppercase"
                   letterSpacing="0.15em" fontFamily="'Space Mono', monospace" mb={1.5}>Fee</Text>
-                <FeeDisplay fee={fee} isExempt={isExempt} />
+                <FeeDisplay fee={fee} isExempt={isExempt} chainId={chain.id} />
               </Box>
               <Box
                 bg="rgba(255,255,255,0.022)" border="1px solid rgba(255,255,255,0.05)"
@@ -690,7 +738,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
               What is GM &amp; Deploy?
             </Heading>
             <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
-              Agent GM Protocol · 5 Networks
+              Agent GM Protocol · {chains.length} Networks
             </Text>
           </Box>
         </HStack>
@@ -699,7 +747,7 @@ const InfoSection = ({ }: { isGM: boolean }) => (
           Interact with the{' '}
           <Text as="span" color="#2dd4bf" fontWeight="600">Agent GM Protocol</Text>{' '}
           across{' '}
-          <Text as="span" color="#2dd4bf" fontWeight="600">5 blockchain networks</Text>.
+          <Text as="span" color="#2dd4bf" fontWeight="600">{chains.length} blockchain networks</Text>.
           {' '}Build your on-chain reputation with daily GM messages, or deploy smart contracts
           with one click — no configuration required.
         </Text>
@@ -767,74 +815,75 @@ const InfoSection = ({ }: { isGM: boolean }) => (
 );
 
 // ============= Footer =============
-const Footer = () => (
-  <Box pt={10} pb={6} position="relative">
-    {/* separator */}
-    <Box h="1px" mb={8} bg="linear-gradient(90deg, transparent, rgba(45,212,191,0.2), rgba(192,38,211,0.2), transparent)" />
+const Footer = () => {
+  const chainsCount = chains.length;
+  
+  return (
+    <Box pt={10} pb={6} position="relative">
+      {/* separator */}
+      <Box h="1px" mb={8} bg="linear-gradient(90deg, transparent, rgba(45,212,191,0.2), rgba(192,38,211,0.2), transparent)" />
 
-    <VStack spacing={5}>
-      {/* chain pills row */}
-      <HStack spacing={2} justify="center" flexWrap="wrap">
-        {[
-          { name: 'Soneium', color: '#2dd4bf' },
-          { name: 'Ink', color: '#c026d3' },
-          { name: 'Optimism', color: '#ff0420' },
-          { name: 'Base', color: '#2563eb' },
-          { name: 'Unichain', color: '#f72585' },
-        ].map(({ name, color }) => (
-          <Box
-            key={name}
-            px={3} py={1} borderRadius="full"
-            bg={`${color}10`} border={`1px solid ${color}25`}
-            _hover={{ bg: `${color}18`, borderColor: `${color}45`, transform: 'translateY(-1px)' }}
-            transition="all 0.2s"
-          >
-            <Text fontSize="10px" fontWeight="700" color={color} fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
-              {name}
-            </Text>
-          </Box>
-        ))}
-      </HStack>
+      <VStack spacing={5}>
+        {/* chain pills row */}
+        <HStack spacing={2} justify="center" flexWrap="wrap">
+          {chains.map((chain) => {
+            const color = chainMetadata[chain.id]?.color || '#6b7280';
+            return (
+              <Box
+                key={chain.id}
+                px={3} py={1} borderRadius="full"
+                bg={`${color}10`} border={`1px solid ${color}25`}
+                _hover={{ bg: `${color}18`, borderColor: `${color}45`, transform: 'translateY(-1px)' }}
+                transition="all 0.2s"
+              >
+                <Text fontSize="10px" fontWeight="700" color={color} fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+                  {chain.name}
+                </Text>
+              </Box>
+            );
+          })}
+        </HStack>
 
-      {/* stat row */}
-      <HStack
-        spacing={0} justify="center" flexWrap="wrap"
-        bg="rgba(255,255,255,0.02)" border="1px solid rgba(255,255,255,0.04)"
-        borderRadius="2xl" px={6} py={3} gap={0}
-      >
-        {[
-          { label: 'Networks', value: '5' },
-          { label: 'Protocol', value: 'ERC-8004' },
-          { label: 'Fee', value: '0.000015 ETH' },
-          { label: 'Status', value: 'Live ✓' },
-        ].map(({ label, value }, i, arr) => (
-          <HStack key={label} spacing={0}>
-            <VStack spacing={0} px={{ base: 4, md: 6 }} py={1}>
-              <Text fontSize="9px" color="gray.600" textTransform="uppercase" letterSpacing="0.18em"
-                fontFamily="'Space Mono', monospace">{label}</Text>
-              <Text fontSize="xs" fontWeight="700" color="gray.400" fontFamily="'Space Mono', monospace">
-                {value}
-              </Text>
-            </VStack>
-            {i < arr.length - 1 && (
-              <Box w="1px" h="28px" bg="rgba(255,255,255,0.06)" flexShrink={0} />
-            )}
-          </HStack>
-        ))}
-      </HStack>
+        {/* stat row */}
+        <HStack
+          spacing={0} justify="center" flexWrap="wrap"
+          bg="rgba(255,255,255,0.02)" border="1px solid rgba(255,255,255,0.04)"
+          borderRadius="2xl" px={6} py={3} gap={0}
+        >
+          {[
+            { label: 'Networks', value: chainsCount.toString() },
+            { label: 'Protocol', value: 'ERC-8004' },
+            { label: 'Fee', value: 'Per Chain' },
+            { label: 'Status', value: 'Live ✓' },
+          ].map(({ label, value }, i, arr) => (
+            <HStack key={label} spacing={0}>
+              <VStack spacing={0} px={{ base: 4, md: 6 }} py={1}>
+                <Text fontSize="9px" color="gray.600" textTransform="uppercase" letterSpacing="0.18em"
+                  fontFamily="'Space Mono', monospace">{label}</Text>
+                <Text fontSize="xs" fontWeight="700" color="gray.400" fontFamily="'Space Mono', monospace">
+                  {value}
+                </Text>
+              </VStack>
+              {i < arr.length - 1 && (
+                <Box w="1px" h="28px" bg="rgba(255,255,255,0.06)" flexShrink={0} />
+              )}
+            </HStack>
+          ))}
+        </HStack>
 
-      {/* bottom line */}
-      <VStack spacing={1}>
-        <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace" letterSpacing="0.12em" textAlign="center">
-          © 2026 · Agent GM Protocol · All rights reserved
-        </Text>
-        <Text fontSize="9px" color="gray.600" fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
-          Built on Soneium · Powered by SilviuASY
-        </Text>
+        {/* bottom line */}
+        <VStack spacing={1}>
+          <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace" letterSpacing="0.12em" textAlign="center">
+            © 2026 · Agent GM Protocol · All rights reserved
+          </Text>
+          <Text fontSize="9px" color="gray.600" fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+            Built on Soneium · Powered by SilviuASY
+          </Text>
+        </VStack>
       </VStack>
-    </VStack>
-  </Box>
-);
+    </Box>
+  );
+};
 
 // ============= Main Page =============
 export default function GMPage() {
@@ -908,16 +957,17 @@ export default function GMPage() {
     return deployData.reduce((sum, item) => sum + item.total, 0);
   }, [deployData]);
 
-  // Active Users - this would require a more complex query across all chains
-  // For now, we'll use a placeholder or you can implement it with a subgraph
-  const activeUsers = 2347; // Placeholder - would need to query unique addresses across all chains
+  const activeUsers = 2347; // Placeholder
+
+  // ============= Calculează numărul de chain-uri dinamic =============
+  const chainsCount = chains.length;
 
   const stats = useMemo(() => {
     if (isGM) {
       return [
         { 
           label: 'Chains', 
-          value: '5', 
+          value: chainsCount.toString(),
           icon: '🌐', 
           color: '#2dd4bf', 
           description: 'Networks available', 
@@ -941,10 +991,10 @@ export default function GMPage() {
         },
         { 
           label: 'Fee / Action', 
-          value: '0.000015', 
+          value: 'Per Chain', 
           icon: '⚡', 
           color: '#2dd4bf', 
-          description: 'ETH per GM or Deploy', 
+          description: 'Varies by network', 
           glowColor: 'rgba(45,212,191,0.3)' 
         },
       ];
@@ -952,7 +1002,7 @@ export default function GMPage() {
       return [
         { 
           label: 'Chains', 
-          value: '5', 
+          value: chainsCount.toString(),
           icon: '🌐', 
           color: '#2dd4bf', 
           description: 'Networks available', 
@@ -976,17 +1026,53 @@ export default function GMPage() {
         },
         { 
           label: 'Fee / Action', 
-          value: '0.000015', 
+          value: 'Per Chain', 
           icon: '⚡', 
           color: '#2dd4bf', 
-          description: 'ETH per GM or Deploy', 
+          description: 'Varies by network', 
           glowColor: 'rgba(45,212,191,0.3)' 
         },
       ];
     }
-  }, [isGM, totalGM, totalDeploys, activeUsers]);
+  }, [isGM, totalGM, totalDeploys, activeUsers, chainsCount]);
 
-  // FIX #3 — handleAction: auto-switch silently before writing, button label never changes
+  // ============= Read fees from contracts =============
+  // GM fees per chain
+  const gmFees = chains.map((chain) => {
+    const contract = GM_CONTRACTS[chain.id];
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data: fee = 0n } = useReadContract({
+      address: contract,
+      abi: DailyGMABI,
+      functionName: 'gmFee',
+      chainId: chain.id,
+      query: { enabled: true, staleTime: 60000 },
+    });
+    return { chainId: chain.id, fee };
+  });
+
+  // Deploy fees per chain
+  const deployFees = chains.map((chain) => {
+    const contract = DEPLOY_CONTRACTS[chain.id];
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data: fee = 0n } = useReadContract({
+      address: contract,
+      abi: DeployABI,
+      functionName: 'gmFee',
+      chainId: chain.id,
+      query: { enabled: true, staleTime: 60000 },
+    });
+    return { chainId: chain.id, fee };
+  });
+
+  // Helper to get fee for a specific chain and type
+  const getFee = (chainId: number, type: 'gm' | 'deploy'): bigint => {
+    const fees = type === 'gm' ? gmFees : deployFees;
+    const found = fees.find(f => f.chainId === chainId);
+    return found?.fee || 0n;
+  };
+
+  // handleAction: auto-switch silently before writing
   const handleAction = async (chain: any, type: 'gm' | 'deploy') => {
     const key = `${chain.id}-${type}`;
     if (loadingStates[key]) return;
@@ -1017,8 +1103,10 @@ export default function GMPage() {
       const functionName = type === 'gm' ? 'gm' : 'deploy';
       const isSoneium = chain.id === SONEIUM_CHAIN_ID;
       const isExempt = isSoneium && hasSBT;
-      const feeInWei = BigInt(Math.floor(FEE_PER_ACTION * 1e18));
-      const value = isExempt ? 0n : feeInWei;
+      
+      // Get fee from contract
+      const fee = getFee(chain.id, type);
+      const value = isExempt ? 0n : fee;
 
       const txHash = await writeContractAsync({
         address: contract,
@@ -1125,7 +1213,7 @@ export default function GMPage() {
                 </HStack>
                 <Text color="gray.600" fontSize={{ base: '9px', md: '10px' }} letterSpacing="0.2em"
                   fontFamily="'Space Mono', monospace" textTransform="uppercase">
-                  5 Networks · GM · Deploy · Earn
+                  {chainsCount} Networks · GM · Deploy · Earn
                 </Text>
               </VStack>
             </HStack>
@@ -1219,6 +1307,9 @@ export default function GMPage() {
                     const key = `${chain.id}-gm`;
                     const isLoading = loadingStates[key] || false;
                     const contract = GM_CONTRACTS[chain.id];
+                    const fee = getFee(chain.id, 'gm');
+                    const isSoneium = chain.id === SONEIUM_CHAIN_ID;
+                    const isExempt = isSoneium && hasSBT;
 
                     const { data: userCount = 0n } = useReadContract({
                       address: contract, abi: DailyGMABI, functionName: 'balanceOf',
@@ -1231,18 +1322,14 @@ export default function GMPage() {
                       chainId: chain.id, query: { enabled: true },
                     });
 
-                    const isSoneium = chain.id === SONEIUM_CHAIN_ID;
-                    const isExempt = isSoneium && hasSBT;
-                    const feeInWei = BigInt(Math.floor(FEE_PER_ACTION * 1e18));
-
                     return (
                       <ActionCard
                         key={chain.id} chain={chain} index={index} type="gm"
                         isLoading={isLoading} onAction={() => handleAction(chain, 'gm')}
-                        fee={isExempt ? 0n : feeInWei}
+                        fee={isExempt ? 0n : fee}
                         userCount={Number(userCount)}
                         totalCount={Math.max(0, Number(nextTokenId) - 1)}
-                        hasSBT={hasSBT} isConnected={isConnected} chainId={chainId}
+                        hasSBT={hasSBT} isConnected={isConnected}
                       />
                     );
                   })}
@@ -1258,6 +1345,9 @@ export default function GMPage() {
                     const key = `${chain.id}-deploy`;
                     const isLoading = loadingStates[key] || false;
                     const contract = DEPLOY_CONTRACTS[chain.id];
+                    const fee = getFee(chain.id, 'deploy');
+                    const isSoneium = chain.id === SONEIUM_CHAIN_ID;
+                    const isExempt = isSoneium && hasSBT;
 
                     const { data: userCount = 0n } = useReadContract({
                       address: contract, abi: DeployABI, functionName: 'getUserDeploymentCount',
@@ -1270,18 +1360,14 @@ export default function GMPage() {
                       chainId: chain.id, query: { enabled: true },
                     });
 
-                    const isSoneium = chain.id === SONEIUM_CHAIN_ID;
-                    const isExempt = isSoneium && hasSBT;
-                    const feeInWei = BigInt(Math.floor(FEE_PER_ACTION * 1e18));
-
                     return (
                       <ActionCard
                         key={chain.id} chain={chain} index={index} type="deploy"
                         isLoading={isLoading} onAction={() => handleAction(chain, 'deploy')}
-                        fee={isExempt ? 0n : feeInWei}
+                        fee={isExempt ? 0n : fee}
                         userCount={Number(userCount)}
                         totalCount={Number(totalData)}
-                        hasSBT={hasSBT} isConnected={isConnected} chainId={chainId}
+                        hasSBT={hasSBT} isConnected={isConnected}
                       />
                     );
                   })}

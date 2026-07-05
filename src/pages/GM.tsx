@@ -43,7 +43,7 @@ import confetti from "canvas-confetti";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useFixScroll } from "../hooks/useFixScroll";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { 
   soneiumChain,
@@ -1205,6 +1205,30 @@ export default function GMPage() {
   const [lastTx, setLastTx] = useState<TxSuccess | null>(null);
   const { isOpen: isTxModalOpen, onOpen: openTxModal, onClose: closeTxModal } = useDisclosure();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+
+  // Deep-link support, e.g.:
+  //   https://gm-agent.xyz/gmorning?chain=ink
+  //   https://gm-agent.xyz/gmorning?chainId=soneium
+  //   https://gm-agent.xyz/gmorning?chainId=1868   (numeric chain id also works)
+  // On load, this pre-fills the search box so the matching card is shown right away —
+  // reusing the existing search/filter instead of adding a separate mechanism.
+  useEffect(() => {
+    const param = searchParams.get('chain') || searchParams.get('chainId');
+    if (!param) return;
+
+    const normalized = param.trim().toLowerCase().replace(/\s+/g, '');
+    const matched = chains.find(
+      (c) => c.name.toLowerCase().replace(/\s+/g, '') === normalized || String(c.id) === normalized
+    );
+
+    if (matched) {
+      setSearchQuery(matched.name);
+    }
+    // Only run once on mount — we don't want to fight the user if they clear the
+    // search box manually afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isGM = tabIndex === 0;
 

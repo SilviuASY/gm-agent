@@ -35,10 +35,12 @@ import {
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useSwitchChain, useReadContract, useWriteContract } from "wagmi";
-import { useState, useMemo, useEffect } from "react";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ChevronLeftIcon, StarIcon, InfoIcon, ExternalLinkIcon, CheckCircleIcon, SearchIcon, CloseIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useFixScroll } from "../hooks/useFixScroll";
 import { useNavigate } from "react-router-dom";
@@ -60,7 +62,11 @@ import {
   katanaChain,
   liteforgeChain,
   ecochainChain,
-  abstractChain
+  abstractChain,
+  // NOTE: this assumes your ../wagmi.ts exports the wagmi config object as `config`
+  // (the same one you pass to <WagmiProvider config={...}>). If it's named differently,
+  // just rename this alias import accordingly.
+  config as wagmiConfig,
 } from "../wagmi";
 
 // ============= ABIs =============
@@ -274,6 +280,8 @@ interface TxSuccess {
   isExempt: boolean;
 }
 
+type LoadingPhase = 'switching' | 'sending' | 'confirming';
+
 // ============= Motion =============
 const MotionBox = motion(Box);
 
@@ -329,6 +337,14 @@ const pageStyles = `
   @keyframes testnetPulse {
     0%, 100% { opacity: 0.8; transform: scale(1); }
     50%      { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* Keep the RainbowKit connect/account button text on a single line
+     (e.g. "0x0f3...56dD") instead of wrapping to two lines and inflating
+     the button's height. */
+  .wallet-connect-btn button,
+  .wallet-connect-btn button * {
+    white-space: nowrap !important;
   }
 `;
 
@@ -616,6 +632,8 @@ const ActionCard = ({
   index,
   type,
   isLoading,
+  isGlobalLoading,
+  loadingPhase,
   onAction,
   fee,
   userCount,
@@ -627,6 +645,8 @@ const ActionCard = ({
   index: number;
   type: 'gm' | 'deploy';
   isLoading: boolean;
+  isGlobalLoading: boolean;
+  loadingPhase?: LoadingPhase | null;
   onAction: () => void;
   fee: bigint;
   userCount: number;
@@ -640,7 +660,20 @@ const ActionCard = ({
   const isTestnet = isTestnetChain(chain.id);
   const isGM = type === 'gm';
   const actionLabel = isGM ? `GM to ${chain.name}` : `Deploy to ${chain.name}`;
-  const loadingLabel = isGM ? 'Sending GM…' : 'Deploying…';
+
+  // Loading text reflects the actual phase of the transaction (switching network,
+  // waiting for wallet signature, or waiting for on-chain confirmation) instead of
+  // a single generic label — this also makes it obvious to the user why the button
+  // stays busy for a bit after the wallet popup already closed.
+  const phaseLoadingLabel: Record<LoadingPhase, string> = {
+    switching: 'Switching network…',
+    sending: isGM ? 'Sending GM…' : 'Deploying…',
+    confirming: 'Confirming on-chain…',
+  };
+  const loadingLabel = loadingPhase ? phaseLoadingLabel[loadingPhase] : (isGM ? 'Sending GM…' : 'Deploying…');
+  
+  // Disable only the button, not the whole card
+  const isButtonDisabled = !isConnected || isLoading || isGlobalLoading;
 
   return (
     <MotionBox
@@ -807,7 +840,7 @@ const ActionCard = ({
               isLoading={isLoading}
               loadingText={loadingLabel}
               spinner={<Spinner size="sm" />}
-              isDisabled={!isConnected}
+              isDisabled={isButtonDisabled}
               position="relative" overflow="hidden"
               fontFamily="'Space Grotesk', sans-serif"
               letterSpacing="0.01em"
@@ -819,7 +852,9 @@ const ActionCard = ({
                 backgroundSize: '200% 100%',
                 animation: 'shimmerBtn 2.5s infinite',
                 pointerEvents: 'none',
+                opacity: isButtonDisabled ? 0 : 1,
               }}
+              opacity={isButtonDisabled && !isLoading ? 0.6 : 1}
             >
               {isExempt ? `✨ ${actionLabel}` : isGM ? `🌅 ${actionLabel}` : `🚀 ${actionLabel}`}
             </Button>
@@ -827,6 +862,11 @@ const ActionCard = ({
             {!isConnected && (
               <Text fontSize="10px" color="gray.700" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
                 Connect wallet to continue
+              </Text>
+            )}
+            {isGlobalLoading && !isLoading && (
+              <Text fontSize="10px" color="gray.500" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                Another transaction in progress...
               </Text>
             )}
           </VStack>
@@ -845,6 +885,8 @@ const WrappedActionCard = ({
   isConnected,
   hasSBT,
   isLoading,
+  isGlobalLoading,
+  loadingPhase,
   onAction,
 }: {
   chain: any;
@@ -854,6 +896,8 @@ const WrappedActionCard = ({
   isConnected: boolean;
   hasSBT: boolean;
   isLoading: boolean;
+  isGlobalLoading: boolean;
+  loadingPhase?: LoadingPhase | null;
   onAction: () => void;
 }) => {
   const isSoneium = chain.id === SONEIUM_CHAIN_ID;
@@ -866,33 +910,60 @@ const WrappedActionCard = ({
   // Get fee from contract
   const { data: fee = 0n } = useReadContract({
     address: contract,
-    abi,
+    abi: abi,
     functionName: 'gmFee',
     chainId: chain.id,
     query: { enabled: true, staleTime: 60000 },
   });
 
-  // Get user count
-  const { data: userCount = 0n } = useReadContract({
+  // Get user count - with refetch capability
+  const { data: userCount = 0n, refetch: refetchUserCount } = useReadContract({
     address: contract,
-    abi,
+    abi: abi,
     functionName: type === 'gm' ? 'balanceOf' : 'getUserDeploymentCount',
     args: address ? [address] : undefined,
     chainId: chain.id,
-    query: { enabled: !!address && isConnected },
+    query: { enabled: !!address && isConnected, staleTime: 10000 },
   });
 
-  // Get total count
-  const { data: totalCount = 0n } = useReadContract({
+  // Get total count - with refetch capability
+  const { data: totalCount = 0n, refetch: refetchTotalCount } = useReadContract({
     address: contract,
-    abi,
+    abi: abi,
     functionName: type === 'gm' ? 'nextTokenId' : 'totalDeployments',
     chainId: chain.id,
-    query: { enabled: true },
+    query: { enabled: true, staleTime: 30000 },
   });
 
   // Calculate the actual fee to pass (0 if exempt)
   const actualFee = isExempt ? 0n : fee;
+
+  // Track previous global loading state to detect when it changes from true to false
+  const prevGlobalLoadingRef = useRef(isGlobalLoading);
+
+  // Refetch data when global loading completes (transitions from true to false).
+  // IMPORTANT: the ref must be updated on *every* run of this effect, not only on the
+  // branch that triggers a refetch — otherwise it gets "stuck" and the comparison below
+  // stops being meaningful. (This was the root cause of cards only refreshing after an
+  // action was fired on a *different* card: the stale ref happened to still work by
+  // accident in that case, but not for the card that just completed its own action.)
+  useEffect(() => {
+    const wasLoading = prevGlobalLoadingRef.current;
+    prevGlobalLoadingRef.current = isGlobalLoading;
+
+    if (wasLoading && !isGlobalLoading) {
+      // By the time isGlobalLoading flips back to false, the transaction has already
+      // been confirmed on-chain (see handleAction), so we don't need a long artificial
+      // delay here anymore — just a small buffer for public RPC read-nodes that may lag
+      // a moment behind the node that broadcast/confirmed the write.
+      const timeoutId = setTimeout(() => {
+        refetchUserCount();
+        refetchTotalCount();
+      }, 400);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isGlobalLoading, refetchUserCount, refetchTotalCount]);
 
   return (
     <ActionCard
@@ -900,6 +971,8 @@ const WrappedActionCard = ({
       index={index}
       type={type}
       isLoading={isLoading}
+      isGlobalLoading={isGlobalLoading}
+      loadingPhase={loadingPhase}
       onAction={onAction}
       fee={actualFee}
       userCount={Number(userCount)}
@@ -1022,6 +1095,24 @@ const InfoSection = ({ }: { isGM: boolean }) => (
   </MotionBox>
 );
 
+// ============= Empty State (search) =============
+const NoChainsFound = ({ query }: { query: string }) => (
+  <Box
+    textAlign="center"
+    py={16}
+    bg="rgba(4,4,14,0.5)"
+    borderRadius="2xl"
+    border="1px solid rgba(255,255,255,0.05)"
+  >
+    <Text fontSize="xl" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+      No chains found matching "{query}"
+    </Text>
+    <Text fontSize="sm" color="gray.600" mt={2} fontFamily="'Space Grotesk', sans-serif">
+      Try searching by chain name
+    </Text>
+  </Box>
+);
+
 // ============= Footer =============
 const Footer = () => {
   const chainsCount = chains.length;
@@ -1096,6 +1187,8 @@ const Footer = () => {
 // ============= Main Page =============
 export default function GMPage() {
   useFixScroll();
+  
+  const queryClient = useQueryClient();
 
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -1105,6 +1198,8 @@ export default function GMPage() {
   const navigate = useNavigate();
   const [tabIndex, setTabIndex] = useState(0);
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  const [loadingPhase, setLoadingPhase] = useState<Record<string, LoadingPhase>>({});
+  const [isGlobalLoading, setIsGlobalLoading] = useState(false);
   const [hasSBT, setHasSBT] = useState(false);
   const [isCheckingSBT, setIsCheckingSBT] = useState(true);
   const [lastTx, setLastTx] = useState<TxSuccess | null>(null);
@@ -1292,17 +1387,37 @@ export default function GMPage() {
     return found?.fee || 0n;
   };
 
-  // handleAction: auto-switch silently before writing
+  // handleAction: auto-switch silently before writing, then wait for the transaction to
+  // actually be MINED before refreshing any on-chain numbers.
+  //
+  // Previously, the data reads for a card were invalidated right after `writeContractAsync`
+  // resolved — but that only means the tx was *broadcast*, not confirmed. Reading the
+  // contract at that point almost always returns stale data, so the UI looked like it
+  // "didn't refresh" until something else (e.g. a later action, after enough time had
+  // passed for the tx to actually confirm) happened to trigger another refetch.
   const handleAction = async (chain: any, type: 'gm' | 'deploy') => {
     const key = `${chain.id}-${type}`;
-    if (loadingStates[key]) return;
+    if (loadingStates[key] || isGlobalLoading) return;
 
     if (!address) {
       toast({ title: 'Wallet Not Connected', description: 'Connect your wallet first.', status: 'warning', duration: 4000, isClosable: true, position: 'top-right' });
       return;
     }
 
+    // Set global loading to true - this will disable all buttons
+    setIsGlobalLoading(true);
     setLoadingStates(prev => ({ ...prev, [key]: true }));
+    setLoadingPhase(prev => ({ ...prev, [key]: 'switching' }));
+
+    const clearLoading = () => {
+      setLoadingStates(prev => ({ ...prev, [key]: false }));
+      setLoadingPhase(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      setIsGlobalLoading(false);
+    };
 
     try {
       // silent chain switch — no toast, happens in background
@@ -1313,7 +1428,7 @@ export default function GMPage() {
           await new Promise(resolve => setTimeout(resolve, 1200));
         } catch {
           toast({ title: 'Network Switch Failed', description: `Please switch to ${chain.name} manually.`, status: 'error', duration: 4000, isClosable: true, position: 'top-right' });
-          setLoadingStates(prev => ({ ...prev, [key]: false }));
+          clearLoading();
           return;
         }
       }
@@ -1328,6 +1443,8 @@ export default function GMPage() {
       const fee = getFee(chain.id, type);
       const value = isExempt ? 0n : fee;
 
+      setLoadingPhase(prev => ({ ...prev, [key]: 'sending' }));
+
       const txHash = await writeContractAsync({
         address: contract,
         abi,
@@ -1336,6 +1453,7 @@ export default function GMPage() {
         chainId: chain.id,
       });
 
+      // Give immediate positive feedback — the tx has been broadcast successfully.
       setLastTx({ hash: txHash, chainName: chain.name, chainId: chain.id, type, isExempt });
       openTxModal();
 
@@ -1344,6 +1462,24 @@ export default function GMPage() {
         spread: 72,
         origin: { y: 0.55 },
         colors: ['#2dd4bf', '#c026d3', '#0d9488', '#f72585', '#60a5fa'],
+      });
+
+      // Now wait for the transaction to actually be confirmed before touching any reads.
+      setLoadingPhase(prev => ({ ...prev, [key]: 'confirming' }));
+      try {
+        await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: chain.id });
+      } catch (confirmError) {
+        // If we can't confirm (e.g. a flaky RPC), don't block the UI forever — just log it
+        // and fall through to refresh anyway; worst case the numbers are a moment early.
+        console.warn('Could not confirm transaction receipt:', confirmError);
+      }
+
+      // Invalidate the cached reads for this exact contract/chain. Every card watching
+      // this contract (including the header totals, which share the same address+chainId)
+      // will refetch automatically.
+      queryClient.invalidateQueries({
+        queryKey: ['readContract', { address: contract, chainId: chain.id }],
+        exact: false,
       });
 
     } catch (error: any) {
@@ -1355,7 +1491,7 @@ export default function GMPage() {
         });
       }
     } finally {
-      setLoadingStates(prev => ({ ...prev, [key]: false }));
+      clearLoading();
     }
   };
 
@@ -1433,7 +1569,8 @@ export default function GMPage() {
                     border="1px solid rgba(45,212,191,0.2)"
                     fontFamily="'Space Mono', monospace"
                   >
-                    v2.1                  </Badge>
+                    v2.1
+                  </Badge>
                 </HStack>
                 <Text color="gray.600" fontSize={{ base: '9px', md: '10px' }} letterSpacing="0.2em"
                   fontFamily="'Space Mono', monospace" textTransform="uppercase">
@@ -1450,6 +1587,7 @@ export default function GMPage() {
                 </InputLeftElement>
                 <Input
                   placeholder="Search chain by name..."
+                  aria-label="Search chain by name"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   bg="rgba(4,4,14,0.85)"
@@ -1474,6 +1612,7 @@ export default function GMPage() {
                       size="sm"
                       variant="ghost"
                       onClick={clearSearch}
+                      aria-label="Clear search"
                       _hover={{ bg: 'rgba(255,255,255,0.08)' }}
                       color="gray.500"
                       borderRadius="full"
@@ -1487,14 +1626,14 @@ export default function GMPage() {
                 )}
               </InputGroup>
 
-              <Box display={{ base: 'none', md: 'block' }} _hover={{ transform: 'scale(1.02)' }} transition="transform 0.2s">
+              <Box className="wallet-connect-btn" display={{ base: 'none', md: 'block' }} _hover={{ transform: 'scale(1.02)' }} transition="transform 0.2s">
                 <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
               </Box>
             </HStack>
           </Flex>
 
           {/* Mobile wallet */}
-          <Box display={{ base: 'flex', md: 'none' }} justifyContent="center" mb={5}>
+          <Box className="wallet-connect-btn" display={{ base: 'flex', md: 'none' }} justifyContent="center" mb={5}>
             <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
           </Box>
 
@@ -1573,20 +1712,7 @@ export default function GMPage() {
               {/* ─── GM Tab ─── */}
               <TabPanel px={0} pt={6}>
                 {filteredChains.length === 0 ? (
-                  <Box
-                    textAlign="center"
-                    py={16}
-                    bg="rgba(4,4,14,0.5)"
-                    borderRadius="2xl"
-                    border="1px solid rgba(255,255,255,0.05)"
-                  >
-                    <Text fontSize="xl" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
-                      No chains found matching "{searchQuery}"
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mt={2} fontFamily="'Space Grotesk', sans-serif">
-                      Try searching by chain name
-                    </Text>
-                  </Box>
+                  <NoChainsFound query={searchQuery} />
                 ) : (
                   <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 3, xl: 5 }} spacing={{ base: 4, md: 5 }}>
                     {filteredChains.map((chain, index) => {
@@ -1603,6 +1729,8 @@ export default function GMPage() {
                           isConnected={isConnected}
                           hasSBT={hasSBT}
                           isLoading={isLoading}
+                          isGlobalLoading={isGlobalLoading}
+                          loadingPhase={loadingPhase[key]}
                           onAction={() => handleAction(chain, 'gm')}
                         />
                       );
@@ -1616,20 +1744,7 @@ export default function GMPage() {
               {/* ─── Deploy Tab ─── */}
               <TabPanel px={0} pt={6}>
                 {filteredChains.length === 0 ? (
-                  <Box
-                    textAlign="center"
-                    py={16}
-                    bg="rgba(4,4,14,0.5)"
-                    borderRadius="2xl"
-                    border="1px solid rgba(255,255,255,0.05)"
-                  >
-                    <Text fontSize="xl" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
-                      No chains found matching "{searchQuery}"
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mt={2} fontFamily="'Space Grotesk', sans-serif">
-                      Try searching by chain name
-                    </Text>
-                  </Box>
+                  <NoChainsFound query={searchQuery} />
                 ) : (
                   <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 3, xl: 5 }} spacing={{ base: 4, md: 5 }}>
                     {filteredChains.map((chain, index) => {
@@ -1646,6 +1761,8 @@ export default function GMPage() {
                           isConnected={isConnected}
                           hasSBT={hasSBT}
                           isLoading={isLoading}
+                          isGlobalLoading={isGlobalLoading}
+                          loadingPhase={loadingPhase[key]}
                           onAction={() => handleAction(chain, 'deploy')}
                         />
                       );

@@ -1064,13 +1064,7 @@ export default function Academy() {
                                     <Text fontWeight="700" color="white" fontSize="md" noOfLines={1}>
                                       {quest.name}
                                     </Text>
-                                    {isMinted && (
-                                      <Tooltip label="View badge on Blockscout" hasArrow>
-                                        <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`} isExternal>
-                                          <ExternalLinkIcon boxSize={3} color="gray.500" _hover={{ color: "#06b6d4" }} />
-                                        </Link>
-                                      </Tooltip>
-                                    )}
+                                    {/* Eliminat link-ul "View badge on Blockscout" de aici */}
                                   </HStack>
                                   <HStack spacing={2} flexWrap="wrap">
                                     <Badge bg={`${meta.color}15`} color={meta.color}
@@ -1110,9 +1104,16 @@ export default function Academy() {
                                       <Text fontSize="11px" fontWeight="600" color="#4ade80" fontFamily="'Space Grotesk', sans-serif">
                                         NFT Badge Minted
                                       </Text>
-                                      <Text fontSize="9px" color="gray.500" fontFamily="'Space Mono', monospace">
+                                      <Text fontSize="9px" color="gray.400" fontFamily="'Space Mono', monospace">
                                         {quest.name} · ERC-721
                                       </Text>
+                                      <Tooltip label="View on Blockscout" hasArrow>
+                                        <Link href={`${BLOCKSCOUT_URL}/token/${AGENT_QUEST_ADDRESS}`} isExternal
+                                          fontSize="8px" color="gray.500" _hover={{ color: "#06b6d4" }}
+                                          fontFamily="'Space Mono', monospace">
+                                          View on Blockscout <ExternalLinkIcon mx={0.5} boxSize={2.5} />
+                                        </Link>
+                                      </Tooltip>
                                     </Box>
                                   </Flex>
                                 </Box>

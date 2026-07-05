@@ -105,7 +105,7 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [monadChain.id]: '0x992f77E78052Bc35a9209F5f153d1DA921A75Cd8',
   [megaethChain.id]: '0x01E5caF3235B8128C13c93c8F170d6fdF6F86a70',
   [plumeChain.id]: '0x10A1106a1597421ec0DF1709C13826611797C9b3',
-  [somniaChain.id]: '0x6d479a185e5c443ed83710146dfA4036D141EC81',
+  [somniaChain.id]: '0x8C4486b0Aa5AB4Fe1a1E7dCdacD45098D224899A',
   [liteforgeChain.id]: '0x53d3cFEf87fBC62b7f91e2577E8409a545814587',
 };
 
@@ -119,7 +119,7 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [monadChain.id]: '0x6B126c96E5187d71EbB6EaA4d6cd225f382752cf',
   [megaethChain.id]: '0xabd30e8C2298F390e08Fe49E24917C6eC4542DD3',
   [plumeChain.id]: '0xCafaD4695AAa566e23464afd7F9602249B0aB02C',
-  [somniaChain.id]: '0x28EB4dE93D4375873323093A9cD3450e5395f8Fe',
+  [somniaChain.id]: '0x323A89Ce7Af62299F586419938FB4a84c4C30f67',
   [liteforgeChain.id]: '0xC8538F3b792D58d8D829fAfFC3AfFf3D8F410047',
 };
 
@@ -176,8 +176,8 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     glowColor: 'rgba(78, 13, 231, 0.35)',
   },
   [liteforgeChain.id]: {
-    color: '#21336e',
-    gradient: 'linear(135deg, #575774, #665ba8, #a7a3db)',
+    color: '#051b63',
+    gradient: 'linear(135deg, #05057e, #230caa, #1709da)',
     glowColor: 'rgba(89, 74, 173, 0.35)',
   },
 };
@@ -999,7 +999,7 @@ export default function GMPage() {
       chainId: chain.id,
       query: { enabled: true, staleTime: 30000 },
     });
-    return { chainId: chain.id, total: Math.max(0, Number(nextTokenId) - 1) };
+    return { chainId: chain.id, total: Number(nextTokenId) };
   });
 
   // ============= Read all Deploy totals from all chains =============
@@ -1396,7 +1396,7 @@ export default function GMPage() {
                         isLoading={isLoading} onAction={() => handleAction(chain, 'gm')}
                         fee={isExempt ? 0n : fee}
                         userCount={Number(userCount)}
-                        totalCount={Math.max(0, Number(nextTokenId) - 1)}
+                        totalCount={Number(nextTokenId)}
                         hasSBT={hasSBT} isConnected={isConnected}
                       />
                     );

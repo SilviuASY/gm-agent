@@ -27,12 +27,16 @@ import {
   useDisclosure,
   Link,
   Icon,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  InputRightElement,
 } from "@chakra-ui/react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useSwitchChain, useReadContract, useWriteContract } from "wagmi";
 import { useState, useMemo, useEffect } from "react";
-import { ChevronLeftIcon, StarIcon, InfoIcon, ExternalLinkIcon, CheckCircleIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, StarIcon, InfoIcon, ExternalLinkIcon, CheckCircleIcon, SearchIcon, CloseIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 
@@ -48,13 +52,15 @@ import {
   robinhoodChain,
   monadChain,
   megaethChain,
+  bscChain,
   lineaChain, 
   plumeChain,
   arbitrumChain,
   somniaChain, 
   katanaChain,
   liteforgeChain,
-  ecochainChain
+  ecochainChain,
+  abstractChain
 } from "../wagmi";
 
 // ============= ABIs =============
@@ -104,6 +110,8 @@ const chains = [soneiumChain,
   robinhoodChain, 
   monadChain, 
   megaethChain,
+  bscChain,
+  abstractChain,
   lineaChain,
   plumeChain,
   arbitrumChain,
@@ -122,6 +130,8 @@ const EXPLORER_URLS: Record<number, string> = {
   [robinhoodChain.id]: 'https://robinhoodchain.blockscout.com/tx/',
   [monadChain.id]: 'https://monadscan.com/tx/',
   [megaethChain.id]: 'https://megaeth.blockscout.com/tx/',
+  [bscChain.id]: 'https://bscscan.com/tx/',
+  [abstractChain.id]: 'https://abscan.org/tx/',
   [lineaChain.id]: 'https://lineascan.build/tx/',
   [plumeChain.id]: 'https://explorer.plume.org/tx/',
   [arbitrumChain.id]: 'https://arbiscan.io/tx/',
@@ -140,6 +150,8 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [robinhoodChain.id]: '0x4A14077d1fa77dE42217EE48DED2099b83D714E1',
   [monadChain.id]: '0x992f77E78052Bc35a9209F5f153d1DA921A75Cd8',
   [megaethChain.id]: '0x01E5caF3235B8128C13c93c8F170d6fdF6F86a70',
+  [bscChain.id]: '0xd326Cb7938454499aa7F0a3f66F657BdaFa9071c',
+  [abstractChain.id]: '0xCF3Be362F59B8E67d487Ecb78F39107A5bC52122',
   [lineaChain.id]: '0xa0866b3D535985ea7d8e925a7A03cDDD37aB1a94',
   [plumeChain.id]: '0x10A1106a1597421ec0DF1709C13826611797C9b3',
   [arbitrumChain.id]: '0xB071EebE62589EF72F46Fc0563546fF60e31c96F',
@@ -158,6 +170,8 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [robinhoodChain.id]: '0x6573bc9090BbCae309d2A3D95fDAC05617914000',
   [monadChain.id]: '0x6B126c96E5187d71EbB6EaA4d6cd225f382752cf',
   [megaethChain.id]: '0xabd30e8C2298F390e08Fe49E24917C6eC4542DD3',
+  [bscChain.id]: '0x763B7E815C5d645a40df2A329FAd6516FC7cdEcA',
+  [abstractChain.id]: '0x23dDe3aC6d9F6d47e2b781Db947cc9Be64Cf32cd',
   [lineaChain.id]: '0xada9f6A0AD0c4605b6F59C2AE99d395DA0198A23',
   [plumeChain.id]: '0xCafaD4695AAa566e23464afd7F9602249B0aB02C',
   [arbitrumChain.id]: '0x5e01A9b2BCc4F78A4A247CA2cAC94B0Fa4F21cA0',
@@ -208,6 +222,16 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#737a7e',
     gradient: 'linear(135deg, #899297, #818586, #b8c0c2)',
     glowColor: 'rgba(110, 112, 114, 0.35)',
+  },
+  [bscChain.id]: {
+    color: '#d8b908',
+    gradient: 'linear(135deg, #9c6806, #e48d0a, #e0d208)',
+    glowColor: 'rgba(219, 146, 9, 0.35)',
+  },
+  [abstractChain.id]: {
+    color: '#49d608',
+    gradient: 'linear(135deg, #078039, #07c521, #65ee09)',
+    glowColor: 'rgba(27, 211, 10, 0.35)',
   },
   [lineaChain.id]: {
     color: '#0fc4e4',
@@ -812,6 +836,80 @@ const ActionCard = ({
   );
 };
 
+// ============= Wrapped Action Card with its own hooks =============
+const WrappedActionCard = ({
+  chain,
+  index,
+  type,
+  address,
+  isConnected,
+  hasSBT,
+  isLoading,
+  onAction,
+}: {
+  chain: any;
+  index: number;
+  type: 'gm' | 'deploy';
+  address: `0x${string}` | undefined;
+  isConnected: boolean;
+  hasSBT: boolean;
+  isLoading: boolean;
+  onAction: () => void;
+}) => {
+  const isSoneium = chain.id === SONEIUM_CHAIN_ID;
+  const isExempt = isSoneium && hasSBT;
+
+  // Get fee
+  const contract = type === 'gm' ? GM_CONTRACTS[chain.id] : DEPLOY_CONTRACTS[chain.id];
+  const abi = type === 'gm' ? DailyGMABI : DeployABI;
+  
+  // Get fee from contract
+  const { data: fee = 0n } = useReadContract({
+    address: contract,
+    abi,
+    functionName: 'gmFee',
+    chainId: chain.id,
+    query: { enabled: true, staleTime: 60000 },
+  });
+
+  // Get user count
+  const { data: userCount = 0n } = useReadContract({
+    address: contract,
+    abi,
+    functionName: type === 'gm' ? 'balanceOf' : 'getUserDeploymentCount',
+    args: address ? [address] : undefined,
+    chainId: chain.id,
+    query: { enabled: !!address && isConnected },
+  });
+
+  // Get total count
+  const { data: totalCount = 0n } = useReadContract({
+    address: contract,
+    abi,
+    functionName: type === 'gm' ? 'nextTokenId' : 'totalDeployments',
+    chainId: chain.id,
+    query: { enabled: true },
+  });
+
+  // Calculate the actual fee to pass (0 if exempt)
+  const actualFee = isExempt ? 0n : fee;
+
+  return (
+    <ActionCard
+      chain={chain}
+      index={index}
+      type={type}
+      isLoading={isLoading}
+      onAction={onAction}
+      fee={actualFee}
+      userCount={Number(userCount)}
+      totalCount={Number(totalCount)}
+      hasSBT={hasSBT}
+      isConnected={isConnected}
+    />
+  );
+};
+
 // ============= Info Section =============
 const InfoSection = ({ }: { isGM: boolean }) => (
   <MotionBox
@@ -1011,6 +1109,7 @@ export default function GMPage() {
   const [isCheckingSBT, setIsCheckingSBT] = useState(true);
   const [lastTx, setLastTx] = useState<TxSuccess | null>(null);
   const { isOpen: isTxModalOpen, onOpen: openTxModal, onClose: closeTxModal } = useDisclosure();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isGM = tabIndex === 0;
 
@@ -1029,6 +1128,17 @@ export default function GMPage() {
     }
     setIsCheckingSBT(false);
   }, [sbtBalance]);
+
+  // Filter chains based on search query
+  const filteredChains = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return chains;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return chains.filter(chain => 
+      chain.name.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   // ============= Read all GM totals from all chains =============
   const gmData = chains.map((chain) => {
@@ -1249,6 +1359,11 @@ export default function GMPage() {
     }
   };
 
+  // Clear search
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
   return (
     <>
       <style>{pageStyles}</style>
@@ -1318,8 +1433,7 @@ export default function GMPage() {
                     border="1px solid rgba(45,212,191,0.2)"
                     fontFamily="'Space Mono', monospace"
                   >
-                    v2.1
-                  </Badge>
+                    v2.1                  </Badge>
                 </HStack>
                 <Text color="gray.600" fontSize={{ base: '9px', md: '10px' }} letterSpacing="0.2em"
                   fontFamily="'Space Mono', monospace" textTransform="uppercase">
@@ -1328,9 +1442,55 @@ export default function GMPage() {
               </VStack>
             </HStack>
 
-            <Box display={{ base: 'none', md: 'block' }} _hover={{ transform: 'scale(1.02)' }} transition="transform 0.2s">
-              <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
-            </Box>
+            {/* Search Bar + Connect Button - mai mare pe PC */}
+            <HStack spacing={3} align="center" w={{ base: 'full', md: 'auto' }}>
+              <InputGroup size="md" maxW={{ base: 'full', md: '260px' }} minW={{ base: 'full', md: '200px' }}>
+                <InputLeftElement pointerEvents="none" h="full">
+                  <SearchIcon color="gray.500" boxSize={4} />
+                </InputLeftElement>
+                <Input
+                  placeholder="Search chain by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  bg="rgba(4,4,14,0.85)"
+                  border="1px solid rgba(255,255,255,0.1)"
+                  borderRadius="xl"
+                  color="gray.300"
+                  fontSize="sm"
+                  h="42px"
+                  _placeholder={{ color: 'gray.500', fontSize: 'sm' }}
+                  _hover={{ borderColor: 'rgba(45,212,191,0.4)' }}
+                  _focus={{
+                    borderColor: 'rgba(45,212,191,0.5)',
+                    boxShadow: '0 0 30px rgba(45,212,191,0.1)',
+                    bg: 'rgba(4,4,14,0.95)',
+                  }}
+                  fontFamily="'Space Grotesk', sans-serif"
+                  pr="36px"
+                />
+                {searchQuery && (
+                  <InputRightElement h="full" w="36px">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={clearSearch}
+                      _hover={{ bg: 'rgba(255,255,255,0.08)' }}
+                      color="gray.500"
+                      borderRadius="full"
+                      minW="24px"
+                      h="24px"
+                      p={0}
+                    >
+                      <CloseIcon boxSize={3} />
+                    </Button>
+                  </InputRightElement>
+                )}
+              </InputGroup>
+
+              <Box display={{ base: 'none', md: 'block' }} _hover={{ transform: 'scale(1.02)' }} transition="transform 0.2s">
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+              </Box>
+            </HStack>
           </Flex>
 
           {/* Mobile wallet */}
@@ -1412,76 +1572,86 @@ export default function GMPage() {
             <TabPanels>
               {/* ─── GM Tab ─── */}
               <TabPanel px={0} pt={6}>
-                <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 3, xl: 5 }} spacing={{ base: 4, md: 5 }}>
-                  {chains.map((chain, index) => {
-                    const key = `${chain.id}-gm`;
-                    const isLoading = loadingStates[key] || false;
-                    const contract = GM_CONTRACTS[chain.id];
-                    const fee = getFee(chain.id, 'gm');
-                    const isSoneium = chain.id === SONEIUM_CHAIN_ID;
-                    const isExempt = isSoneium && hasSBT;
+                {filteredChains.length === 0 ? (
+                  <Box
+                    textAlign="center"
+                    py={16}
+                    bg="rgba(4,4,14,0.5)"
+                    borderRadius="2xl"
+                    border="1px solid rgba(255,255,255,0.05)"
+                  >
+                    <Text fontSize="xl" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                      No chains found matching "{searchQuery}"
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" mt={2} fontFamily="'Space Grotesk', sans-serif">
+                      Try searching by chain name
+                    </Text>
+                  </Box>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 3, xl: 5 }} spacing={{ base: 4, md: 5 }}>
+                    {filteredChains.map((chain, index) => {
+                      const key = `${chain.id}-gm`;
+                      const isLoading = loadingStates[key] || false;
 
-                    const { data: userCount = 0n } = useReadContract({
-                      address: contract, abi: DailyGMABI, functionName: 'balanceOf',
-                      args: address ? [address] : undefined,
-                      chainId: chain.id,
-                      query: { enabled: !!address && isConnected },
-                    });
-                    const { data: nextTokenId = 0n } = useReadContract({
-                      address: contract, abi: DailyGMABI, functionName: 'nextTokenId',
-                      chainId: chain.id, query: { enabled: true },
-                    });
-
-                    return (
-                      <ActionCard
-                        key={chain.id} chain={chain} index={index} type="gm"
-                        isLoading={isLoading} onAction={() => handleAction(chain, 'gm')}
-                        fee={isExempt ? 0n : fee}
-                        userCount={Number(userCount)}
-                        totalCount={Number(nextTokenId)}
-                        hasSBT={hasSBT} isConnected={isConnected}
-                      />
-                    );
-                  })}
-                </SimpleGrid>
+                      return (
+                        <WrappedActionCard
+                          key={chain.id}
+                          chain={chain}
+                          index={index}
+                          type="gm"
+                          address={address}
+                          isConnected={isConnected}
+                          hasSBT={hasSBT}
+                          isLoading={isLoading}
+                          onAction={() => handleAction(chain, 'gm')}
+                        />
+                      );
+                    })}
+                  </SimpleGrid>
+                )}
 
                 <InfoSection isGM={true} />
               </TabPanel>
 
               {/* ─── Deploy Tab ─── */}
               <TabPanel px={0} pt={6}>
-                <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 3, xl: 5 }} spacing={{ base: 4, md: 5 }}>
-                  {chains.map((chain, index) => {
-                    const key = `${chain.id}-deploy`;
-                    const isLoading = loadingStates[key] || false;
-                    const contract = DEPLOY_CONTRACTS[chain.id];
-                    const fee = getFee(chain.id, 'deploy');
-                    const isSoneium = chain.id === SONEIUM_CHAIN_ID;
-                    const isExempt = isSoneium && hasSBT;
+                {filteredChains.length === 0 ? (
+                  <Box
+                    textAlign="center"
+                    py={16}
+                    bg="rgba(4,4,14,0.5)"
+                    borderRadius="2xl"
+                    border="1px solid rgba(255,255,255,0.05)"
+                  >
+                    <Text fontSize="xl" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                      No chains found matching "{searchQuery}"
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" mt={2} fontFamily="'Space Grotesk', sans-serif">
+                      Try searching by chain name
+                    </Text>
+                  </Box>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, sm: 2, md: 2, lg: 3, xl: 5 }} spacing={{ base: 4, md: 5 }}>
+                    {filteredChains.map((chain, index) => {
+                      const key = `${chain.id}-deploy`;
+                      const isLoading = loadingStates[key] || false;
 
-                    const { data: userCount = 0n } = useReadContract({
-                      address: contract, abi: DeployABI, functionName: 'getUserDeploymentCount',
-                      args: address ? [address] : undefined,
-                      chainId: chain.id,
-                      query: { enabled: !!address && isConnected },
-                    });
-                    const { data: totalData = 0n } = useReadContract({
-                      address: contract, abi: DeployABI, functionName: 'totalDeployments',
-                      chainId: chain.id, query: { enabled: true },
-                    });
-
-                    return (
-                      <ActionCard
-                        key={chain.id} chain={chain} index={index} type="deploy"
-                        isLoading={isLoading} onAction={() => handleAction(chain, 'deploy')}
-                        fee={isExempt ? 0n : fee}
-                        userCount={Number(userCount)}
-                        totalCount={Number(totalData)}
-                        hasSBT={hasSBT} isConnected={isConnected}
-                      />
-                    );
-                  })}
-                </SimpleGrid>
+                      return (
+                        <WrappedActionCard
+                          key={chain.id}
+                          chain={chain}
+                          index={index}
+                          type="deploy"
+                          address={address}
+                          isConnected={isConnected}
+                          hasSBT={hasSBT}
+                          isLoading={isLoading}
+                          onAction={() => handleAction(chain, 'deploy')}
+                        />
+                      );
+                    })}
+                  </SimpleGrid>
+                )}
 
                 <InfoSection isGM={false} />
               </TabPanel>

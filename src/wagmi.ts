@@ -631,6 +631,7 @@ export const lineaChain = {
     default: { http: ['https://rpc.linea.build'] },
     public: { http: ['https://rpc.linea.build'] },
   },
+  iconUrl: '/linea.png',
 } as const
 
 export const bobChain = {
@@ -776,6 +777,17 @@ export const liteforgeChain = {
   iconUrl: '/litvm.png',
 } as const
 
+export const ecochainChain = {
+  id: 10778,
+  name: 'X1 EcoChain',
+  nativeCurrency: { name: 'X1 EcoChain', symbol: 'X1T', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://maculatus-rpc.x1eco.com'] },
+    public: { http: ['https://maculatus-rpc.x1eco.com'] },
+  },
+  iconUrl: '/ecochain.png',
+} as const
+
 // ============= Configurația principală =============
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',
@@ -857,6 +869,7 @@ export const config = getDefaultConfig({
     opSepoliaChain,
     tronChain,
     liteforgeChain,
+    ecochainChain
   ],
   transports: {
     [soneiumChain.id]: http(),
@@ -935,5 +948,6 @@ export const config = getDefaultConfig({
     [opSepoliaChain.id]: http(),
     [tronChain.id]: http(),
     [liteforgeChain.id]: http(),
+    [ecochainChain.id]: http(),
   },
 })

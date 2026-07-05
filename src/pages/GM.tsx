@@ -69,6 +69,16 @@ const SBT_ABI = [
 const SONEIUM_CHAIN_ID = 1868;
 const SBT_CONTRACT_ADDRESS = '0x13DBC40aB0695a7c392BB6447f972995A71527f9';
 
+// List of testnet chain IDs
+const TESTNET_CHAIN_IDS: number[] = [
+  liteforgeChain.id, // 4441
+];
+
+// Function to check if a chain is testnet
+const isTestnetChain = (chainId: number): boolean => {
+  return TESTNET_CHAIN_IDS.includes(chainId);
+};
+
 const chains = [soneiumChain, inkChain, optimismChain, baseChain, unichainChain, robinhoodChain, monadChain, megaethChain, plumeChain, somniaChain, liteforgeChain];
 
 const EXPLORER_URLS: Record<number, string> = {
@@ -167,7 +177,7 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
   },
   [liteforgeChain.id]: {
     color: '#04217e',
-    gradient: 'linear(135deg, #191a57, #211179, #140aaa)',
+    gradient: 'linear(135deg, #353547, #493e85, #7f7bb1)',
     glowColor: 'rgba(29, 8, 150, 0.35)',
   },
 };
@@ -232,6 +242,10 @@ const pageStyles = `
   @keyframes countUp {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes testnetPulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50%      { opacity: 1; transform: scale(1.05); }
   }
 `;
 
@@ -460,6 +474,34 @@ const SBTBadge = ({ hasSBT }: { hasSBT: boolean }) => {
   );
 };
 
+// ============= Testnet Badge =============
+const TestnetBadge = () => {
+  return (
+    <Tooltip label="This is a testnet network — use for testing purposes" hasArrow placement="top">
+      <Badge
+        bg="rgba(7, 121, 228, 0.12)"
+        color="#0be4ec"
+        fontSize="12px"
+        px={3}
+        py={1.5}
+        borderRadius="full"
+        border="1px solid rgba(12, 129, 207, 0.2)"
+        display="inline-flex"
+        alignItems="center"
+        gap={1.5}
+        boxShadow="0 0 20px rgba(11, 119, 182, 0.12)"
+        _hover={{ transform: 'scale(1.08)' }}
+        transition="all 0.2s"
+        style={{ animation: 'testnetPulse 2.5s ease-in-out infinite' }}
+        fontFamily="'Space Mono', monospace"
+        letterSpacing="0.06em"
+      >
+        Testnet
+      </Badge>
+    </Tooltip>
+  );
+};
+
 // ============= Fee Display =============
 const FeeDisplay = ({ fee, isExempt, chainId }: { fee: bigint; isExempt: boolean; chainId: number }) => {
   const formatted = (Number(fee) / 1e18).toFixed(6);
@@ -512,6 +554,7 @@ const ActionCard = ({
   const meta = chainMetadata[chain.id] || chainMetadata[soneiumChain.id];
   const isSoneium = chain.id === SONEIUM_CHAIN_ID;
   const isExempt = isSoneium && hasSBT;
+  const isTestnet = isTestnetChain(chain.id);
   const isGM = type === 'gm';
   const actionLabel = isGM ? `GM to ${chain.name}` : `Deploy to ${chain.name}`;
   const loadingLabel = isGM ? 'Sending GM…' : 'Deploying…';
@@ -556,9 +599,17 @@ const ActionCard = ({
           style={{ animation: 'scanline 9s linear infinite' }}
         />
 
+        {/* SBT Badge - top left */}
         <Flex position="absolute" top={3} left={3} zIndex={3}>
           {isSoneium && <SBTBadge hasSBT={hasSBT} />}
         </Flex>
+
+        {/* Testnet Badge - top right */}
+        {isTestnet && (
+          <Flex position="absolute" top={3} right={3} zIndex={3}>
+            <TestnetBadge />
+          </Flex>
+        )}
 
         <Box p={{ base: 5, md: 6 }} flex="1" display="flex" flexDirection="column" position="relative" zIndex={1}>
           <VStack spacing={4} align="stretch" flex="1">
@@ -828,6 +879,7 @@ const Footer = () => {
         <HStack spacing={2} justify="center" flexWrap="wrap">
           {chains.map((chain) => {
             const color = chainMetadata[chain.id]?.color || '#6b7280';
+            const isTestnet = isTestnetChain(chain.id);
             return (
               <Box
                 key={chain.id}
@@ -836,9 +888,25 @@ const Footer = () => {
                 _hover={{ bg: `${color}18`, borderColor: `${color}45`, transform: 'translateY(-1px)' }}
                 transition="all 0.2s"
               >
-                <Text fontSize="10px" fontWeight="700" color={color} fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
-                  {chain.name}
-                </Text>
+                <HStack spacing={1.5}>
+                  <Text fontSize="10px" fontWeight="700" color={color} fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
+                    {chain.name}
+                  </Text>
+                  {isTestnet && (
+                    <Badge
+                      bg="rgba(251,191,36,0.12)"
+                      color="#fbbf24"
+                      fontSize="7px"
+                      px={1.5}
+                      py={0.5}
+                      borderRadius="full"
+                      border="1px solid rgba(251,191,36,0.15)"
+                      fontFamily="'Space Mono', monospace"
+                    >
+                      🧪
+                    </Badge>
+                  )}
+                </HStack>
               </Box>
             );
           })}

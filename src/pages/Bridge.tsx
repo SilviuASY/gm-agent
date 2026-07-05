@@ -100,6 +100,38 @@ const pageStyles = `
     border-color: rgba(139,92,246,0.4) !important;
     box-shadow: 0 8px 60px rgba(139,92,246,0.1) !important;
   }
+
+  /* Force dark theme for LiFi widget */
+  .lifi-widget-container * {
+    color-scheme: dark !important;
+  }
+  
+  .lifi-widget-container .MuiPaper-root {
+    background-color: rgba(4,4,14,0.95) !important;
+    color: #ffffff !important;
+  }
+  
+  .lifi-widget-container .MuiInputBase-root {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #ffffff !important;
+  }
+  
+  .lifi-widget-container .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(139,92,246,0.3) !important;
+  }
+  
+  .lifi-widget-container .MuiTypography-root {
+    color: #ffffff !important;
+  }
+  
+  .lifi-widget-container .MuiTypography-colorTextSecondary {
+    color: #9ca3af !important;
+  }
+  
+  .lifi-widget-container .MuiButton-root {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+    color: #ffffff !important;
+  }
 `;
 
 // =====================================================================
@@ -321,7 +353,7 @@ const Footer = () => {
 // ============= Main Page =============
 export default function Bridge() {
   const navigate = useNavigate();
-  const { colorMode } = useColorMode();
+  useColorMode();
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();
@@ -519,12 +551,12 @@ export default function Bridge() {
   const currentChain = combinedChains.find((c) => c.id === chainId);
 
   // =====================================================================
-  // Widget configuration
+  // Widget configuration - FORCE DARK MODE
   // =====================================================================
   const lifiConfig = useMemo(() => {
     const cfg: any = {
       apiKey: LIFI_API_KEY,
-      appearance: colorMode,
+      appearance: "dark", // FORCE DARK MODE - always dark
       fromChain: tokenPrefill.fromChain || chainId || DEFAULT_FROM_CHAIN,
       fee: 0.001,
       theme: {
@@ -533,16 +565,16 @@ export default function Bridge() {
           fontFamily: "'Space Grotesk', sans-serif",
         },
         palette: {
-          mode: colorMode === "dark" ? "dark" : "light",
+          mode: "dark", // FORCE DARK MODE
           primary: { main: "#8b5cf6" },
           secondary: { main: "#ec4899" },
           background: {
-            default: colorMode === "dark" ? "#0a0a1a" : "#f8f9fa",
-            paper: colorMode === "dark" ? "rgba(4,4,14,0.95)" : "#ffffff",
+            default: "#0a0a1a",
+            paper: "rgba(4,4,14,0.95)",
           },
           text: {
-            primary: colorMode === "dark" ? "#ffffff" : "#1a1a2e",
-            secondary: colorMode === "dark" ? "#9ca3af" : "#6b7280",
+            primary: "#ffffff",
+            secondary: "#9ca3af",
           },
         },
       },
@@ -556,7 +588,7 @@ export default function Bridge() {
     if (tokenPrefill.toToken) cfg.toToken = tokenPrefill.toToken;
 
     return cfg;
-  }, [colorMode, chainId, tokenPrefill, handleBridgeChainSwitch]);
+  }, [chainId, tokenPrefill, handleBridgeChainSwitch]);
 
   // =====================================================================
   // Stats

@@ -73,6 +73,11 @@ interface QuestProgress {
 }
 
 // ============= Styles =============
+// Design tokens (kept close to the original palette — purple / pink / cyan / blue / gold / green —
+// but pushed into a more deliberate "signal on a dark motherboard" system: everything sits on a
+// near-black surface, and each quest track owns exactly one accent color end-to-end (icon, rail,
+// glow, badge). Space Grotesk stays for the display face (it already reads technical/web3), Space
+// Mono is reserved strictly for anything that resembles data: fees, hashes, timers, counters.
 const pageStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
@@ -122,14 +127,29 @@ const pageStyles = `
     0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
     40% { transform: scale(1); opacity: 1; }
   }
+  @keyframes nodeGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.35); }
+    50% { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+  }
+  @keyframes railFlow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% -200%; }
+  }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .aa-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+  .aa-scrollbar::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.35); border-radius: 999px; }
 `;
 
 // ============= Quest Meta =============
-const questMeta: { [key: number]: { icon: string; color: string; bg: string; accent: string; tag: string; difficulty: string; duration: string; xp: string; nftImage: string } } = {
-  1: { icon: "/soneium.png", color: "#06b6d4", bg: "rgba(6,182,212,0.08)", accent: "rgba(6,182,212,0.2)", tag: "Fundamentals", difficulty: "Beginner", duration: "~5 min", xp: "+50 XP", nftImage: "/agentquest.png" },
-  2: { icon: "/dex.png", color: "#3b82f6", bg: "rgba(59,130,246,0.08)", accent: "rgba(59,130,246,0.2)", tag: "DeFi", difficulty: "Intermediate", duration: "~8 min", xp: "+75 XP", nftImage: "/agentquest.png" },
-  3: { icon: "/deploy.png", color: "#ec4899", bg: "rgba(236,72,153,0.08)", accent: "rgba(236,72,153,0.2)", tag: "Smart Contracts", difficulty: "Advanced", duration: "~10 min", xp: "+100 XP", nftImage: "/agentquest.png" },
-  4: { icon: "/agent.png", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", accent: "rgba(139,92,246,0.2)", tag: "AI Agents", difficulty: "Advanced", duration: "~12 min", xp: "+125 XP", nftImage: "/agentquest.png" },
+const questMeta: { [key: number]: { icon: string; color: string; bg: string; accent: string; tag: string; difficulty: string; duration: string; xp: string; nftImage: string; codename: string } } = {
+  1: { icon: "/soneium.png", color: "#06b6d4", bg: "rgba(6,182,212,0.08)", accent: "rgba(6,182,212,0.2)", tag: "Fundamentals", difficulty: "Beginner", duration: "~5 min", xp: "+50 XP", nftImage: "/agentquest.png", codename: "PROTOCOL-01" },
+  2: { icon: "/dex.png", color: "#3b82f6", bg: "rgba(59,130,246,0.08)", accent: "rgba(59,130,246,0.2)", tag: "DeFi", difficulty: "Intermediate", duration: "~8 min", xp: "+75 XP", nftImage: "/agentquest.png", codename: "PROTOCOL-02" },
+  3: { icon: "/deploy.png", color: "#ec4899", bg: "rgba(236,72,153,0.08)", accent: "rgba(236,72,153,0.2)", tag: "Smart Contracts", difficulty: "Advanced", duration: "~10 min", xp: "+100 XP", nftImage: "/agentquest.png", codename: "PROTOCOL-03" },
+  4: { icon: "/agent.png", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", accent: "rgba(139,92,246,0.2)", tag: "AI Agents", difficulty: "Advanced", duration: "~12 min", xp: "+125 XP", nftImage: "/agentquest.png", codename: "PROTOCOL-04" },
 };
 
 const getQuestMeta = (id: number) => questMeta[id] || questMeta[4];
@@ -619,6 +639,12 @@ export default function Academy() {
           backgroundImage="linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)"
           backgroundSize="60px 60px" />
 
+        {/* ── Fine scanline sweep for a "live terminal" feel ── */}
+        <Box position="fixed" inset={0} zIndex={0} pointerEvents="none" overflow="hidden" opacity={0.03}>
+          <Box h="140%" w="100%" bg="linear-gradient(180deg, transparent 0%, rgba(139,92,246,0.6) 50%, transparent 100%)"
+            style={{ animation: "scanline 9s linear infinite" }} />
+        </Box>
+
         <Container maxW="1440px" position="relative" zIndex={1} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
 
           {/* ══════════════════════════════════════════════════════════
@@ -639,9 +665,11 @@ export default function Academy() {
 
               <VStack align="start" spacing={0.5}>
                 <HStack spacing={3} align="center">
-                  <Box w="7px" h="7px" borderRadius="full" bg="#4ade80"
-                    boxShadow="0 0 10px rgba(74,222,128,1)"
-                    style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }} />
+                  <Box position="relative" w="9px" h="9px">
+                    <Box position="absolute" inset={0} borderRadius="full" bg="#4ade80"
+                      style={{ animation: "nodeGlow 2.4s ease-in-out infinite" }} />
+                    <Box position="absolute" inset={0} borderRadius="full" bg="#4ade80" />
+                  </Box>
                   <Heading fontSize={{ base: "xl", md: "2xl", lg: "3xl" }} fontWeight="800"
                     bgGradient="linear(135deg, #a855f7 0%, #ec4899 50%, #fbbf24 100%)"
                     bgClip="text" letterSpacing="-0.03em">
@@ -650,12 +678,12 @@ export default function Academy() {
                   <Badge bg="rgba(139,92,246,0.12)" color="#a855f7" fontSize="9px" px={2.5} py={0.5}
                     borderRadius="full" border="1px solid rgba(139,92,246,0.25)"
                     fontFamily="'Space Mono', monospace" letterSpacing="0.08em">
-                    S13
+                    SEASON 13
                   </Badge>
                 </HStack>
-                <Text color="gray.500" fontSize={{ base: "9px", md: "10px" }} letterSpacing="0.2em"
+                <Text color="gray.500" fontSize={{ base: "9px", md: "10px" }} letterSpacing="0.22em"
                   fontFamily="'Space Mono', monospace" textTransform="uppercase">
-                  Learn · Earn · Build on Soneium
+                  On-chain learning path · Soneium
                 </Text>
               </VStack>
             </HStack>
@@ -714,7 +742,7 @@ export default function Academy() {
           ══════════════════════════════════════════════════════════ */}
           {currentStep === "list" && (
             <>
-              {/* ── Hero Banner ── */}
+              {/* ── Hero: the four-stage path, shown as a thesis rather than a banner ── */}
               {(!isConnected || !isCorrectChain) && (
                 <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} mb={8}>
                   <Box bg="rgba(4,4,14,0.9)" backdropFilter="blur(24px)" borderRadius="3xl"
@@ -725,40 +753,82 @@ export default function Academy() {
                       bgGradient="linear(90deg, transparent, #8b5cf6, #ec4899, #fbbf24, transparent)"
                       style={{ animation: "shimmerBorder 4s linear infinite" }} />
 
-                    <Flex direction={{ base: "column", md: "row" }} align="center" gap={8}>
-                      <Box flexShrink={0} textAlign="center">
-                        <Text fontSize={{ base: "64px", md: "80px" }} lineHeight="1">🎓</Text>
-                        <Badge mt={2} bg="rgba(251,191,36,0.15)" color="#fbbf24" px={3} py={1}
-                          borderRadius="full" fontSize="9px" fontFamily="'Space Mono', monospace">
-                          SEASON 13 · LIVE
-                        </Badge>
-                      </Box>
-                      <Box flex={1}>
-                        <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="800" color="white" mb={3} lineHeight="1.2">
-                          Master the Soneium{" "}
-                          <Text as="span" bgGradient="linear(135deg, #a855f7, #ec4899)" bgClip="text">
-                            Ecosystem
-                          </Text>
-                        </Heading>
-                        <Text color="gray.400" fontSize="md" lineHeight="1.7" mb={4}>
-                          Agent Academy is a structured learning program on Soneium. Complete 4 curated quests covering
-                          fundamentals, DeFi, smart contract deployment, and AI agent development. Prove your knowledge
-                          on-chain and earn unique NFT badges that boost your Season 13 reputation.
-                        </Text>
-                        <HStack spacing={6} flexWrap="wrap">
-                          {[
-                            { label: "NFT Badges", value: "4 Quests" },
-                            { label: "Bonus Rep", value: "+2 pts" },
-                            { label: "Network", value: "Soneium" },
-                          ].map(({ label, value }) => (
-                            <VStack key={label} spacing={0} align="start">
-                              <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.12em">{label}</Text>
-                              <Text fontSize="sm" fontWeight="700" color="white" fontFamily="'Space Mono', monospace">{value}</Text>
-                            </VStack>
-                          ))}
-                        </HStack>
-                      </Box>
-                    </Flex>
+                    <Badge mb={4} bg="rgba(251,191,36,0.15)" color="#fbbf24" px={3} py={1}
+                      borderRadius="full" fontSize="9px" fontFamily="'Space Mono', monospace" letterSpacing="0.1em">
+                      SEASON 13 · ENROLLMENT OPEN
+                    </Badge>
+
+                    <Heading fontSize={{ base: "2xl", md: "4xl" }} fontWeight="800" color="white" mb={3} lineHeight="1.15" maxW="620px">
+                      Four protocols stand between you and{" "}
+                      <Text as="span" bgGradient="linear(135deg, #a855f7, #ec4899)" bgClip="text">
+                        Graduate status
+                      </Text>
+                    </Heading>
+                    <Text color="gray.400" fontSize="md" lineHeight="1.7" mb={7} maxW="640px">
+                      Agent Academy is a structured, on-chain curriculum for the Soneium ecosystem. Clear each
+                      quiz, sign your proof of knowledge, and mint the badge — no shortcuts, every credential
+                      lives on-chain.
+                    </Text>
+
+                    {/* Path preview — a real sequence: nodes sit ON the rail, not floating above a guessed offset */}
+                    <Box position="relative" overflowX="auto" className="aa-scrollbar" pb={2}>
+                      <Flex align="flex-start" gap={0} minW={{ base: "620px", md: "auto" }}>
+                        {[1, 2, 3, 4].map((id, idx) => {
+                          const meta = getQuestMeta(id);
+                          const nextMeta = idx < 3 ? getQuestMeta(id + 1) : meta;
+                          return (
+                            <Flex key={id} align="flex-start" flex={idx < 3 ? 1 : "0 0 auto"}>
+                              <VStack spacing={2.5} flexShrink={0} w="52px">
+                                <Flex w="52px" h="52px" borderRadius="xl" align="center" justify="center"
+                                  bg={meta.bg} border={`1.5px solid ${meta.color}70`} position="relative"
+                                  boxShadow={`0 0 18px ${meta.color}25`}>
+                                  <Image src={meta.icon} alt={meta.tag} w="26px" h="26px" objectFit="contain"
+                                    fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26'><text y='55%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='16'>◆</text></svg>" />
+                                  <Flex position="absolute" bottom="-6px" right="-6px" w="18px" h="18px" borderRadius="full"
+                                    bg="#03030f" border={`1.5px solid ${meta.color}`} align="center" justify="center">
+                                    <Text fontSize="8px" fontWeight="800" color={meta.color} fontFamily="'Space Mono', monospace">
+                                      {idx + 1}
+                                    </Text>
+                                  </Flex>
+                                </Flex>
+                                <VStack spacing={0}>
+                                  <Text fontSize="10px" color={meta.color} fontFamily="'Space Mono', monospace" fontWeight="700" whiteSpace="nowrap">
+                                    {meta.tag}
+                                  </Text>
+                                  <Text fontSize="8px" color="gray.600" fontFamily="'Space Mono', monospace" whiteSpace="nowrap">
+                                    {meta.xp}
+                                  </Text>
+                                </VStack>
+                              </VStack>
+                              {idx < 3 && (
+                                <Box flex={1} position="relative" h="2px" mt="25px" mx={1} borderRadius="full"
+                                  bg="rgba(255,255,255,0.06)" overflow="hidden">
+                                  <Box position="absolute" inset={0}
+                                    bgGradient={`linear(90deg, ${meta.color}, ${nextMeta.color})`} opacity={0.5} />
+                                  <Box position="absolute" top="-2px" w="6px" h="6px" borderRadius="full"
+                                    bg={nextMeta.color} boxShadow={`0 0 8px ${nextMeta.color}`}
+                                    style={{ animation: `railTravel${idx} 2.8s linear infinite` }} />
+                                  <style>{`@keyframes railTravel${idx} { 0% { left: -3%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: 100%; opacity: 0; } }`}</style>
+                                </Box>
+                              )}
+                            </Flex>
+                          );
+                        })}
+                      </Flex>
+                    </Box>
+
+                    <HStack spacing={6} flexWrap="wrap" mt={7}>
+                      {[
+                        { label: "NFT Badges", value: "4 Quests" },
+                        { label: "Graduate Bonus", value: "+2 rep" },
+                        { label: "Network", value: "Soneium" },
+                      ].map(({ label, value }) => (
+                        <VStack key={label} spacing={0} align="start">
+                          <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace" textTransform="uppercase" letterSpacing="0.12em">{label}</Text>
+                          <Text fontSize="sm" fontWeight="700" color="white" fontFamily="'Space Mono', monospace">{value}</Text>
+                        </VStack>
+                      ))}
+                    </HStack>
                   </Box>
                 </MotionBox>
               )}
@@ -960,7 +1030,7 @@ export default function Academy() {
 
               {/* ── Quests Grid ── */}
               <Box mb={6}>
-                <Flex align="center" justify="space-between" mb={5}>
+                <Flex align="center" justify="space-between" mb={5} flexWrap="wrap" gap={2}>
                   <HStack spacing={3}>
                     <Box w="3px" h="18px" borderRadius="full"
                       bgGradient="linear(180deg, #a855f7, #ec4899)" />
@@ -1048,7 +1118,7 @@ export default function Academy() {
                               <Box position="absolute" left={0} top={0} bottom={0} w="3px" borderRadius="full"
                                 bgGradient={`linear(180deg, ${meta.color}, transparent)`} />
 
-                              <HStack spacing={4} align="start" mb={4}>
+                              <HStack spacing={4} align="start" mb={3}>
                                 <Box w="52px" h="52px" borderRadius="xl" bg={meta.bg}
                                   border={`1px solid ${meta.color}25`}
                                   display="flex" alignItems="center" justifyContent="center"
@@ -1060,11 +1130,13 @@ export default function Academy() {
                                   )}
                                 </Box>
                                 <Box flex={1} minW={0}>
-                                  <HStack spacing={2} mb={0.5} flexWrap="wrap">
+                                  <HStack spacing={2} mb={0.5} flexWrap="wrap" justify="space-between">
                                     <Text fontWeight="700" color="white" fontSize="md" noOfLines={1}>
                                       {quest.name}
                                     </Text>
-                                    {/* Eliminat link-ul "View badge on Blockscout" de aici */}
+                                    <Text fontSize="9px" color="gray.600" fontFamily="'Space Mono', monospace" letterSpacing="0.05em" flexShrink={0}>
+                                      {meta.codename}
+                                    </Text>
                                   </HStack>
                                   <HStack spacing={2} flexWrap="wrap">
                                     <Badge bg={`${meta.color}15`} color={meta.color}
@@ -1081,6 +1153,11 @@ export default function Academy() {
                                       fontSize="8px" px={2} py={0.5} borderRadius="full"
                                       fontFamily="'Space Mono', monospace">
                                       {meta.duration}
+                                    </Badge>
+                                    <Badge bg="rgba(251,191,36,0.1)" color="#fbbf24"
+                                      fontSize="8px" px={2} py={0.5} borderRadius="full"
+                                      fontFamily="'Space Mono', monospace" fontWeight="700">
+                                      {meta.xp}
                                     </Badge>
                                   </HStack>
                                 </Box>
@@ -1174,24 +1251,54 @@ export default function Academy() {
               {/* ── How It Works ── */}
               {isConnected && isCorrectChain && (
                 <Box bg="rgba(4,4,14,0.7)" backdropFilter="blur(16px)" borderRadius="2xl"
-                  border="1px solid rgba(255,255,255,0.05)" p={{ base: 5, md: 7 }} mb={8}>
-                  <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace"
-                    textTransform="uppercase" letterSpacing="0.2em" mb={4}>
-                    How It Works
-                  </Text>
-                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={{ base: 3, md: 4 }}>
+                  border="1px solid rgba(255,255,255,0.05)" p={{ base: 5, md: 7 }} mb={8} position="relative" overflow="hidden">
+                  <Flex align="center" justify="space-between" mb={5} flexWrap="wrap" gap={2}>
+                    <Text fontSize="xs" color="gray.500" fontFamily="'Space Mono', monospace"
+                      textTransform="uppercase" letterSpacing="0.2em">
+                      How It Works
+                    </Text>
+                    <Text fontSize="10px" color="gray.600" fontFamily="'Space Mono', monospace" display={{ base: "none", md: "block" }}>
+                      4-STEP SEQUENCE
+                    </Text>
+                  </Flex>
+
+                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6}>
                     {[
                       { step: "01", title: "Pick a Quest", desc: "Choose from 4 topics covering the Soneium ecosystem, from basics to AI agents.", color: "#06b6d4" },
-                      { step: "02", title: "Answer Questions", desc: "Read through the material and answer True/False questions to verify your understanding.", color: "#8b5cf6" },
-                      { step: "03", title: "Get Signature", desc: "Pass the quiz and receive a cryptographic signature allowing you to mint your NFT badge.", color: "#ec4899" },
-                      { step: "04", title: "Mint & Earn", desc: "Mint your badge on Soneium. Complete all 4 to unlock Graduate and +2 rep points.", color: "#fbbf24" },
-                    ].map(({ step, title, desc, color }) => (
-                      <Box key={step} p={4} borderRadius="xl" bg="rgba(0,0,0,0.25)"
-                        border="1px solid rgba(255,255,255,0.04)"
-                        _hover={{ borderColor: `${color}25`, bg: "rgba(0,0,0,0.4)" }}
-                        transition="all 0.2s">
-                        <Text fontSize="9px" color={color} fontFamily="'Space Mono', monospace"
-                          fontWeight="700" letterSpacing="0.15em" mb={1}>{step}</Text>
+                      { step: "02", title: "Answer Questions", desc: "Read the material and answer True / False questions to prove your understanding.", color: "#8b5cf6" },
+                      { step: "03", title: "Get Signature", desc: "Pass the quiz and receive a cryptographic signature that unlocks your NFT mint.", color: "#ec4899" },
+                      { step: "04", title: "Mint & Earn", desc: "Mint your badge on Soneium. Clear all 4 to unlock Graduate and +2 rep points.", color: "#fbbf24" },
+                    ].map(({ step, title, desc, color }, idx) => (
+                      <Box key={step} p={5} borderRadius="xl" bg="rgba(0,0,0,0.25)"
+                        border="1px solid rgba(255,255,255,0.04)" position="relative" zIndex={1}
+                        textAlign="center"
+                        _hover={{ borderColor: `${color}30`, bg: "rgba(0,0,0,0.4)", transform: "translateY(-2px)" }}
+                        transition="all 0.25s">
+
+                        {/* connector: center of this node → center of the next, always equal length */}
+                        {idx < 3 && (
+                          <Box display={{ base: "none", md: "block" }} position="absolute"
+                            left="50%" top="40px" width="calc(100% + 24px)" height="2px"
+                            zIndex={0} pointerEvents="none" overflow="visible">
+                            <Box position="absolute" inset={0} borderRadius="full"
+                              bg="rgba(255,255,255,0.06)" />
+                            <Box position="absolute" inset={0} borderRadius="full"
+                              bgGradient={`linear(90deg, ${color}, ${[
+                                "#06b6d4", "#8b5cf6", "#ec4899", "#fbbf24",
+                              ][idx + 1]})`} opacity={0.45} />
+                            <Box position="absolute" top="-2px" w="6px" h="6px" borderRadius="full"
+                              bg={color} boxShadow={`0 0 8px ${color}`}
+                              style={{ animation: `stepTravel${idx} 2.6s linear infinite` }} />
+                            <style>{`@keyframes stepTravel${idx} { 0% { left: 0%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { left: 100%; opacity: 0; } }`}</style>
+                          </Box>
+                        )}
+
+                        <Flex w="40px" h="40px" borderRadius="lg" align="center" justify="center" mb={3} mx="auto"
+                          bg={`${color}15`} border={`1px solid ${color}40`}
+                          boxShadow={`0 0 14px ${color}20`}>
+                          <Text fontSize="12px" color={color} fontFamily="'Space Mono', monospace"
+                            fontWeight="800" letterSpacing="0.05em">{step}</Text>
+                        </Flex>
                         <Text fontSize="sm" fontWeight="700" color="white" mb={1.5}>{title}</Text>
                         <Text fontSize="xs" color="gray.500" lineHeight="1.6">{desc}</Text>
                       </Box>

@@ -78,84 +78,86 @@ const parseChainId = (value: string | null): number | undefined => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
-// ============= Bridge history — read straight from the LI.FI widget's own store =============
-// The widget already persists every route (pending/completed/failed) to localStorage via
-// a zustand `persist` store, under the key `${keyPrefix || "li.fi"}-widget-routes` (verified
-// against the installed @lifi/widget package — see stores/routes/createRouteExecutionStore).
-// Rather than re-implementing history tracking ourselves, we just read that same store: it
-// already has everything (chains, tokens, USD values, status, and even the explorer link
-// per transaction), and it goes back further than "from now on" since it's been recording
-// since before this feature existed.
+// ============= Bridge history — same API the widget's own history page uses =============
+// Verified by inspecting @lifi/widget's source: its "Transaction History" page does NOT
+// read from local storage for display — it calls `getTransactionHistory` from @lifi/sdk,
+// which hits LI.FI's `/analytics/transfers` endpoint for the connected wallet, going back
+// years. Local storage is only used internally by the widget to track/cleanup very recent,
+// not-yet-indexed routes — not as the source of the history list itself.
 //
-// IMPORTANT: if `keyPrefix` is ever added to `lifiConfig` below, update LIFI_KEY_PREFIX here
-// to match — otherwise this will silently read from the wrong (empty) key.
-const LIFI_KEY_PREFIX: string | undefined = undefined;
-const LIFI_ROUTES_STORAGE_KEY = `${LIFI_KEY_PREFIX || "li.fi"}-widget-routes`;
-
-// Status bitflags, matching the widget's internal RouteExecutionStatus (1=pending,
-// 2=in progress, 4=done, 8=failed — 16/32 are done-with-partial/refund, additive to 4).
-const ROUTE_STATUS_DONE = 4;
-const ROUTE_STATUS_FAILED = 8;
-const hasStatusFlag = (status: number, flag: number) => (status & flag) === flag;
+// We call that same endpoint directly with fetch() instead of importing createClient/
+// getTransactionHistory from @lifi/sdk — the installed @lifi/sdk version in this project
+// doesn't export createClient (its public API differs by version), and a raw fetch call
+// sidesteps that entirely: it's just a GET request with the same headers the SDK itself
+// sends under the hood (verified against @lifi/sdk's internal request() helper).
+const LIFI_API_BASE_URL = "https://li.quest/v1";
+const LIFI_INTEGRATOR = "PulseVault"; // matches the `integrator` prop passed to <LiFiWidget> below
 
 interface BridgeHistoryEntry {
   id: string;
-  timestamp: number;
+  timestamp: number; // ms since epoch
   fromChainId?: number;
   toChainId?: number;
   fromSymbol?: string;
   toSymbol?: string;
   fromAmountUSD?: string;
   toAmountUSD?: string;
-  txHash?: string;
   txLink?: string;
   failed: boolean;
   pending: boolean;
 }
 
-const readLifiWidgetHistory = (addr?: string): BridgeHistoryEntry[] => {
-  try {
-    const raw = localStorage.getItem(LIFI_ROUTES_STORAGE_KEY);
-    if (!raw) return [];
+// Maps one entry of the API's `transfers` array (FullStatusData | StatusData | FailedStatusData)
+// into our simplified history entry shape.
+const mapTransferToEntry = (t: any): BridgeHistoryEntry => {
+  const sending = t?.sending ?? {};
+  const receiving = t?.receiving ?? {};
 
-    const parsed = JSON.parse(raw);
-    const routes = parsed?.state?.routes;
-    if (!routes || typeof routes !== "object") return [];
+  return {
+    id: t?.transactionId || sending?.txHash || `${sending?.timestamp ?? Date.now()}-${sending?.chainId ?? 0}`,
+    // API timestamps are in seconds (same convention as the fromTimestamp/toTimestamp
+    // request params) — converting to ms here. If this ever looks off by 1000x, this is
+    // the line to flip.
+    timestamp: sending?.timestamp ? sending.timestamp * 1000 : Date.now(),
+    fromChainId: sending?.chainId,
+    toChainId: receiving?.chainId,
+    fromSymbol: sending?.token?.symbol,
+    toSymbol: receiving?.token?.symbol,
+    fromAmountUSD: sending?.amountUSD,
+    toAmountUSD: receiving?.amountUSD,
+    txLink: t?.lifiExplorerLink || sending?.txLink,
+    failed: t?.status === "FAILED",
+    pending: t?.status === "PENDING",
+  };
+};
 
-    return Object.values(routes as Record<string, { route: any; status: number }>)
-      .filter(
-        (entry) =>
-          !addr || !entry?.route?.fromAddress || entry.route.fromAddress.toLowerCase() === addr.toLowerCase()
-      )
-      .map((entry) => {
-        const { route, status } = entry;
-        const steps = route?.steps ?? [];
-        const firstStep = steps[0];
-        const lastStep = steps[steps.length - 1];
-        const actions = lastStep?.execution?.actions ?? [];
-        const txAction = [...actions].reverse().find((a: any) => a?.txHash);
+// Fetches the transaction history for a wallet directly from LI.FI's API — a plain GET
+// with the same headers the SDK sends internally, so no @lifi/sdk import is needed at all.
+const fetchLifiTransactionHistory = async (wallet: string): Promise<BridgeHistoryEntry[]> => {
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
 
-        return {
-          id: route?.id || `${firstStep?.execution?.startedAt ?? Date.now()}`,
-          timestamp: firstStep?.execution?.startedAt || Date.now(),
-          fromChainId: route?.fromChainId,
-          toChainId: route?.toChainId,
-          fromSymbol: route?.fromToken?.symbol,
-          toSymbol: route?.toToken?.symbol,
-          fromAmountUSD: route?.fromAmountUSD,
-          toAmountUSD: route?.toAmountUSD,
-          txHash: txAction?.txHash,
-          txLink: txAction?.txLink,
-          failed: hasStatusFlag(status, ROUTE_STATUS_FAILED),
-          pending: !hasStatusFlag(status, ROUTE_STATUS_DONE) && !hasStatusFlag(status, ROUTE_STATUS_FAILED),
-        } as BridgeHistoryEntry;
-      })
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 20);
-  } catch (err) {
-    console.warn("Could not read LI.FI widget history:", err);
-    return [];
+  const url = new URL(`${LIFI_API_BASE_URL}/analytics/transfers`);
+  url.searchParams.set("integrator", LIFI_INTEGRATOR);
+  url.searchParams.set("wallet", wallet);
+  url.searchParams.set("fromTimestamp", Math.floor(tenYearsAgo.getTime() / 1000).toString());
+  url.searchParams.set("toTimestamp", Math.floor(Date.now() / 1000).toString());
+
+  const headers: Record<string, string> = { "x-lifi-integrator": LIFI_INTEGRATOR };
+  if (LIFI_API_KEY) headers["x-lifi-api-key"] = LIFI_API_KEY;
+
+  const response = await fetch(url.toString(), { headers });
+  if (!response.ok) {
+    throw new Error(`LI.FI history request failed (${response.status})`);
   }
+
+  const data = await response.json();
+  const transfers = data?.transfers ?? [];
+
+  return transfers
+    .map(mapTransferToEntry)
+    .sort((a: BridgeHistoryEntry, b: BridgeHistoryEntry) => b.timestamp - a.timestamp)
+    .slice(0, 20);
 };
 
 const formatTimeAgo = (timestamp: number): string => {
@@ -513,38 +515,60 @@ export default function Bridge() {
   }, []);
 
   // =====================================================================
-  // Bridge history — read from the LI.FI widget's own persisted store (see the
-  // readLifiWidgetHistory comment above for why). Refreshed whenever it's likely
-  // to have changed: on mount, when the wallet changes, right before the drawer
-  // opens, and whenever the widget reports route activity.
+  // Bridge history — fetched from the same LI.FI API the widget's own history page
+  // uses (see the BridgeHistoryEntry/fetchLifiTransactionHistory comment above for why).
   // =====================================================================
-  useEffect(() => {
-    setHistory(readLifiWidgetHistory(address));
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  const fetchHistory = useCallback(async () => {
+    if (!address) {
+      setHistory([]);
+      return;
+    }
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const entries = await fetchLifiTransactionHistory(address);
+      setHistory(entries);
+    } catch (err) {
+      console.warn("Could not fetch bridge transaction history:", err);
+      setHistoryError("Could not load transaction history right now.");
+    } finally {
+      setIsHistoryLoading(false);
+    }
   }, [address]);
 
+  // Load on mount / whenever the wallet changes
   useEffect(() => {
-    if (isHistoryOpen) {
-      setHistory(readLifiWidgetHistory(address));
-    }
-  }, [isHistoryOpen, address]);
+    fetchHistory();
+  }, [fetchHistory]);
 
+  // Refresh right before showing the drawer, so it's as fresh as possible
+  useEffect(() => {
+    if (isHistoryOpen) fetchHistory();
+  }, [isHistoryOpen, fetchHistory]);
+
+  // The API can take a few seconds to index a transaction after it completes, so refresh
+  // shortly after (rather than instantly) when the widget reports a route finished.
   const widgetEvents = useWidgetEvents();
 
   useEffect(() => {
-    const refreshHistory = () => setHistory(readLifiWidgetHistory(address));
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refreshSoon = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(fetchHistory, 4000);
+    };
 
-    widgetEvents.on(WidgetEvent.RouteExecutionStarted, refreshHistory);
-    widgetEvents.on(WidgetEvent.RouteExecutionUpdated, refreshHistory);
-    widgetEvents.on(WidgetEvent.RouteExecutionCompleted, refreshHistory);
-    widgetEvents.on(WidgetEvent.RouteExecutionFailed, refreshHistory);
+    widgetEvents.on(WidgetEvent.RouteExecutionCompleted, refreshSoon);
+    widgetEvents.on(WidgetEvent.RouteExecutionFailed, refreshSoon);
 
     return () => {
-      widgetEvents.off(WidgetEvent.RouteExecutionStarted, refreshHistory);
-      widgetEvents.off(WidgetEvent.RouteExecutionUpdated, refreshHistory);
-      widgetEvents.off(WidgetEvent.RouteExecutionCompleted, refreshHistory);
-      widgetEvents.off(WidgetEvent.RouteExecutionFailed, refreshHistory);
+      clearTimeout(timeoutId);
+      widgetEvents.off(WidgetEvent.RouteExecutionCompleted, refreshSoon);
+      widgetEvents.off(WidgetEvent.RouteExecutionFailed, refreshSoon);
     };
-  }, [widgetEvents, address]);
+  }, [widgetEvents, fetchHistory]);
 
   // =====================================================================
   // Token pre-selection from URL
@@ -892,37 +916,44 @@ export default function Bridge() {
   const HistoryButton = () => (
     <Button
       onClick={openHistory}
-      variant="ghost"
       size={{ base: "sm", md: "md" }}
-      color="gray.400"
+      color="#c4b5fd"
+      bg="rgba(139,92,246,0.1)"
+      border="1px solid rgba(139,92,246,0.3)"
       _hover={{
         color: "white",
-        bg: "rgba(139,92,246,0.08)",
-        borderColor: "rgba(139,92,246,0.25)",
+        bg: "rgba(139,92,246,0.18)",
+        borderColor: "rgba(139,92,246,0.5)",
+        boxShadow: "0 0 20px rgba(139,92,246,0.15)",
+        transform: "translateY(-1px)",
       }}
+      _active={{ transform: "scale(0.97)" }}
       borderRadius="xl"
-      border="1px solid rgba(255,255,255,0.07)"
       fontFamily="'Space Grotesk', sans-serif"
-      fontWeight="500"
+      fontWeight="600"
       position="relative"
       transition="all 0.2s"
+      leftIcon={<Text as="span" fontSize="14px">🕘</Text>}
     >
-      🕘 History
+      History
       {history.length > 0 && (
         <Badge
           position="absolute"
-          top="-6px"
-          right="-6px"
-          bg="#8b5cf6"
+          top="-7px"
+          right="-7px"
+          bgGradient="linear(135deg, #8b5cf6, #ec4899)"
           color="white"
           fontSize="9px"
+          fontWeight="700"
           borderRadius="full"
-          minW="18px"
-          h="18px"
+          minW="19px"
+          h="19px"
           display="flex"
           alignItems="center"
           justifyContent="center"
           fontFamily="'Space Mono', monospace"
+          border="2px solid #03030f"
+          boxShadow="0 0 10px rgba(139,92,246,0.5)"
         >
           {history.length}
         </Badge>
@@ -948,13 +979,50 @@ export default function Bridge() {
             color="white"
             fontSize="md"
           >
-            🕘 Bridge History
+            <HStack justify="space-between" pr={8}>
+              <Text>🕘 Bridge History</Text>
+              <Button
+                size="xs"
+                variant="ghost"
+                color="gray.400"
+                onClick={fetchHistory}
+                isLoading={isHistoryLoading}
+                _hover={{ color: "white", bg: "rgba(139,92,246,0.1)" }}
+                fontFamily="'Space Mono', monospace"
+              >
+                ↻ Refresh
+              </Button>
+            </HStack>
           </DrawerHeader>
           <DrawerBody py={4}>
             {!isConnected ? (
               <Text fontSize="sm" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
                 Connect your wallet to see your bridge history.
               </Text>
+            ) : isHistoryLoading && history.length === 0 ? (
+              <VStack spacing={3} py={6}>
+                <Spinner size="md" color="#8b5cf6" />
+                <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                  Loading your transaction history...
+                </Text>
+              </VStack>
+            ) : historyError && history.length === 0 ? (
+              <VStack spacing={3} py={6} textAlign="center">
+                <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
+                  {historyError}
+                </Text>
+                <Button
+                  size="sm"
+                  onClick={fetchHistory}
+                  bg="rgba(139,92,246,0.15)"
+                  color="#c4b5fd"
+                  border="1px solid rgba(139,92,246,0.3)"
+                  _hover={{ bg: "rgba(139,92,246,0.25)" }}
+                  borderRadius="lg"
+                >
+                  Try again
+                </Button>
+              </VStack>
             ) : history.length === 0 ? (
               <Text fontSize="sm" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
                 No bridge transactions yet. Once you complete a bridge, it'll show up here.

@@ -71,9 +71,7 @@ import {
   liteforgeChain,
   ecochainChain,
   abstractChain,
-  // NOTE: this assumes your ../wagmi.ts exports the wagmi config object as `config`
-  // (the same one you pass to <WagmiProvider config={...}>). If it's named differently,
-  // just rename this alias import accordingly.
+  arcTestnetChain,
   config as wagmiConfig,
 } from "../wagmi";
 
@@ -108,7 +106,8 @@ const SBT_CONTRACT_ADDRESS = '0x13DBC40aB0695a7c392BB6447f972995A71527f9';
 // List of testnet chain IDs
 const TESTNET_CHAIN_IDS: number[] = [
   liteforgeChain.id,
-  ecochainChain.id 
+  ecochainChain.id,
+  arcTestnetChain.id
 ];
 
 // Function to check if a chain is testnet
@@ -132,7 +131,8 @@ const chains = [soneiumChain,
   somniaChain, 
   katanaChain, 
   liteforgeChain,
-  ecochainChain
+  ecochainChain,
+  arcTestnetChain
 ];
 
 const EXPLORER_URLS: Record<number, string> = {
@@ -153,6 +153,8 @@ const EXPLORER_URLS: Record<number, string> = {
   [katanaChain.id]: 'https://explorer.katanarpc.com/tx/',
   [liteforgeChain.id]: 'https://liteforge.explorer.caldera.xyz/tx/',
   [ecochainChain.id]: 'https://maculatus-scan.x1eco.com/tx/',
+  [arcTestnetChain.id]: 'https://testnet.arcscan.app/tx/',
+  
 };
 
 const GM_CONTRACTS: Record<number, `0x${string}`> = {
@@ -173,6 +175,7 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [katanaChain.id]: '0xc09349baBedf46CcbA46cB1F4C14d0b8f2fd5726',
   [liteforgeChain.id]: '0x53d3cFEf87fBC62b7f91e2577E8409a545814587',
   [ecochainChain.id]: '0x8f5F899667E301645491116ea2B79Be299c60cE4',
+  [arcTestnetChain.id]: '0x5A7B96bFefE14E216E41D5E2FEF40E8dD47db0Ea',
 };
 
 const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
@@ -193,6 +196,7 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [katanaChain.id]: '0x64B41a111645a85eDD7cC8587BA5261053aE58A2',
   [liteforgeChain.id]: '0xC8538F3b792D58d8D829fAfFC3AfFf3D8F410047',
   [ecochainChain.id]: '0x55231Bc7686c280f9EA6d7ddf963B2606E3D93aF',
+  [arcTestnetChain.id]: '0x428066D90a5e59a9025DCFEA5edF81b02Ce6040D',
 };
 
 // Cards Colour
@@ -276,6 +280,11 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#099b21',
     gradient: 'linear(135deg, #057c05, #06c43f, #51e70c)',
     glowColor: 'rgba(27, 187, 12, 0.35)',
+  },
+  [arcTestnetChain.id]: {
+    color: '#053c70',
+    gradient: 'linear(135deg, #033658, #37a8e9, #82c5da)',
+    glowColor: 'rgba(6, 151, 161, 0.35)',
   },
 };
 

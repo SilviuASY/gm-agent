@@ -806,7 +806,7 @@ export default function App() {
                   <VStack spacing={0} align="stretch">
                     <Button
                       onClick={() => {
-                        navigate("/tools/badge-season-12");
+                        navigate("/badge-season-12");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -827,7 +827,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/tools/badge-season-10");
+                        navigate("/badge-season-10");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -848,7 +848,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/tools/gmorning");
+                        navigate("/gmorning");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -869,7 +869,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/tools/bridge");
+                        navigate("/bridge");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -1213,12 +1213,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/tools/badge-season-12");
+                          navigate("/badge-season-12");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/tools/badge-season-12");
+                            navigate("/badge-season-12");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1242,12 +1242,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/tools/badge-season-10");
+                          navigate("/badge-season-10");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/tools/badge-season-10");
+                            navigate("/badge-season-10");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1271,12 +1271,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/tools/gmorning");
+                          navigate("/gmorning");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/tools/gmorning");
+                            navigate("/gmorning");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1300,12 +1300,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/tools/bridge");
+                          navigate("/bridge");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/tools/bridge");
+                            navigate("/bridge");
                           }, 50);
                         }}
                         variant="ghost"
@@ -1329,12 +1329,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/tools/docs");
+                          navigate("/docs");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/tools/docs");
+                            navigate("/docs");
                           }, 50);
                         }}
                         variant="ghost"

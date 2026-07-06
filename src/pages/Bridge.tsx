@@ -20,6 +20,7 @@ import {
   DrawerHeader,
   DrawerOverlay,
   useDisclosure,
+  Image,
 } from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
@@ -39,16 +40,12 @@ import {
 } from "react";
 import { useFixScroll } from "../hooks/useFixScroll";
 
-// ============= Import wagmi config =============
 import { config } from "../wagmi";
 
 // ============= Motion =============
 const MotionBox = motion(Box);
 
-// ============= LI.FI Config =============
-// No hardcoded fallback key anymore — silently falling back to a shared key made it
-// invisible when a deploy was missing its own key. Instead: warn loudly in dev, and
-// fail the build outright in production so a missing key can never ship unnoticed.
+
 const LIFI_API_KEY = (import.meta as any).env?.VITE_LIFI_API_KEY as string | undefined;
 
 if (!LIFI_API_KEY) {
@@ -56,46 +53,30 @@ if (!LIFI_API_KEY) {
     "VITE_LIFI_API_KEY is not set. Add it to your .env file (request a key at https://apidocs.li.fi/). " +
     "Without it, the LI.FI widget runs on a shared/rate-limited tier.";
   if ((import.meta as any).env?.PROD) {
-    // Fail loudly in production builds — silent fallback is not acceptable here.
     throw new Error(`[Bridge] ${message}`);
   } else {
     console.warn(`[Bridge] ${message}`);
   }
 }
 
-// Platform fee — single source of truth, used both in the widget config below and in
-// the "Quick Tips" disclosure so the two can never drift out of sync.
 const PLATFORM_FEE = 0.001; // 0.1%
 
-const DEFAULT_FROM_CHAIN = 1868; // Soneium
+const DEFAULT_FROM_CHAIN = 1868;
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 
-// Parses a chain id from a URL query param, rejecting anything that isn't a positive
-// finite number instead of silently passing NaN through to the widget config.
 const parseChainId = (value: string | null): number | undefined => {
   if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
-// ============= Bridge history — same API the widget's own history page uses =============
-// Verified by inspecting @lifi/widget's source: its "Transaction History" page does NOT
-// read from local storage for display — it calls `getTransactionHistory` from @lifi/sdk,
-// which hits LI.FI's `/analytics/transfers` endpoint for the connected wallet, going back
-// years. Local storage is only used internally by the widget to track/cleanup very recent,
-// not-yet-indexed routes — not as the source of the history list itself.
-//
-// We call that same endpoint directly with fetch() instead of importing createClient/
-// getTransactionHistory from @lifi/sdk — the installed @lifi/sdk version in this project
-// doesn't export createClient (its public API differs by version), and a raw fetch call
-// sidesteps that entirely: it's just a GET request with the same headers the SDK itself
-// sends under the hood (verified against @lifi/sdk's internal request() helper).
+
 const LIFI_API_BASE_URL = "https://li.quest/v1";
-const LIFI_INTEGRATOR = "PulseVault"; // matches the `integrator` prop passed to <LiFiWidget> below
+const LIFI_INTEGRATOR = "PulseVault";
 
 interface BridgeHistoryEntry {
   id: string;
-  timestamp: number; // ms since epoch
+  timestamp: number;
   fromChainId?: number;
   toChainId?: number;
   fromSymbol?: string;
@@ -107,17 +88,12 @@ interface BridgeHistoryEntry {
   pending: boolean;
 }
 
-// Maps one entry of the API's `transfers` array (FullStatusData | StatusData | FailedStatusData)
-// into our simplified history entry shape.
 const mapTransferToEntry = (t: any): BridgeHistoryEntry => {
   const sending = t?.sending ?? {};
   const receiving = t?.receiving ?? {};
 
   return {
     id: t?.transactionId || sending?.txHash || `${sending?.timestamp ?? Date.now()}-${sending?.chainId ?? 0}`,
-    // API timestamps are in seconds (same convention as the fromTimestamp/toTimestamp
-    // request params) — converting to ms here. If this ever looks off by 1000x, this is
-    // the line to flip.
     timestamp: sending?.timestamp ? sending.timestamp * 1000 : Date.now(),
     fromChainId: sending?.chainId,
     toChainId: receiving?.chainId,
@@ -131,8 +107,6 @@ const mapTransferToEntry = (t: any): BridgeHistoryEntry => {
   };
 };
 
-// Fetches the transaction history for a wallet directly from LI.FI's API — a plain GET
-// with the same headers the SDK sends internally, so no @lifi/sdk import is needed at all.
 const fetchLifiTransactionHistory = async (wallet: string): Promise<BridgeHistoryEntry[]> => {
   const tenYearsAgo = new Date();
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
@@ -916,7 +890,8 @@ export default function Bridge() {
   const HistoryButton = () => (
     <Button
       onClick={openHistory}
-      size={{ base: "sm", md: "md" }}
+      size={{ base: "md", md: "md" }}
+      px={{ base: 4, md: 4 }}
       color="#c4b5fd"
       bg="rgba(139,92,246,0.1)"
       border="1px solid rgba(139,92,246,0.3)"
@@ -931,9 +906,11 @@ export default function Bridge() {
       borderRadius="xl"
       fontFamily="'Space Grotesk', sans-serif"
       fontWeight="600"
+      fontSize={{ base: "sm", md: "md" }}
       position="relative"
       transition="all 0.2s"
-      leftIcon={<Text as="span" fontSize="14px">🕘</Text>}
+      leftIcon={<Image src="/history.png" alt="" boxSize={{ base: "28px", md: "28px" }} />}
+      marginTop={{ base: 0, md: "4px" }}
     >
       History
       {history.length > 0 && (
@@ -1234,7 +1211,7 @@ export default function Bridge() {
               </VStack>
             </HStack>
 
-            <HStack spacing={3} display={{ base: "none", md: "flex" }}>
+            <HStack spacing={5} display={{ base: "none", md: "flex" }}>
               <HistoryButton />
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
                 <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: true, largeScreen: true }} />

@@ -31,16 +31,24 @@ import {
   InputGroup,
   InputLeftElement,
   InputRightElement,
+  Skeleton,
 } from "@chakra-ui/react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useChainId, useSwitchChain, useReadContract, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  useSwitchChain,
+  useReadContract,
+  useReadContracts,
+  useBalance,
+  useWriteContract,
+} from "wagmi";
 import { waitForTransactionReceipt } from "@wagmi/core";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeftIcon, StarIcon, InfoIcon, ExternalLinkIcon, CheckCircleIcon, SearchIcon, CloseIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { useFixScroll } from "../hooks/useFixScroll";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -271,6 +279,14 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
   },
 };
 
+// ============= Multicall layout =============
+// Every chain contributes a fixed number of entries to the two batched
+// `useReadContracts` calls below. These offsets describe where each value
+// lives inside the flat results array so we can look it up by index instead
+// of running a separate RPC read per card.
+const GLOBAL_FIELDS_PER_CHAIN = 4; // [gmFee, deployFee, gmTotal, deployTotal]
+const USER_FIELDS_PER_CHAIN = 2;   // [gmUserCount, deployUserCount]
+
 // ============= Types =============
 interface TxSuccess {
   hash: string;
@@ -284,6 +300,21 @@ type LoadingPhase = 'switching' | 'sending' | 'confirming';
 
 // ============= Motion =============
 const MotionBox = motion(Box);
+
+// ============= Small helpers =============
+// Creates/updates a <meta> tag in <head> — used for the Open Graph tags below.
+// Kept dependency-free (no react-helmet) so it works regardless of what's
+// already set up in the project.
+const upsertMetaTag = (attr: 'name' | 'property', key: string, content: string) => {
+  if (typeof document === 'undefined') return;
+  let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+  if (!el) {
+    el = document.createElement('meta');
+    el.setAttribute(attr, key);
+    document.head.appendChild(el);
+  }
+  el.setAttribute('content', content);
+};
 
 // ============= Styles =============
 const pageStyles = `
@@ -602,9 +633,45 @@ const TestnetBadge = () => {
 };
 
 // ============= Fee Display =============
-const FeeDisplay = ({ fee, isExempt, chainId }: { fee: bigint; isExempt: boolean; chainId: number }) => {
+const FeeDisplay = ({
+  fee,
+  isExempt,
+  chainId,
+  isLoading,
+  hasError,
+  onRetry,
+}: {
+  fee: bigint;
+  isExempt: boolean;
+  chainId: number;
+  isLoading?: boolean;
+  hasError?: boolean;
+  onRetry?: () => void;
+}) => {
   const formatted = (Number(fee) / 1e18).toFixed(6);
   const symbol = chains.find(c => c.id === chainId)?.nativeCurrency?.symbol || 'ETH';
+
+  if (isLoading) {
+    return (
+      <Skeleton
+        height="16px" width="72px" mx="auto" borderRadius="md"
+        startColor="rgba(255,255,255,0.04)" endColor="rgba(255,255,255,0.14)"
+      />
+    );
+  }
+
+  if (hasError) {
+    return (
+      <Tooltip label="Couldn't load this value from the RPC" hasArrow>
+        <Button
+          variant="link" size="xs" color="#f87171" onClick={onRetry}
+          fontFamily="'Space Mono', monospace" fontWeight="700"
+        >
+          ⚠️ Retry
+        </Button>
+      </Tooltip>
+    );
+  }
   
   if (isExempt) {
     return (
@@ -626,6 +693,49 @@ const FeeDisplay = ({ fee, isExempt, chainId }: { fee: bigint; isExempt: boolean
   );
 };
 
+// ============= Generic stat value (skeleton / error / value) =============
+const StatValue = ({
+  value,
+  isLoading,
+  hasError,
+  onRetry,
+  color = 'white',
+  fontSize = 'xl',
+}: {
+  value: string | number;
+  isLoading?: boolean;
+  hasError?: boolean;
+  onRetry?: () => void;
+  color?: string;
+  fontSize?: string;
+}) => {
+  if (isLoading) {
+    return (
+      <Skeleton
+        height="20px" width="36px" mx="auto" borderRadius="md"
+        startColor="rgba(255,255,255,0.04)" endColor="rgba(255,255,255,0.14)"
+      />
+    );
+  }
+  if (hasError) {
+    return (
+      <Tooltip label="Couldn't load this value from the RPC" hasArrow>
+        <Button
+          variant="link" size="xs" color="#f87171" onClick={onRetry}
+          fontFamily="'Space Mono', monospace" fontWeight="700"
+        >
+          ⚠️
+        </Button>
+      </Tooltip>
+    );
+  }
+  return (
+    <Text fontSize={fontSize} fontWeight="800" color={color} fontFamily="'Space Mono', monospace">
+      {value}
+    </Text>
+  );
+};
+
 // ============= Action Card =============
 const ActionCard = ({
   chain,
@@ -635,11 +745,20 @@ const ActionCard = ({
   isGlobalLoading,
   loadingPhase,
   onAction,
+  onRetry,
   fee,
   userCount,
   totalCount,
   hasSBT,
   isConnected,
+  isFeeLoading,
+  isTotalLoading,
+  isUserCountLoading,
+  hasFeeError,
+  hasTotalError,
+  hasUserError,
+  balance,
+  isBalanceLoading,
 }: {
   chain: any;
   index: number;
@@ -648,11 +767,20 @@ const ActionCard = ({
   isGlobalLoading: boolean;
   loadingPhase?: LoadingPhase | null;
   onAction: () => void;
+  onRetry: () => void;
   fee: bigint;
   userCount: number;
   totalCount: number;
   hasSBT: boolean;
   isConnected: boolean;
+  isFeeLoading?: boolean;
+  isTotalLoading?: boolean;
+  isUserCountLoading?: boolean;
+  hasFeeError?: boolean;
+  hasTotalError?: boolean;
+  hasUserError?: boolean;
+  balance?: bigint;
+  isBalanceLoading?: boolean;
 }) => {
   const meta = chainMetadata[chain.id] || chainMetadata[soneiumChain.id];
   const isSoneium = chain.id === SONEIUM_CHAIN_ID;
@@ -660,20 +788,45 @@ const ActionCard = ({
   const isTestnet = isTestnetChain(chain.id);
   const isGM = type === 'gm';
   const actionLabel = isGM ? `GM to ${chain.name}` : `Deploy to ${chain.name}`;
+  const toast = useToast();
 
   // Loading text reflects the actual phase of the transaction (switching network,
   // waiting for wallet signature, or waiting for on-chain confirmation) instead of
-  // a single generic label — this also makes it obvious to the user why the button
-  // stays busy for a bit after the wallet popup already closed.
+  // a single generic label.
   const phaseLoadingLabel: Record<LoadingPhase, string> = {
     switching: 'Switching network…',
     sending: isGM ? 'Sending GM…' : 'Deploying…',
     confirming: 'Confirming on-chain…',
   };
   const loadingLabel = loadingPhase ? phaseLoadingLabel[loadingPhase] : (isGM ? 'Sending GM…' : 'Deploying…');
+
+  // Balance check: only meaningful once both the fee and the balance have
+  // actually loaded, and never for fee-exempt (SBT) actions.
+  const feeToCompare = isExempt ? 0n : fee;
+  const hasInsufficientBalance =
+    isConnected &&
+    !isExempt &&
+    !isFeeLoading &&
+    !isBalanceLoading &&
+    balance !== undefined &&
+    balance < feeToCompare;
   
   // Disable only the button, not the whole card
-  const isButtonDisabled = !isConnected || isLoading || isGlobalLoading;
+  const isButtonDisabled = !isConnected || isLoading || isGlobalLoading || hasInsufficientBalance;
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}${window.location.pathname}?chainId=${chain.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: 'Link copied',
+        description: `Shareable link for ${chain.name} copied to clipboard.`,
+        status: 'success', duration: 3000, isClosable: true, position: 'top-right',
+      });
+    } catch {
+      toast({ title: 'Could not copy link', status: 'error', duration: 3000, isClosable: true, position: 'top-right' });
+    }
+  };
 
   return (
     <MotionBox
@@ -759,7 +912,7 @@ const ActionCard = ({
               </Box>
             </Flex>
 
-            {/* chain name + id */}
+            {/* chain name + id + share */}
             <VStack spacing={1.5} pt={1}>
               <Heading
                 fontSize={{ base: "md", md: "lg" }} fontWeight="800"
@@ -769,14 +922,30 @@ const ActionCard = ({
               >
                 {chain.name}
               </Heading>
-              <Badge
-                fontSize="9px" px={2} py={0.5} borderRadius="full"
-                bg="rgba(255,255,255,0.04)" color="gray.600"
-                border="1px solid rgba(255,255,255,0.06)"
-                fontFamily="'Space Mono', monospace"
-              >
-                Chain {chain.id}
-              </Badge>
+              <HStack spacing={1.5}>
+                <Badge
+                  fontSize="9px" px={2} py={0.5} borderRadius="full"
+                  bg="rgba(255,255,255,0.04)" color="gray.600"
+                  border="1px solid rgba(255,255,255,0.06)"
+                  fontFamily="'Space Mono', monospace"
+                >
+                  Chain {chain.id}
+                </Badge>
+                <Tooltip label={`Copy a direct link to ${chain.name} you can share`} hasArrow placement="top">
+                  <Button
+                    size="xs" variant="outline" minW="auto" h="20px" px={2} py={0}
+                    color="gray.400" fontSize="9px" fontWeight="700" borderRadius="full"
+                    borderColor="rgba(255,255,255,0.1)"
+                    letterSpacing="0.04em"
+                    onClick={handleShare}
+                    leftIcon={<Text as="span" fontSize="10px" lineHeight={1}>🔗</Text>}
+                    _hover={{ color: meta.color, bg: `${meta.color}14`, borderColor: `${meta.color}40` }}
+                    fontFamily="'Space Mono', monospace"
+                  >
+                    Share
+                  </Button>
+                </Tooltip>
+              </HStack>
             </VStack>
 
             {/* separator */}
@@ -792,7 +961,10 @@ const ActionCard = ({
               >
                 <Text fontSize="9px" color="gray.600" fontWeight="700" textTransform="uppercase"
                   letterSpacing="0.15em" fontFamily="'Space Mono', monospace" mb={1.5}>Fee</Text>
-                <FeeDisplay fee={fee} isExempt={isExempt} chainId={chain.id} />
+                <FeeDisplay
+                  fee={fee} isExempt={isExempt} chainId={chain.id}
+                  isLoading={isFeeLoading} hasError={hasFeeError} onRetry={onRetry}
+                />
               </Box>
               <Box
                 bg="rgba(255,255,255,0.022)" border="1px solid rgba(255,255,255,0.05)"
@@ -804,11 +976,14 @@ const ActionCard = ({
                   letterSpacing="0.15em" fontFamily="'Space Mono', monospace" mb={1.5}>
                   My {isGM ? 'GM' : 'Deploys'}
                 </Text>
-                <Text fontSize="xl" fontWeight="800"
+                <StatValue
+                  value={userCount}
+                  isLoading={isUserCountLoading}
+                  hasError={hasUserError}
+                  onRetry={onRetry}
                   color={isExempt ? '#2dd4bf' : 'white'}
-                  fontFamily="'Space Mono', monospace">
-                  {userCount}
-                </Text>
+                  fontSize="xl"
+                />
               </Box>
             </SimpleGrid>
 
@@ -821,9 +996,14 @@ const ActionCard = ({
                 textTransform="uppercase" letterSpacing="0.12em">
                 Total {isGM ? 'GM' : 'Deploys'}
               </Text>
-              <Text fontSize="sm" fontWeight="700" color="gray.300" fontFamily="'Space Mono', monospace">
-                {totalCount.toLocaleString()}
-              </Text>
+              <StatValue
+                value={totalCount.toLocaleString()}
+                isLoading={isTotalLoading}
+                hasError={hasTotalError}
+                onRetry={onRetry}
+                color="gray.300"
+                fontSize="sm"
+              />
             </Flex>
 
             <Button
@@ -864,6 +1044,11 @@ const ActionCard = ({
                 Connect wallet to continue
               </Text>
             )}
+            {hasInsufficientBalance && (
+              <Text fontSize="10px" color="#f87171" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                Insufficient balance to cover the fee on {chain.name}
+              </Text>
+            )}
             {isGlobalLoading && !isLoading && (
               <Text fontSize="10px" color="gray.500" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
                 Another transaction in progress...
@@ -873,113 +1058,6 @@ const ActionCard = ({
         </Box>
       </Box>
     </MotionBox>
-  );
-};
-
-// ============= Wrapped Action Card with its own hooks =============
-const WrappedActionCard = ({
-  chain,
-  index,
-  type,
-  address,
-  isConnected,
-  hasSBT,
-  isLoading,
-  isGlobalLoading,
-  loadingPhase,
-  onAction,
-}: {
-  chain: any;
-  index: number;
-  type: 'gm' | 'deploy';
-  address: `0x${string}` | undefined;
-  isConnected: boolean;
-  hasSBT: boolean;
-  isLoading: boolean;
-  isGlobalLoading: boolean;
-  loadingPhase?: LoadingPhase | null;
-  onAction: () => void;
-}) => {
-  const isSoneium = chain.id === SONEIUM_CHAIN_ID;
-  const isExempt = isSoneium && hasSBT;
-
-  // Get fee
-  const contract = type === 'gm' ? GM_CONTRACTS[chain.id] : DEPLOY_CONTRACTS[chain.id];
-  const abi = type === 'gm' ? DailyGMABI : DeployABI;
-  
-  // Get fee from contract
-  const { data: fee = 0n } = useReadContract({
-    address: contract,
-    abi: abi,
-    functionName: 'gmFee',
-    chainId: chain.id,
-    query: { enabled: true, staleTime: 60000 },
-  });
-
-  // Get user count - with refetch capability
-  const { data: userCount = 0n, refetch: refetchUserCount } = useReadContract({
-    address: contract,
-    abi: abi,
-    functionName: type === 'gm' ? 'balanceOf' : 'getUserDeploymentCount',
-    args: address ? [address] : undefined,
-    chainId: chain.id,
-    query: { enabled: !!address && isConnected, staleTime: 10000 },
-  });
-
-  // Get total count - with refetch capability
-  const { data: totalCount = 0n, refetch: refetchTotalCount } = useReadContract({
-    address: contract,
-    abi: abi,
-    functionName: type === 'gm' ? 'nextTokenId' : 'totalDeployments',
-    chainId: chain.id,
-    query: { enabled: true, staleTime: 30000 },
-  });
-
-  // Calculate the actual fee to pass (0 if exempt)
-  const actualFee = isExempt ? 0n : fee;
-
-  // Track previous global loading state to detect when it changes from true to false
-  const prevGlobalLoadingRef = useRef(isGlobalLoading);
-
-  // Refetch data when global loading completes (transitions from true to false).
-  // IMPORTANT: the ref must be updated on *every* run of this effect, not only on the
-  // branch that triggers a refetch — otherwise it gets "stuck" and the comparison below
-  // stops being meaningful. (This was the root cause of cards only refreshing after an
-  // action was fired on a *different* card: the stale ref happened to still work by
-  // accident in that case, but not for the card that just completed its own action.)
-  useEffect(() => {
-    const wasLoading = prevGlobalLoadingRef.current;
-    prevGlobalLoadingRef.current = isGlobalLoading;
-
-    if (wasLoading && !isGlobalLoading) {
-      // By the time isGlobalLoading flips back to false, the transaction has already
-      // been confirmed on-chain (see handleAction), so we don't need a long artificial
-      // delay here anymore — just a small buffer for public RPC read-nodes that may lag
-      // a moment behind the node that broadcast/confirmed the write.
-      const timeoutId = setTimeout(() => {
-        refetchUserCount();
-        refetchTotalCount();
-      }, 400);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isGlobalLoading, refetchUserCount, refetchTotalCount]);
-
-  return (
-    <ActionCard
-      chain={chain}
-      index={index}
-      type={type}
-      isLoading={isLoading}
-      isGlobalLoading={isGlobalLoading}
-      loadingPhase={loadingPhase}
-      onAction={onAction}
-      fee={actualFee}
-      userCount={Number(userCount)}
-      totalCount={Number(totalCount)}
-      hasSBT={hasSBT}
-      isConnected={isConnected}
-    />
   );
 };
 
@@ -1187,8 +1265,6 @@ const Footer = () => {
 // ============= Main Page =============
 export default function GMPage() {
   useFixScroll();
-  
-  const queryClient = useQueryClient();
 
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -1206,6 +1282,8 @@ export default function GMPage() {
   const { isOpen: isTxModalOpen, onOpen: openTxModal, onClose: closeTxModal } = useDisclosure();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchParams] = useSearchParams();
+
+  const isGM = tabIndex === 0;
 
   // Deep-link support, e.g.:
   //   https://gm-agent.xyz/gmorning?chain=ink
@@ -1229,8 +1307,6 @@ export default function GMPage() {
     // search box manually afterwards.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const isGM = tabIndex === 0;
 
   const { data: sbtBalance } = useReadContract({
     address: SBT_CONTRACT_ADDRESS as `0x${string}`,
@@ -1259,42 +1335,165 @@ export default function GMPage() {
     );
   }, [searchQuery]);
 
-  // ============= Read all GM totals from all chains =============
-  const gmData = chains.map((chain) => {
-    const contract = GM_CONTRACTS[chain.id];
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: nextTokenId = 0n } = useReadContract({
-      address: contract,
-      abi: DailyGMABI,
-      functionName: 'nextTokenId',
-      chainId: chain.id,
-      query: { enabled: true, staleTime: 30000 },
+  // Open Graph / title tags — customized when a deep-link (or manual search) narrows
+  // the page down to a single chain, so sharing that link gives a relevant preview.
+  useEffect(() => {
+    const singleMatch = searchQuery.trim() && filteredChains.length === 1 ? filteredChains[0] : null;
+    const title = singleMatch
+      ? `GM & Deploy · ${singleMatch.name} — Agent GM Protocol`
+      : 'GM & Deploy — Agent GM Protocol';
+    const description = singleMatch
+      ? `Send a daily GM or deploy a contract on ${singleMatch.name} in one click.`
+      : `Send daily GM messages and deploy contracts across ${chains.length} blockchain networks.`;
+
+    document.title = title;
+    upsertMetaTag('property', 'og:title', title);
+    upsertMetaTag('property', 'og:description', description);
+    upsertMetaTag('property', 'og:url', window.location.href);
+    upsertMetaTag('name', 'twitter:card', 'summary');
+    upsertMetaTag('name', 'twitter:title', title);
+    upsertMetaTag('name', 'twitter:description', description);
+  }, [searchQuery, filteredChains]);
+
+  // ============= Chain index lookup =============
+  const chainIndexById = useMemo(() => {
+    const map = new Map<number, number>();
+    chains.forEach((c, i) => map.set(c.id, i));
+    return map;
+  }, []);
+
+  // ============= MULTICALL #1 — global reads (fee + totals, no wallet needed) =============
+  // Instead of one useReadContract per chain per field (the old approach), all of these
+  // are batched into a single call. wagmi groups contracts by chainId internally and
+  // performs one multicall per chain, so this turns dozens of individual RPC round-trips
+  // into ~1 request per network.
+  const globalContracts = useMemo(() => {
+    const list: any[] = [];
+    chains.forEach((chain) => {
+      list.push({ address: GM_CONTRACTS[chain.id], abi: DailyGMABI, functionName: 'gmFee', chainId: chain.id });
+      list.push({ address: DEPLOY_CONTRACTS[chain.id], abi: DeployABI, functionName: 'gmFee', chainId: chain.id });
+      list.push({ address: GM_CONTRACTS[chain.id], abi: DailyGMABI, functionName: 'nextTokenId', chainId: chain.id });
+      list.push({ address: DEPLOY_CONTRACTS[chain.id], abi: DeployABI, functionName: 'totalDeployments', chainId: chain.id });
     });
-    return { chainId: chain.id, total: Number(nextTokenId) };
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { data: globalResults, refetch: refetchGlobal } = useReadContracts({
+    contracts: globalContracts,
+    query: { enabled: true, staleTime: 20000 },
   });
 
-  // ============= Read all Deploy totals from all chains =============
-  const deployData = chains.map((chain) => {
-    const contract = DEPLOY_CONTRACTS[chain.id];
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: totalDeployments = 0n } = useReadContract({
-      address: contract,
-      abi: DeployABI,
-      functionName: 'totalDeployments',
-      chainId: chain.id,
-      query: { enabled: true, staleTime: 30000 },
+  // ============= MULTICALL #2 — per-user reads (only when a wallet is connected) =============
+  const userContracts = useMemo(() => {
+    const list: any[] = [];
+    chains.forEach((chain) => {
+      list.push({
+        address: GM_CONTRACTS[chain.id], abi: DailyGMABI, functionName: 'balanceOf',
+        args: address ? [address] : undefined, chainId: chain.id,
+      });
+      list.push({
+        address: DEPLOY_CONTRACTS[chain.id], abi: DeployABI, functionName: 'getUserDeploymentCount',
+        args: address ? [address] : undefined, chainId: chain.id,
+      });
     });
-    return { chainId: chain.id, total: Number(totalDeployments) };
+    return list;
+  }, [address]);
+
+  const { data: userResults, refetch: refetchUser } = useReadContracts({
+    contracts: userContracts,
+    query: { enabled: !!address && isConnected, staleTime: 10000 },
   });
 
-  // Calculate totals
+  // ============= Native balances per chain (for the "insufficient balance" check) =============
+  // Native balance reads aren't ERC contract calls, so they ride along as a lightweight
+  // per-chain loop (chains.length is fixed, so the hook count stays stable across renders).
+  const balances = chains.map((chain) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data: balanceData, isLoading: isBalanceLoadingRaw, refetch: refetchBalance } = useBalance({
+      address,
+      chainId: chain.id,
+      query: { enabled: !!address && isConnected, staleTime: 15000 },
+    });
+    return {
+      chainId: chain.id,
+      value: balanceData?.value,
+      isLoading: !!address && isConnected && isBalanceLoadingRaw,
+      refetch: refetchBalance,
+    };
+  });
+
+  const getBalance = (chainId: number) => balances.find((b) => b.chainId === chainId);
+
+  // Builds every prop ActionCard needs for a given chain + type by reading straight out of
+  // the two batched multicall results above (plus the matching balance entry).
+  const buildCardData = (chain: any, type: 'gm' | 'deploy') => {
+    const idx = chainIndexById.get(chain.id) ?? 0;
+    const feeOffset = type === 'gm' ? 0 : 1;
+    const totalOffset = type === 'gm' ? 2 : 3;
+    const userOffset = type === 'gm' ? 0 : 1;
+
+    const feeResult = globalResults?.[idx * GLOBAL_FIELDS_PER_CHAIN + feeOffset];
+    const totalResult = globalResults?.[idx * GLOBAL_FIELDS_PER_CHAIN + totalOffset];
+    const userResult = userResults?.[idx * USER_FIELDS_PER_CHAIN + userOffset];
+
+    const globalValuesLoading = !globalResults;
+    const userValuesLoading = !!address && isConnected && !userResults;
+
+    const fee = feeResult?.status === 'success' ? (feeResult.result as bigint) : 0n;
+    const total = totalResult?.status === 'success' ? Number(totalResult.result as bigint) : 0;
+    const userCount = userResult?.status === 'success' ? Number(userResult.result as bigint) : 0;
+
+    const hasFeeError = !globalValuesLoading && feeResult?.status !== 'success';
+    const hasTotalError = !globalValuesLoading && totalResult?.status !== 'success';
+    const hasUserError = !!address && isConnected && !userValuesLoading && userResult?.status !== 'success';
+
+    const balanceEntry = getBalance(chain.id);
+
+    return {
+      fee,
+      totalCount: total,
+      userCount,
+      isFeeLoading: globalValuesLoading,
+      isTotalLoading: globalValuesLoading,
+      isUserCountLoading: userValuesLoading,
+      hasFeeError,
+      hasTotalError,
+      hasUserError,
+      balance: balanceEntry?.value,
+      isBalanceLoading: balanceEntry?.isLoading ?? false,
+    };
+  };
+
+  // Helper to get fee for a specific chain and type (used when sending the transaction)
+  const getFee = (chainId: number, type: 'gm' | 'deploy'): bigint => {
+    const idx = chainIndexById.get(chainId);
+    if (idx === undefined || !globalResults) return 0n;
+    const offset = type === 'gm' ? 0 : 1;
+    const r = globalResults[idx * GLOBAL_FIELDS_PER_CHAIN + offset];
+    return r?.status === 'success' ? (r.result as bigint) : 0n;
+  };
+
+  // Calculate header totals directly from the batched results
   const totalGM = useMemo(() => {
-    return gmData.reduce((sum, item) => sum + item.total, 0);
-  }, [gmData]);
+    if (!globalResults) return 0;
+    let sum = 0;
+    chains.forEach((_, i) => {
+      const r = globalResults[i * GLOBAL_FIELDS_PER_CHAIN + 2];
+      if (r?.status === 'success') sum += Number(r.result as bigint);
+    });
+    return sum;
+  }, [globalResults]);
 
   const totalDeploys = useMemo(() => {
-    return deployData.reduce((sum, item) => sum + item.total, 0);
-  }, [deployData]);
+    if (!globalResults) return 0;
+    let sum = 0;
+    chains.forEach((_, i) => {
+      const r = globalResults[i * GLOBAL_FIELDS_PER_CHAIN + 3];
+      if (r?.status === 'success') sum += Number(r.result as bigint);
+    });
+    return sum;
+  }, [globalResults]);
 
   const activeUsers = 2347; // Placeholder
 
@@ -1375,50 +1574,8 @@ export default function GMPage() {
     }
   }, [isGM, totalGM, totalDeploys, activeUsers, chainsCount]);
 
-  // ============= Read fees from contracts =============
-  // GM fees per chain
-  const gmFees = chains.map((chain) => {
-    const contract = GM_CONTRACTS[chain.id];
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: fee = 0n } = useReadContract({
-      address: contract,
-      abi: DailyGMABI,
-      functionName: 'gmFee',
-      chainId: chain.id,
-      query: { enabled: true, staleTime: 60000 },
-    });
-    return { chainId: chain.id, fee };
-  });
-
-  // Deploy fees per chain
-  const deployFees = chains.map((chain) => {
-    const contract = DEPLOY_CONTRACTS[chain.id];
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: fee = 0n } = useReadContract({
-      address: contract,
-      abi: DeployABI,
-      functionName: 'gmFee',
-      chainId: chain.id,
-      query: { enabled: true, staleTime: 60000 },
-    });
-    return { chainId: chain.id, fee };
-  });
-
-  // Helper to get fee for a specific chain and type
-  const getFee = (chainId: number, type: 'gm' | 'deploy'): bigint => {
-    const fees = type === 'gm' ? gmFees : deployFees;
-    const found = fees.find(f => f.chainId === chainId);
-    return found?.fee || 0n;
-  };
-
   // handleAction: auto-switch silently before writing, then wait for the transaction to
   // actually be MINED before refreshing any on-chain numbers.
-  //
-  // Previously, the data reads for a card were invalidated right after `writeContractAsync`
-  // resolved — but that only means the tx was *broadcast*, not confirmed. Reading the
-  // contract at that point almost always returns stale data, so the UI looked like it
-  // "didn't refresh" until something else (e.g. a later action, after enough time had
-  // passed for the tx to actually confirm) happened to trigger another refetch.
   const handleAction = async (chain: any, type: 'gm' | 'deploy') => {
     const key = `${chain.id}-${type}`;
     if (loadingStates[key] || isGlobalLoading) return;
@@ -1463,7 +1620,7 @@ export default function GMPage() {
       const isSoneium = chain.id === SONEIUM_CHAIN_ID;
       const isExempt = isSoneium && hasSBT;
       
-      // Get fee from contract
+      // Get fee from the batched reads
       const fee = getFee(chain.id, type);
       const value = isExempt ? 0n : fee;
 
@@ -1498,13 +1655,10 @@ export default function GMPage() {
         console.warn('Could not confirm transaction receipt:', confirmError);
       }
 
-      // Invalidate the cached reads for this exact contract/chain. Every card watching
-      // this contract (including the header totals, which share the same address+chainId)
-      // will refetch automatically.
-      queryClient.invalidateQueries({
-        queryKey: ['readContract', { address: contract, chainId: chain.id }],
-        exact: false,
-      });
+      // Refresh both batched reads plus this chain's balance now that the tx is confirmed.
+      refetchGlobal();
+      if (address) refetchUser();
+      getBalance(chain.id)?.refetch();
 
     } catch (error: any) {
       if (!error?.message?.includes('rejected')) {
@@ -1517,6 +1671,13 @@ export default function GMPage() {
     } finally {
       clearLoading();
     }
+  };
+
+  // Retries both batched reads — used by the ⚠️ Retry affordance on any card whose
+  // fee/total/user-count failed to load from the RPC.
+  const handleRetryReads = () => {
+    refetchGlobal();
+    if (address) refetchUser();
   };
 
   // Clear search
@@ -1742,20 +1903,22 @@ export default function GMPage() {
                     {filteredChains.map((chain, index) => {
                       const key = `${chain.id}-gm`;
                       const isLoading = loadingStates[key] || false;
+                      const cardData = buildCardData(chain, 'gm');
 
                       return (
-                        <WrappedActionCard
+                        <ActionCard
                           key={chain.id}
                           chain={chain}
                           index={index}
                           type="gm"
-                          address={address}
-                          isConnected={isConnected}
-                          hasSBT={hasSBT}
                           isLoading={isLoading}
                           isGlobalLoading={isGlobalLoading}
                           loadingPhase={loadingPhase[key]}
                           onAction={() => handleAction(chain, 'gm')}
+                          onRetry={handleRetryReads}
+                          hasSBT={hasSBT}
+                          isConnected={isConnected}
+                          {...cardData}
                         />
                       );
                     })}
@@ -1774,20 +1937,22 @@ export default function GMPage() {
                     {filteredChains.map((chain, index) => {
                       const key = `${chain.id}-deploy`;
                       const isLoading = loadingStates[key] || false;
+                      const cardData = buildCardData(chain, 'deploy');
 
                       return (
-                        <WrappedActionCard
+                        <ActionCard
                           key={chain.id}
                           chain={chain}
                           index={index}
                           type="deploy"
-                          address={address}
-                          isConnected={isConnected}
-                          hasSBT={hasSBT}
                           isLoading={isLoading}
                           isGlobalLoading={isGlobalLoading}
                           loadingPhase={loadingPhase[key]}
                           onAction={() => handleAction(chain, 'deploy')}
+                          onRetry={handleRetryReads}
+                          hasSBT={hasSBT}
+                          isConnected={isConnected}
+                          {...cardData}
                         />
                       );
                     })}

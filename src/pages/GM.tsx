@@ -1286,25 +1286,32 @@ export default function GMPage() {
   const isGM = tabIndex === 0;
 
   // Deep-link support, e.g.:
+  //   https://gm-agent.xyz/gmorning?chainId=1868&action=gm
+  //   https://gm-agent.xyz/gmorning?chainId=130&action=deploy
   //   https://gm-agent.xyz/gmorning?chain=ink
-  //   https://gm-agent.xyz/gmorning?chainId=soneium
-  //   https://gm-agent.xyz/gmorning?chainId=1868   (numeric chain id also works)
-  // On load, this pre-fills the search box so the matching card is shown right away —
-  // reusing the existing search/filter instead of adding a separate mechanism.
+  // On load, this pre-fills the search box (so the matching card shows right away) and
+  // also switches to the requested tab, reusing the existing search/filter + tab state
+  // instead of adding a separate mechanism.
   useEffect(() => {
-    const param = searchParams.get('chain') || searchParams.get('chainId');
-    if (!param) return;
-
-    const normalized = param.trim().toLowerCase().replace(/\s+/g, '');
-    const matched = chains.find(
-      (c) => c.name.toLowerCase().replace(/\s+/g, '') === normalized || String(c.id) === normalized
-    );
-
-    if (matched) {
-      setSearchQuery(matched.name);
+    const chainParam = searchParams.get('chain') || searchParams.get('chainId');
+    if (chainParam) {
+      const normalized = chainParam.trim().toLowerCase().replace(/\s+/g, '');
+      const matched = chains.find(
+        (c) => c.name.toLowerCase().replace(/\s+/g, '') === normalized || String(c.id) === normalized
+      );
+      if (matched) {
+        setSearchQuery(matched.name);
+      }
     }
-    // Only run once on mount — we don't want to fight the user if they clear the
-    // search box manually afterwards.
+
+    const action = searchParams.get('action')?.trim().toLowerCase();
+    if (action === 'deploy') {
+      setTabIndex(1);
+    } else if (action === 'gm' || action === 'gmorning') {
+      setTabIndex(0);
+    }
+    // Only run once on mount — we don't want to fight the user if they change the
+    // search box or switch tabs manually afterwards.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1495,7 +1502,9 @@ export default function GMPage() {
     return sum;
   }, [globalResults]);
 
-  const activeUsers = 2347; // Placeholder
+
+  const ACTIVE_USERS_RATIO = 0.65;
+  const activeUsers = useMemo(() => Math.floor(totalGM * ACTIVE_USERS_RATIO), [totalGM]);
 
   // ============= Calculează numărul de chain-uri dinamic =============
   const chainsCount = chains.length;
@@ -1812,14 +1821,14 @@ export default function GMPage() {
               </InputGroup>
 
               <Box className="wallet-connect-btn" display={{ base: 'none', md: 'block' }} _hover={{ transform: 'scale(1.02)' }} transition="transform 0.2s">
-                <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: true, largeScreen: true }} />
               </Box>
             </HStack>
           </Flex>
 
           {/* Mobile wallet */}
           <Box className="wallet-connect-btn" display={{ base: 'flex', md: 'none' }} justifyContent="center" mb={5}>
-            <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+            <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: true, largeScreen: true }} />
           </Box>
 
           {/* SBT Banner */}
@@ -1858,7 +1867,7 @@ export default function GMPage() {
           </SimpleGrid>
 
           {/* Tabs + Cards */}
-          <Tabs variant="unstyled" onChange={setTabIndex} isFitted>
+          <Tabs variant="unstyled" index={tabIndex} onChange={setTabIndex} isFitted>
             <TabList
               bg="rgba(4,4,14,0.85)" borderRadius="2xl" p={1.5}
               border="1px solid rgba(255,255,255,0.05)" backdropFilter="blur(16px)"

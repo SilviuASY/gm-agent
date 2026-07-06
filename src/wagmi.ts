@@ -741,12 +741,13 @@ export const lighterChain = {
 
 export const arcTestnetChain = {
   id: 5042002,
-  name: 'Arc Testnet',
-  nativeCurrency: { name: 'Arc', symbol: 'ARC', decimals: 18 },
+  name: 'Arc',
+  nativeCurrency: { name: 'Arc', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.arc-testnet.xyz'] },
-    public: { http: ['https://rpc.arc-testnet.xyz'] },
+    default: { http: ['https://rpc.testnet.arc.network'] },
+    public: { http: ['https://rpc.testnet.arc.network'] },
   },
+  iconUrl: '/arc.png',
 } as const
 
 export const opSepoliaChain = {

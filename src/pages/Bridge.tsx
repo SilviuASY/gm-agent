@@ -13,13 +13,20 @@ import {
   Link,
   SimpleGrid,
   Spinner,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LiFiWidget, useAvailableChains } from "@lifi/widget";
+import { LiFiWidget, useAvailableChains, useWidgetEvents, WidgetEvent } from "@lifi/widget";
 import { useSyncWagmiConfig } from "@lifi/wallet-management";
 import {
   useMemo,
@@ -39,12 +46,126 @@ import { config } from "../wagmi";
 const MotionBox = motion(Box);
 
 // ============= LI.FI Config =============
-const LIFI_API_KEY =
-  (import.meta as any).env?.VITE_LIFI_API_KEY ||
-  "7b415723-cfa7-4d4e-b58d-4dea6e36b71a.be9467a8-914e-4511-8d07-01987626c5ed";
+// No hardcoded fallback key anymore — silently falling back to a shared key made it
+// invisible when a deploy was missing its own key. Instead: warn loudly in dev, and
+// fail the build outright in production so a missing key can never ship unnoticed.
+const LIFI_API_KEY = (import.meta as any).env?.VITE_LIFI_API_KEY as string | undefined;
+
+if (!LIFI_API_KEY) {
+  const message =
+    "VITE_LIFI_API_KEY is not set. Add it to your .env file (request a key at https://apidocs.li.fi/). " +
+    "Without it, the LI.FI widget runs on a shared/rate-limited tier.";
+  if ((import.meta as any).env?.PROD) {
+    // Fail loudly in production builds — silent fallback is not acceptable here.
+    throw new Error(`[Bridge] ${message}`);
+  } else {
+    console.warn(`[Bridge] ${message}`);
+  }
+}
+
+// Platform fee — single source of truth, used both in the widget config below and in
+// the "Quick Tips" disclosure so the two can never drift out of sync.
+const PLATFORM_FEE = 0.001; // 0.1%
 
 const DEFAULT_FROM_CHAIN = 1868; // Soneium
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+
+// Parses a chain id from a URL query param, rejecting anything that isn't a positive
+// finite number instead of silently passing NaN through to the widget config.
+const parseChainId = (value: string | null): number | undefined => {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+};
+
+// ============= Bridge history — read straight from the LI.FI widget's own store =============
+// The widget already persists every route (pending/completed/failed) to localStorage via
+// a zustand `persist` store, under the key `${keyPrefix || "li.fi"}-widget-routes` (verified
+// against the installed @lifi/widget package — see stores/routes/createRouteExecutionStore).
+// Rather than re-implementing history tracking ourselves, we just read that same store: it
+// already has everything (chains, tokens, USD values, status, and even the explorer link
+// per transaction), and it goes back further than "from now on" since it's been recording
+// since before this feature existed.
+//
+// IMPORTANT: if `keyPrefix` is ever added to `lifiConfig` below, update LIFI_KEY_PREFIX here
+// to match — otherwise this will silently read from the wrong (empty) key.
+const LIFI_KEY_PREFIX: string | undefined = undefined;
+const LIFI_ROUTES_STORAGE_KEY = `${LIFI_KEY_PREFIX || "li.fi"}-widget-routes`;
+
+// Status bitflags, matching the widget's internal RouteExecutionStatus (1=pending,
+// 2=in progress, 4=done, 8=failed — 16/32 are done-with-partial/refund, additive to 4).
+const ROUTE_STATUS_DONE = 4;
+const ROUTE_STATUS_FAILED = 8;
+const hasStatusFlag = (status: number, flag: number) => (status & flag) === flag;
+
+interface BridgeHistoryEntry {
+  id: string;
+  timestamp: number;
+  fromChainId?: number;
+  toChainId?: number;
+  fromSymbol?: string;
+  toSymbol?: string;
+  fromAmountUSD?: string;
+  toAmountUSD?: string;
+  txHash?: string;
+  txLink?: string;
+  failed: boolean;
+  pending: boolean;
+}
+
+const readLifiWidgetHistory = (addr?: string): BridgeHistoryEntry[] => {
+  try {
+    const raw = localStorage.getItem(LIFI_ROUTES_STORAGE_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    const routes = parsed?.state?.routes;
+    if (!routes || typeof routes !== "object") return [];
+
+    return Object.values(routes as Record<string, { route: any; status: number }>)
+      .filter(
+        (entry) =>
+          !addr || !entry?.route?.fromAddress || entry.route.fromAddress.toLowerCase() === addr.toLowerCase()
+      )
+      .map((entry) => {
+        const { route, status } = entry;
+        const steps = route?.steps ?? [];
+        const firstStep = steps[0];
+        const lastStep = steps[steps.length - 1];
+        const actions = lastStep?.execution?.actions ?? [];
+        const txAction = [...actions].reverse().find((a: any) => a?.txHash);
+
+        return {
+          id: route?.id || `${firstStep?.execution?.startedAt ?? Date.now()}`,
+          timestamp: firstStep?.execution?.startedAt || Date.now(),
+          fromChainId: route?.fromChainId,
+          toChainId: route?.toChainId,
+          fromSymbol: route?.fromToken?.symbol,
+          toSymbol: route?.toToken?.symbol,
+          fromAmountUSD: route?.fromAmountUSD,
+          toAmountUSD: route?.toAmountUSD,
+          txHash: txAction?.txHash,
+          txLink: txAction?.txLink,
+          failed: hasStatusFlag(status, ROUTE_STATUS_FAILED),
+          pending: !hasStatusFlag(status, ROUTE_STATUS_DONE) && !hasStatusFlag(status, ROUTE_STATUS_FAILED),
+        } as BridgeHistoryEntry;
+      })
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 20);
+  } catch (err) {
+    console.warn("Could not read LI.FI widget history:", err);
+    return [];
+  }
+};
+
+const formatTimeAgo = (timestamp: number): string => {
+  const diffMin = Math.floor((Date.now() - timestamp) / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  return `${Math.floor(diffH / 24)}d ago`;
+};
 
 // ============= Styles =============
 const pageStyles = `
@@ -362,9 +483,13 @@ export default function Bridge() {
 
   const [widgetKey, setWidgetKey] = useState(0);
   const [isSwitchingChain, setIsSwitchingChain] = useState(false);
+  const [history, setHistory] = useState<BridgeHistoryEntry[]>([]);
+
+  const { isOpen: isHistoryOpen, onOpen: openHistory, onClose: closeHistory } = useDisclosure();
 
   const isSwitchingRef = useRef(false);
   const lastAddressRef = useRef<string | undefined>(address);
+  const lastPrefillKeyRef = useRef<string>("");
 
   useFixScroll();
 
@@ -388,6 +513,40 @@ export default function Bridge() {
   }, []);
 
   // =====================================================================
+  // Bridge history — read from the LI.FI widget's own persisted store (see the
+  // readLifiWidgetHistory comment above for why). Refreshed whenever it's likely
+  // to have changed: on mount, when the wallet changes, right before the drawer
+  // opens, and whenever the widget reports route activity.
+  // =====================================================================
+  useEffect(() => {
+    setHistory(readLifiWidgetHistory(address));
+  }, [address]);
+
+  useEffect(() => {
+    if (isHistoryOpen) {
+      setHistory(readLifiWidgetHistory(address));
+    }
+  }, [isHistoryOpen, address]);
+
+  const widgetEvents = useWidgetEvents();
+
+  useEffect(() => {
+    const refreshHistory = () => setHistory(readLifiWidgetHistory(address));
+
+    widgetEvents.on(WidgetEvent.RouteExecutionStarted, refreshHistory);
+    widgetEvents.on(WidgetEvent.RouteExecutionUpdated, refreshHistory);
+    widgetEvents.on(WidgetEvent.RouteExecutionCompleted, refreshHistory);
+    widgetEvents.on(WidgetEvent.RouteExecutionFailed, refreshHistory);
+
+    return () => {
+      widgetEvents.off(WidgetEvent.RouteExecutionStarted, refreshHistory);
+      widgetEvents.off(WidgetEvent.RouteExecutionUpdated, refreshHistory);
+      widgetEvents.off(WidgetEvent.RouteExecutionCompleted, refreshHistory);
+      widgetEvents.off(WidgetEvent.RouteExecutionFailed, refreshHistory);
+    };
+  }, [widgetEvents, address]);
+
+  // =====================================================================
   // Token pre-selection from URL
   // =====================================================================
   const tokenPrefill = useMemo(() => {
@@ -405,14 +564,11 @@ export default function Bridge() {
     if (qFromToken && EVM_ADDRESS_RE.test(qFromToken)) fromToken = qFromToken;
     if (qToToken && EVM_ADDRESS_RE.test(qToToken)) toToken = qToToken;
 
-    const qFromChain = searchParams.get("fromChain");
-    const qToChain = searchParams.get("toChain");
-
     return {
       fromToken,
       toToken,
-      fromChain: qFromChain ? Number(qFromChain) : undefined,
-      toChain: qToChain ? Number(qToChain) : undefined,
+      fromChain: parseChainId(searchParams.get("fromChain")),
+      toChain: parseChainId(searchParams.get("toChain")),
     };
   }, [routeParams.tokens, searchParams]);
 
@@ -444,16 +600,33 @@ export default function Bridge() {
   );
 
   // =====================================================================
-  // Remount widget ONLY when account changes
+  // Remount widget when the account changes OR when a deep-link brings new
+  // prefill values (fromToken/toToken/fromChain/toChain) — e.g. navigating
+  // client-side from /bridge/tokenA-tokenB to /bridge/tokenC-tokenD used to
+  // leave the widget showing the old pair, since only the address change
+  // triggered a remount before.
   // =====================================================================
+  const prefillKey = useMemo(
+    () =>
+      JSON.stringify({
+        fromToken: tokenPrefill.fromToken,
+        toToken: tokenPrefill.toToken,
+        fromChain: tokenPrefill.fromChain,
+        toChain: tokenPrefill.toChain,
+      }),
+    [tokenPrefill]
+  );
+
   useEffect(() => {
     const addressChanged = lastAddressRef.current !== address;
+    const prefillChanged = lastPrefillKeyRef.current !== prefillKey;
     lastAddressRef.current = address;
+    lastPrefillKeyRef.current = prefillKey;
 
-    if (!addressChanged) return;
+    if (!addressChanged && !prefillChanged) return;
 
     setWidgetKey((prev) => prev + 1);
-  }, [address]);
+  }, [address, prefillKey]);
 
   // =====================================================================
   // Handler for chain switch
@@ -556,7 +729,7 @@ export default function Bridge() {
       apiKey: LIFI_API_KEY,
       appearance: "dark", // FORCE DARK MODE - always dark
       fromChain: tokenPrefill.fromChain || chainId || DEFAULT_FROM_CHAIN,
-      fee: 0.001,
+      fee: PLATFORM_FEE,
       theme: {
         shape: { borderRadius: 16 },
         typography: {
@@ -715,12 +888,147 @@ export default function Bridge() {
     </MotionBox>
   );
 
+  // History button — shared between the desktop and mobile header layouts
+  const HistoryButton = () => (
+    <Button
+      onClick={openHistory}
+      variant="ghost"
+      size={{ base: "sm", md: "md" }}
+      color="gray.400"
+      _hover={{
+        color: "white",
+        bg: "rgba(139,92,246,0.08)",
+        borderColor: "rgba(139,92,246,0.25)",
+      }}
+      borderRadius="xl"
+      border="1px solid rgba(255,255,255,0.07)"
+      fontFamily="'Space Grotesk', sans-serif"
+      fontWeight="500"
+      position="relative"
+      transition="all 0.2s"
+    >
+      🕘 History
+      {history.length > 0 && (
+        <Badge
+          position="absolute"
+          top="-6px"
+          right="-6px"
+          bg="#8b5cf6"
+          color="white"
+          fontSize="9px"
+          borderRadius="full"
+          minW="18px"
+          h="18px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          fontFamily="'Space Mono', monospace"
+        >
+          {history.length}
+        </Badge>
+      )}
+    </Button>
+  );
+
   // =====================================================================
   // Render
   // =====================================================================
   return (
     <PageErrorBoundary>
       <style>{pageStyles}</style>
+
+      {/* Bridge history drawer */}
+      <Drawer isOpen={isHistoryOpen} placement="right" onClose={closeHistory} size="sm">
+        <DrawerOverlay bg="rgba(0,0,0,0.7)" backdropFilter="blur(6px)" />
+        <DrawerContent bg="rgba(4,4,14,0.98)" borderLeft="1px solid rgba(139,92,246,0.2)">
+          <DrawerCloseButton color="gray.500" _hover={{ color: "white" }} />
+          <DrawerHeader
+            borderBottom="1px solid rgba(255,255,255,0.06)"
+            fontFamily="'Space Grotesk', sans-serif"
+            color="white"
+            fontSize="md"
+          >
+            🕘 Bridge History
+          </DrawerHeader>
+          <DrawerBody py={4}>
+            {!isConnected ? (
+              <Text fontSize="sm" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                Connect your wallet to see your bridge history.
+              </Text>
+            ) : history.length === 0 ? (
+              <Text fontSize="sm" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                No bridge transactions yet. Once you complete a bridge, it'll show up here.
+              </Text>
+            ) : (
+              <VStack spacing={3} align="stretch">
+                {history.map((entry) => {
+                  const fromName =
+                    combinedChains.find((c) => c.id === entry.fromChainId)?.name ||
+                    (entry.fromChainId ? `Chain ${entry.fromChainId}` : "Unknown");
+                  const toName =
+                    combinedChains.find((c) => c.id === entry.toChainId)?.name ||
+                    (entry.toChainId ? `Chain ${entry.toChainId}` : "Unknown");
+
+                  return (
+                    <Box
+                      key={entry.id}
+                      bg="rgba(255,255,255,0.03)"
+                      border="1px solid rgba(255,255,255,0.06)"
+                      borderRadius="xl"
+                      p={3}
+                    >
+                      <HStack justify="space-between" mb={1}>
+                        <Text
+                          fontSize="xs"
+                          fontWeight="700"
+                          color="gray.200"
+                          fontFamily="'Space Grotesk', sans-serif"
+                        >
+                          {fromName} → {toName}
+                        </Text>
+                        <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">
+                          {formatTimeAgo(entry.timestamp)}
+                        </Text>
+                      </HStack>
+                      <HStack spacing={2} mb={entry.txLink ? 2 : 0}>
+                        <Text fontSize="11px" color="gray.400" fontFamily="'Space Mono', monospace">
+                          {entry.fromSymbol || "—"} → {entry.toSymbol || "—"}
+                          {entry.fromAmountUSD ? ` · ~$${Number(entry.fromAmountUSD).toFixed(2)}` : ""}
+                        </Text>
+                        {entry.failed ? (
+                          <Badge bg="rgba(239,68,68,0.15)" color="#f87171" fontSize="8px" px={1.5} borderRadius="full">
+                            Failed
+                          </Badge>
+                        ) : entry.pending ? (
+                          <Badge bg="rgba(251,191,36,0.15)" color="#fbbf24" fontSize="8px" px={1.5} borderRadius="full">
+                            Pending
+                          </Badge>
+                        ) : (
+                          <Badge bg="rgba(34,197,94,0.15)" color="#4ade80" fontSize="8px" px={1.5} borderRadius="full">
+                            Completed
+                          </Badge>
+                        )}
+                      </HStack>
+                      {entry.txLink && (
+                        <Link
+                          href={entry.txLink}
+                          isExternal
+                          fontSize="10px"
+                          color="#8b5cf6"
+                          _hover={{ color: "#ec4899" }}
+                          fontFamily="'Space Grotesk', sans-serif"
+                        >
+                          View on Explorer <ExternalLinkIcon mx={1} boxSize={2.5} />
+                        </Link>
+                      )}
+                    </Box>
+                  );
+                })}
+              </VStack>
+            )}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
 
       <Box minH="100vh" bg="#03030f" position="relative" fontFamily="'Space Grotesk', sans-serif">
         {/* Ambient orbs */}
@@ -859,16 +1167,20 @@ export default function Bridge() {
             </HStack>
 
             <HStack spacing={3} display={{ base: "none", md: "flex" }}>
+              <HistoryButton />
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
-                <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: true, largeScreen: true }} />
               </Box>
             </HStack>
           </Flex>
 
           {/* Mobile wallet */}
           <VStack spacing={3} display={{ base: "flex", md: "none" }} w="full" mb={5}>
+            <HStack spacing={3} w="full" justify="center">
+              <HistoryButton />
+            </HStack>
             <Box w="full" display="flex" justifyContent="center">
-              <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+              <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: true, largeScreen: true }} />
             </Box>
           </VStack>
 
@@ -1143,6 +1455,9 @@ export default function Bridge() {
                       </Text>
                       <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
                         • LI.FI aggregates 30+ bridge protocols
+                      </Text>
+                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                        • A {(PLATFORM_FEE * 100).toFixed(1)}% platform fee applies to bridge transactions
                       </Text>
                     </VStack>
                   </Box>

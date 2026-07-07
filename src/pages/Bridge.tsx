@@ -1214,7 +1214,7 @@ export default function Bridge() {
             <HStack spacing={5} display={{ base: "none", md: "flex" }}>
               <HistoryButton />
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
-                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: true }} />
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: false }} />
               </Box>
             </HStack>
           </Flex>
@@ -1225,7 +1225,7 @@ export default function Bridge() {
               <HistoryButton />
             </HStack>
             <Box w="full" display="flex" justifyContent="center">
-              <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: true }} />
+              <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: false }} />
             </Box>
           </VStack>
 

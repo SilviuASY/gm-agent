@@ -35,7 +35,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/gmorning/*" element={<GMPage />} />
                 <Route path="/gmorning" element={<GMPage />} />
                 <Route path="/gmorning/*" element={<GMPage />} />
-                <Route path="/badge-season-10" element={<BadgePage />} />
+                <Route path="/pulse-cards" element={<BadgePage />} />
                 <Route path="/docs" element={<Docs />} />
                 <Route path="/academy" element={<Academy />} />
                 <Route path="/bridge" element={<Bridge />} />

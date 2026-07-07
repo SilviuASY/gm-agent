@@ -806,7 +806,7 @@ export default function App() {
                   <VStack spacing={0} align="stretch">
                     <Button
                       onClick={() => {
-                        navigate("/badge-season-12");
+                        navigate("/agent-reputation");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -1213,12 +1213,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/badge-season-12");
+                          navigate("/agent-reputation");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/badge-season-12");
+                            navigate("/agent-reputation");
                           }, 50);
                         }}
                         variant="ghost"

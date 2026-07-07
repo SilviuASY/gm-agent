@@ -11,6 +11,8 @@ import {
   Button,
   Image,
   Progress,
+  Skeleton,
+  Link,
   useToast,
   SimpleGrid,
 } from "@chakra-ui/react";
@@ -23,9 +25,10 @@ import {
   useReadContract,
   useWriteContract,
   usePublicClient,
+  useBalance,
 } from "wagmi";
-import { useState, useEffect, useMemo } from "react";
-import { ChevronLeftIcon, InfoIcon } from "@chakra-ui/icons";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ChevronLeftIcon, InfoIcon, CheckCircleIcon, CopyIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 
@@ -39,6 +42,7 @@ import PuzzleGrid from "../components/PuzzleGrid";
 
 // ============= Constants =============
 const COOLDOWN_SECONDS = 86400;
+const TOTAL_PIECES = 9;
 
 const PULSE_ENTRY_IMAGE =
   "https://bafybeiddo3w2y7ja43agkv5qppoee2k2dfwn67etxbiea2f44himtrphd4.ipfs.dweb.link/";
@@ -58,17 +62,25 @@ const PUZZLE_IMAGES = [
   "https://bafkreidb5ytfidv5qhj5grzapaz47cn5hfvk3b4hvegy6fszaf5l7id77a.ipfs.dweb.link/",
 ];
 
+// Shown in place of any NFT art image while it's loading or if the IPFS gateway is
+// slow/unreachable — better than a broken-image icon.
+const IMAGE_FALLBACK =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23120a1f'/><text y='54%25' x='50%25' text-anchor='middle' dominant-baseline='middle' font-size='64'>🧩</text></svg>";
+
+const SONEIUM_ADDRESS_EXPLORER = "https://soneium.blockscout.com/address/";
+
+const CONTRACTS_INFO = [
+  { name: "PulseEntry", description: "Entry NFT · daily boosts", address: PULSE_ENTRY_ADDRESS },
+  { name: "PulseCards", description: "Soulbound completion badge", address: PULSE_CARDS_ADDRESS },
+] as const;
+
 // ============= Motion =============
 const MotionBox = motion(Box);
 
 // ============= Styles =============
 const pageStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
-  @keyframes floatCard {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-7px); }
-  }
   @keyframes shimmerBorder {
     0%   { background-position: -200% 0; }
     100% { background-position:  200% 0; }
@@ -81,6 +93,10 @@ const pageStyles = `
     0%, 100% { transform: scale(1)   translateY(0px);   opacity: 0.45; }
     50%      { transform: scale(1.1) translateY(-20px);  opacity: 0.7; }
   }
+  @keyframes auroraDrift {
+    0%   { transform: translateX(-50%) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(360deg); }
+  }
   @keyframes countUp {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -90,64 +106,52 @@ const pageStyles = `
     50% { opacity: 1; transform: scale(1.05); }
     100% { opacity: 0.6; transform: scale(1); }
   }
-  @keyframes neonGlow {
-    0% { text-shadow: 0 0 5px #a855f7, 0 0 10px #a855f7, 0 0 20px #22c55e; }
-    100% { text-shadow: 0 0 15px #a855f7, 0 0 25px #a855f7, 0 0 35px #22c55e; }
+  @keyframes progressShimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
   }
-    @keyframes progressShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-@keyframes progressGlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes dotPop {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.4); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes completePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-@keyframes starFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-4px) rotate(10deg); }
-}
-@keyframes progressPop {
-  0% { opacity: 0; transform: scale(0.5); }
-  70% { opacity: 1; transform: scale(1.2); }
-  100% { opacity: 1; transform: scale(1); }
-}
+  @keyframes progressGlow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes completePulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+  }
+  @keyframes starFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-4px) rotate(10deg); }
+  }
+  @keyframes progressPop {
+    0%   { opacity: 0; transform: scale(0.5); }
+    70%  { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+  }
 `;
 
-// ============= Stat Card =============
+// ============= Compact Stat Chip =============
+// Redesigned to sit as a tight metrics strip under the hero headline — a single thin
+// gradient top-line and a restrained icon chip instead of the previous stack of
+// competing radial glows + a permanently bobbing icon, which read as busy/noisy.
 const StatCard = ({ stat, index }: { stat: any; index: number }) => (
   <MotionBox
-    initial={{ opacity: 0, y: 24 }}
+    initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay: index * 0.08 }}
-    position="relative"
+    transition={{ duration: 0.45, delay: index * 0.06 }}
     h="full"
-    _hover={{ transform: "translateY(-5px)" }}
-    sx={{ transition: "transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275)" }}
   >
     <Box
-      bg="rgba(4,4,14,0.85)"
+      bg="rgba(255,255,255,0.02)"
       backdropFilter="blur(20px)"
-      borderRadius="2xl"
-      p={{ base: 3.5, md: 5 }}
-      border={`1px solid ${stat.color}20`}
-      overflow="hidden"
+      borderRadius="xl"
+      p={{ base: 3.5, md: 4 }}
+      border="1px solid rgba(255,255,255,0.07)"
       position="relative"
+      overflow="hidden"
       h="full"
-      _hover={{
-        borderColor: `${stat.color}55`,
-        boxShadow: `0 0 40px ${stat.glowColor}, inset 0 1px 0 rgba(255,255,255,0.04)`,
-      }}
-      transition="all 0.35s ease"
+      _hover={{ borderColor: `${stat.color}45`, transform: "translateY(-3px)" }}
+      transition="all 0.3s ease"
     >
       <Box
         position="absolute"
@@ -155,29 +159,19 @@ const StatCard = ({ stat, index }: { stat: any; index: number }) => (
         left={0}
         right={0}
         h="1px"
-        bg={`linear-gradient(90deg, transparent, ${stat.color}60, transparent)`}
+        bg={`linear-gradient(90deg, transparent, ${stat.color}80, transparent)`}
       />
-      <Box
-        position="absolute"
-        top={0}
-        right={0}
-        w="80px"
-        h="80px"
-        bg={`radial-gradient(circle at top right, ${stat.color}15, transparent 70%)`}
-      />
-
-      <HStack spacing={3} align="center" position="relative" zIndex={1}>
+      <HStack spacing={3} align="center">
         <Flex
           align="center"
           justify="center"
-          w={{ base: "40px", md: "52px" }}
-          h={{ base: "40px", md: "52px" }}
-          bg={`${stat.color}10`}
-          border={`1px solid ${stat.color}22`}
-          borderRadius="xl"
+          w={{ base: "34px", md: "38px" }}
+          h={{ base: "34px", md: "38px" }}
+          bg={`${stat.color}12`}
+          border={`1px solid ${stat.color}28`}
+          borderRadius="lg"
           flexShrink={0}
-          fontSize={{ base: "18px", md: "24px" }}
-          style={{ animation: "floatCard 5s ease-in-out infinite" }}
+          fontSize={{ base: "15px", md: "17px" }}
         >
           {stat.icon}
         </Flex>
@@ -186,32 +180,198 @@ const StatCard = ({ stat, index }: { stat: any; index: number }) => (
             fontSize="9px"
             color="gray.500"
             textTransform="uppercase"
-            letterSpacing="0.2em"
+            letterSpacing="0.16em"
             fontFamily="'Space Mono', monospace"
             fontWeight="700"
             mb={0.5}
           >
             {stat.label}
           </Text>
-          <Text
-            fontSize={{ base: "lg", md: "xl" }}
-            fontWeight="800"
-            color="white"
-            fontFamily="'Space Mono', monospace"
-            letterSpacing="-0.02em"
-            lineHeight="1.1"
-            style={{ animation: "countUp 0.6s ease-out forwards" }}
-          >
-            {stat.value}
-          </Text>
-          <Text fontSize="9px" color="gray.400" mt={1} fontFamily="'Space Grotesk', sans-serif" fontWeight="500">
-            {stat.description}
-          </Text>
+          {stat.isLoading ? (
+            <Skeleton
+              height="18px"
+              width="46px"
+              borderRadius="md"
+              startColor="rgba(255,255,255,0.04)"
+              endColor="rgba(255,255,255,0.16)"
+            />
+          ) : (
+            <Text
+              fontSize={{ base: "md", md: "lg" }}
+              fontWeight="800"
+              color="white"
+              fontFamily="'Space Mono', monospace"
+              letterSpacing="-0.01em"
+              lineHeight="1.1"
+              style={{ animation: "countUp 0.5s ease-out forwards" }}
+            >
+              {stat.value}
+            </Text>
+          )}
         </Box>
       </HStack>
     </Box>
   </MotionBox>
 );
+
+// ============= Milestone Tracker =============
+// Replaces the previous plain 9-dot row with a connected node path — each node shows
+// its step number until completed (then a checkmark), the current "next" node pulses
+// gently when a boost is available, and a gradient fill line tracks overall progress.
+const MilestoneTracker = ({
+  piecesUnlocked,
+  cooldownReady,
+}: {
+  piecesUnlocked: number;
+  cooldownReady: boolean;
+}) => {
+  const progressPct = (piecesUnlocked / TOTAL_PIECES) * 100;
+
+  return (
+    <Box position="relative" py={2} px={{ base: 1, md: 2 }}>
+      <Box
+        position="absolute"
+        top="50%"
+        left="4%"
+        right="4%"
+        h="2px"
+        bg="rgba(255,255,255,0.08)"
+        transform="translateY(-50%)"
+        borderRadius="full"
+      />
+      <Box
+        position="absolute"
+        top="50%"
+        left="4%"
+        h="2px"
+        bgGradient="linear(90deg, #a855f7, #22c55e)"
+        transform="translateY(-50%)"
+        width={`${(progressPct / 100) * 92}%`}
+        transition="width 0.8s cubic-bezier(0.4, 0, 0.2, 1)"
+        borderRadius="full"
+      />
+      <Flex justify="space-between" position="relative" px={{ base: "2%", md: "4%" }}>
+        {Array.from({ length: TOTAL_PIECES }).map((_, i) => {
+          const step = i + 1;
+          const isDone = step <= piecesUnlocked;
+          const isNext = step === piecesUnlocked + 1 && piecesUnlocked < TOTAL_PIECES;
+          return (
+            <Flex
+              key={step}
+              w={{ base: "20px", md: "26px" }}
+              h={{ base: "20px", md: "26px" }}
+              borderRadius="full"
+              align="center"
+              justify="center"
+              bg={isDone ? "linear-gradient(135deg, #22c55e, #4ade80)" : "rgba(10,10,20,0.9)"}
+              border={isNext ? "2px solid #a855f7" : isDone ? "none" : "1px solid rgba(255,255,255,0.14)"}
+              boxShadow={
+                isNext && cooldownReady
+                  ? "0 0 14px rgba(168,85,247,0.55)"
+                  : isDone
+                    ? "0 0 8px rgba(34,197,94,0.35)"
+                    : "none"
+              }
+              animation={isNext && cooldownReady ? "completePulse 1.4s ease-in-out infinite" : "none"}
+              fontSize={{ base: "9px", md: "10px" }}
+              fontWeight="800"
+              color={isDone ? "#052e0f" : isNext ? "#e9d5ff" : "gray.600"}
+              fontFamily="'Space Mono', monospace"
+              transition="all 0.3s ease"
+              flexShrink={0}
+            >
+              {isDone ? "✓" : step}
+            </Flex>
+          );
+        })}
+      </Flex>
+    </Box>
+  );
+};
+
+// ============= Contract Transparency Row =============
+const ContractRow = ({
+  name,
+  description,
+  address,
+}: {
+  name: string;
+  description: string;
+  address: string;
+}) => {
+  const toast = useToast();
+  const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      toast({
+        title: `${name} address copied`,
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } catch {
+      toast({ title: "Could not copy address", status: "error", duration: 2000, isClosable: true, position: "top-right" });
+    }
+  };
+
+  return (
+    <Flex
+      justify="space-between"
+      align="center"
+      py={3}
+      borderBottom="1px solid rgba(255,255,255,0.05)"
+      _last={{ borderBottom: "none" }}
+      flexWrap="wrap"
+      gap={2}
+    >
+      <HStack spacing={2.5}>
+        <CheckCircleIcon color="#4ade80" boxSize={3.5} />
+        <Box>
+          <Text fontSize="xs" color="white" fontWeight="700" fontFamily="'Space Grotesk', sans-serif">
+            {name}
+          </Text>
+          <Text fontSize="10px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+            {description}
+          </Text>
+        </Box>
+      </HStack>
+      <HStack spacing={1}>
+        <Text fontSize="11px" color="gray.500" fontFamily="'Space Mono', monospace" mr={1}>
+          {short}
+        </Text>
+        <Button
+          size="xs"
+          variant="ghost"
+          onClick={handleCopy}
+          minW="auto"
+          h="24px"
+          px={1.5}
+          color="gray.500"
+          _hover={{ color: "white", bg: "rgba(255,255,255,0.06)" }}
+          aria-label={`Copy ${name} contract address`}
+        >
+          <CopyIcon boxSize={3} />
+        </Button>
+        <Link href={`${SONEIUM_ADDRESS_EXPLORER}${address}`} isExternal aria-label={`View ${name} on explorer`}>
+          <Button
+            size="xs"
+            variant="ghost"
+            minW="auto"
+            h="24px"
+            px={1.5}
+            color="gray.500"
+            _hover={{ color: "white", bg: "rgba(255,255,255,0.06)" }}
+          >
+            <ExternalLinkIcon boxSize={3} />
+          </Button>
+        </Link>
+      </HStack>
+    </Flex>
+  );
+};
 
 // ============= Footer =============
 const Footer = () => {
@@ -402,7 +562,7 @@ export default function BadgePage() {
 
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const toast = useToast();
@@ -410,7 +570,6 @@ export default function BadgePage() {
 
   const [isSbtOpen, setIsSbtOpen] = useState(false);
   const [isTxPending, setIsTxPending] = useState(false);
-  const [tempBoostCount, setTempBoostCount] = useState<number | null>(null);
   const [txOpen, setTxOpen] = useState(false);
   const [txStatus, setTxStatus] = useState<"idle" | "wallet" | "pending" | "success" | "rejected" | "failed">("idle");
   const [txTitle, setTxTitle] = useState("");
@@ -429,7 +588,11 @@ export default function BadgePage() {
     query: { enabled },
   });
 
-  const { data: entryLevel = 0n, refetch: refetchEntryLevel } = useReadContract({
+  const {
+    data: entryLevel = 0n,
+    isLoading: isEntryLevelLoading,
+    refetch: refetchEntryLevel,
+  } = useReadContract({
     address: PULSE_ENTRY_ADDRESS,
     abi: PULSE_ENTRY_ABI,
     functionName: "getLevel",
@@ -437,7 +600,11 @@ export default function BadgePage() {
     query: { enabled },
   });
 
-  const { data: boostCountRaw = 0n, refetch: refetchBoost } = useReadContract({
+  const {
+    data: boostCountRaw = 0n,
+    isLoading: isBoostCountLoading,
+    refetch: refetchBoost,
+  } = useReadContract({
     address: PULSE_ENTRY_ADDRESS,
     abi: PULSE_ENTRY_ABI,
     functionName: "getBoostCount",
@@ -490,12 +657,21 @@ export default function BadgePage() {
     query: { enabled },
   });
 
+  // Native balance on Soneium — used to warn before the user signs a transaction they
+  // can't actually afford, instead of letting the wallet reject it after the fact.
+  const { data: nativeBalance, isLoading: isBalanceLoading } = useBalance({
+    address,
+    chainId: soneiumChain.id,
+    query: { enabled: !!address && isConnected },
+  });
+
   // ===== Computed =====
-  const boostCount = tempBoostCount ?? Number(boostCountRaw);
+  const boostCount = Number(boostCountRaw);
   const hasEntry = entryLevel > 0n;
   const hasMintedPulseCards = ownsPulseCards > 0n;
-  const piecesUnlocked = Math.min(boostCount, 9);
-  const canMintPulseCards = piecesUnlocked >= 9 && entryLevel >= 2n && !hasMintedPulseCards;
+  const piecesUnlocked = Math.min(boostCount, TOTAL_PIECES);
+  const canMintPulseCards = piecesUnlocked >= TOTAL_PIECES && entryLevel >= 2n && !hasMintedPulseCards;
+  const isStatsLoading = enabled && (isEntryLevelLoading || isBoostCountLoading);
 
   // ===== Cooldown Timer =====
   useEffect(() => {
@@ -526,26 +702,39 @@ export default function BadgePage() {
     return () => clearInterval(interval);
   }, [lastBoostTime, enabled, hasEntry]);
 
-  const canBoost = hasEntry && cooldownReady && piecesUnlocked < 9;
+  const canBoost = hasEntry && cooldownReady && piecesUnlocked < TOTAL_PIECES;
 
-  // ===== Auto-switch from URL =====
+  // ===== Auto-switch from URL (?chainId=1868) =====
+  // Only attempted once per page load — if the user rejects the switch, we don't keep
+  // re-prompting on every unrelated chain change. The "Wrong Network" banner below still
+  // gives them a manual retry button either way. Uses switchChainAsync specifically so
+  // the try/catch below can actually catch a rejection — the non-async `switchChain`
+  // mutate function returns void, not a promise, so awaiting/catching its return value
+  // (as the previous version of this effect did) never actually worked.
+  const hasAttemptedAutoSwitchRef = useRef(false);
+
   useEffect(() => {
+    if (hasAttemptedAutoSwitchRef.current) return;
+
     const params = new URLSearchParams(window.location.search);
-    const targetChainId = params.get("chainId");
-    if (targetChainId && switchChain && chainId !== 1868) {
-      if (Number(targetChainId) === 1868) {
-        console.log("🔁 Switching to Soneium (chainId 1868) from URL param");
-        switchChain({ chainId: 1868 });
-      }
-    }
-  }, [chainId, switchChain]);
+    const rawChainId = params.get("chainId");
+    if (!rawChainId) return;
 
-  // ===== Confetti on completion =====
-  useEffect(() => {
-    if (piecesUnlocked === 9 && !hasMintedPulseCards) {
-      confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
-    }
-  }, [piecesUnlocked, hasMintedPulseCards]);
+    const parsed = Number(rawChainId);
+    if (!Number.isFinite(parsed) || parsed !== soneiumChain.id) return;
+    if (chainId === soneiumChain.id) return;
+
+    hasAttemptedAutoSwitchRef.current = true;
+
+    (async () => {
+      try {
+        await switchChainAsync?.({ chainId: soneiumChain.id });
+      } catch {
+        // Silent — this is an unsolicited background attempt, not a user-initiated
+        // action. The "Wrong Network" banner already offers a manual, explicit retry.
+      }
+    })();
+  }, [chainId, switchChainAsync]);
 
   // ===== Handle Actions =====
   const handleAction = async (type: "mintEntry" | "boost" | "mintPulseCards") => {
@@ -617,7 +806,9 @@ export default function BadgePage() {
           confetti({ particleCount: 300, spread: 120, origin: { y: 0.7 } });
         }
 
-        await Promise.all([
+        // Refetch everything, and — for boosts — use the *actual* refetched count (not a
+        // client-side guess) to decide whether this action just completed the puzzle.
+        const [, boostResult] = await Promise.all([
           refetchEntryLevel(),
           refetchBoost(),
           refetchLastBoost(),
@@ -626,7 +817,10 @@ export default function BadgePage() {
         ]);
 
         if (type === "boost") {
-          setTempBoostCount(Number(boostCountRaw) + 1);
+          const refreshedCount = Number(boostResult.data ?? boostCountRaw);
+          if (Math.min(refreshedCount, TOTAL_PIECES) === TOTAL_PIECES && !hasMintedPulseCards) {
+            confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
+          }
         }
 
         toast({
@@ -653,7 +847,7 @@ export default function BadgePage() {
 
   const handleSwitchToSoneium = async () => {
     try {
-      await switchChain({ chainId: 1868 });
+      await switchChainAsync({ chainId: soneiumChain.id });
       toast({
         title: "Switched to Soneium",
         description: "You can now use PulseCards features.",
@@ -676,37 +870,33 @@ export default function BadgePage() {
   const stats = useMemo(() => [
     {
       label: "Pieces",
-      value: `${piecesUnlocked}/9`,
+      value: `${piecesUnlocked}/${TOTAL_PIECES}`,
       icon: "🧩",
       color: "#a855f7",
-      description: "Puzzle pieces unlocked",
-      glowColor: "rgba(168,85,247,0.3)",
+      isLoading: isStatsLoading,
     },
     {
       label: "Boosts",
       value: boostCount.toString(),
       icon: "⚡",
       color: "#4ade80",
-      description: "Total boosts performed",
-      glowColor: "rgba(74,222,128,0.3)",
+      isLoading: isStatsLoading,
     },
     {
       label: "Level",
       value: entryLevel.toString(),
       icon: "⭐",
       color: "#fbbf24",
-      description: "Current PulseEntry level",
-      glowColor: "rgba(251,191,36,0.3)",
+      isLoading: isStatsLoading,
     },
     {
       label: "Status",
-      value: hasMintedPulseCards ? "Minted ✅" : hasEntry ? "Active" : "Not Started",
+      value: hasMintedPulseCards ? "Minted" : hasEntry ? "Active" : "Not Started",
       icon: hasMintedPulseCards ? "🏆" : hasEntry ? "🟢" : "⏳",
       color: hasMintedPulseCards ? "#4ade80" : hasEntry ? "#2dd4bf" : "#6b7280",
-      description: hasMintedPulseCards ? "Soulbound acquired" : hasEntry ? "Journey in progress" : "Mint to begin",
-      glowColor: hasMintedPulseCards ? "rgba(74,222,128,0.3)" : hasEntry ? "rgba(45,212,191,0.3)" : "rgba(107,114,128,0.3)",
+      isLoading: isStatsLoading,
     },
-  ], [piecesUnlocked, boostCount, entryLevel, hasMintedPulseCards, hasEntry]);
+  ], [piecesUnlocked, boostCount, entryLevel, hasMintedPulseCards, hasEntry, isStatsLoading]);
 
   // ===== Button Logic =====
   let mainButtonLabel = "";
@@ -717,22 +907,52 @@ export default function BadgePage() {
     if (!isCorrectChain) {
       mainButtonLabel = "Switch to Soneium";
     } else if (!hasEntry) {
-      mainButtonLabel = "Mint PulseEntry";
-      mainActionType = "mintEntry";
+      if (isPaused) {
+        mainButtonLabel = "⏸ Contract Paused";
+        isMainDisabled = true;
+      } else {
+        mainButtonLabel = "Mint PulseEntry";
+        mainActionType = "mintEntry";
+      }
     } else if (canBoost) {
-      mainButtonLabel = `Boost Now ${piecesUnlocked}/9`;
-      mainActionType = "boost";
+      if (isPaused) {
+        mainButtonLabel = "⏸ Contract Paused";
+        isMainDisabled = true;
+      } else {
+        mainButtonLabel = `Boost Now · ${piecesUnlocked}/${TOTAL_PIECES}`;
+        mainActionType = "boost";
+      }
     } else if (canMintPulseCards) {
-      mainButtonLabel = "🌟 Mint Soulbound 🌟";
+      mainButtonLabel = "🌟 Mint Soulbound Badge";
       mainActionType = "mintPulseCards";
     } else if (hasMintedPulseCards) {
-      mainButtonLabel = "✨ Already Minted ✨";
+      mainButtonLabel = "✨ Already Minted";
       isMainDisabled = true;
     } else {
       mainButtonLabel = "⏳ Cooldown";
       isMainDisabled = true;
     }
   }
+
+  // Fee for whichever action the main button currently represents — shown to the user
+  // before they click, and used for the insufficient-balance check below.
+  const currentFee: bigint | undefined =
+    mainActionType === "mintEntry"
+      ? (mintFee as bigint | undefined)
+      : mainActionType === "boost"
+        ? (boostFee as bigint | undefined)
+        : mainActionType === "mintPulseCards"
+          ? (pulseCardsFee as bigint | undefined)
+          : undefined;
+
+  const hasInsufficientBalance =
+    isConnected &&
+    isCorrectChain &&
+    !!mainActionType &&
+    currentFee !== undefined &&
+    !isBalanceLoading &&
+    nativeBalance?.value !== undefined &&
+    nativeBalance.value < currentFee;
 
   // ===== Handle Main Button Click =====
   const handleMainClick = () => {
@@ -747,48 +967,68 @@ export default function BadgePage() {
     <>
       <style>{pageStyles}</style>
 
-      <Box minH="100vh" bg="#03030f" position="relative" fontFamily="'Space Grotesk', sans-serif">
-        {/* Ambient orbs */}
+      <Box
+        minH="100vh"
+        bgGradient="linear(180deg, #05040d 0%, #030309 45%, #050308 100%)"
+        position="relative"
+        fontFamily="'Space Grotesk', sans-serif"
+        overflowX="hidden"
+      >
+        {/* ─── Background layers ─── */}
         <Box
           position="fixed"
-          top="-10%"
-          left="-10%"
-          w="650px"
-          h="650px"
-          borderRadius="full"
-          bg="radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 65%)"
+          top="-8%"
+          left="50%"
+          w="1000px"
+          h="580px"
+          pointerEvents="none"
+          zIndex={0}
+          bg="conic-gradient(from 180deg at 50% 50%, rgba(168,85,247,0.26), rgba(34,197,94,0.2), rgba(56,189,248,0.2), rgba(168,85,247,0.26))"
           filter="blur(90px)"
-          style={{ animation: "orbFloat 22s ease-in-out infinite" }}
+          opacity={0.85}
+          style={{ animation: "auroraDrift 24s linear infinite" }}
+        />
+        <Box
+          position="fixed"
+          top="10%"
+          left="-15%"
+          w="600px"
+          h="600px"
+          borderRadius="full"
+          bg="radial-gradient(circle, rgba(56,189,248,0.13) 0%, transparent 65%)"
+          filter="blur(100px)"
+          style={{ animation: "orbFloat 26s ease-in-out infinite" }}
           zIndex={0}
           pointerEvents="none"
         />
         <Box
           position="fixed"
-          bottom="-10%"
+          bottom="-12%"
           right="-10%"
-          w="750px"
-          h="750px"
+          w="700px"
+          h="700px"
           borderRadius="full"
-          bg="radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 65%)"
+          bg="radial-gradient(circle, rgba(34,197,94,0.13) 0%, transparent 65%)"
           filter="blur(110px)"
           style={{ animation: "orbFloat 30s ease-in-out infinite 8s" }}
           zIndex={0}
           pointerEvents="none"
         />
+        {/* mid-page accent — keeps color energy going further down instead of fading
+            to flat black once you scroll past the hero */}
         <Box
-          position="fixed"
-          top="45%"
-          left="30%"
-          w="450px"
-          h="450px"
+          position="absolute"
+          top="70%"
+          left="50%"
+          transform="translateX(-50%)"
+          w="900px"
+          h="500px"
           borderRadius="full"
-          bg="radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 65%)"
-          filter="blur(70px)"
-          style={{ animation: "orbFloat 18s ease-in-out infinite reverse 4s" }}
+          bg="radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)"
+          filter="blur(120px)"
           zIndex={0}
           pointerEvents="none"
         />
-
         {/* subtle dot grid */}
         <Box
           position="fixed"
@@ -798,17 +1038,39 @@ export default function BadgePage() {
           bottom={0}
           zIndex={0}
           pointerEvents="none"
-          opacity={0.018}
+          opacity={0.02}
           bgImage="radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)"
           bgSize="32px 32px"
         />
+        {/* fine grain texture — adds material depth instead of a flat color field */}
+        <Box
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={0}
+          pointerEvents="none"
+          opacity={0.035}
+          mixBlendMode="overlay"
+          bgImage={`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`}
+        />
+        {/* vignette — focuses attention toward the center instead of a uniform flat field */}
+        <Box
+          position="fixed"
+          inset={0}
+          zIndex={0}
+          pointerEvents="none"
+          bg="radial-gradient(ellipse at 50% 30%, transparent 45%, rgba(0,0,0,0.55) 100%)"
+        />
 
-        <Container maxW="1440px" position="relative" zIndex={1} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
+
+        <Container maxW="1280px" position="relative" zIndex={1} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
           {/* ─── Header ─── */}
           <Flex
             justify="space-between"
             align="center"
-            mb={{ base: 6, md: 10 }}
+            mb={{ base: 6, md: 8 }}
             direction={{ base: "column", md: "row" }}
             gap={{ base: 3, md: 0 }}
           >
@@ -818,14 +1080,14 @@ export default function BadgePage() {
                 variant="ghost"
                 size={{ base: "sm", md: "md" }}
                 leftIcon={<ChevronLeftIcon />}
-                color="gray.500"
+                color="gray.300"
                 _hover={{
                   color: "white",
-                  bg: "rgba(168,85,247,0.08)",
-                  borderColor: "rgba(168,85,247,0.25)",
+                  bg: "rgba(168,85,247,0.12)",
+                  borderColor: "rgba(168,85,247,0.5)",
                 }}
                 borderRadius="xl"
-                border="1px solid rgba(255,255,255,0.07)"
+                border="1px solid rgba(168,85,247,0.28)"
                 fontFamily="'Space Grotesk', sans-serif"
                 fontWeight="500"
                 transition="all 0.2s"
@@ -835,50 +1097,42 @@ export default function BadgePage() {
 
               <Box h="36px" w="1px" bg="rgba(255,255,255,0.05)" display={{ base: "none", md: "block" }} />
 
-              <VStack align="start" spacing={0.5}>
-                <HStack spacing={3} align="center">
-                  <Box
-                    w="7px"
-                    h="7px"
-                    borderRadius="full"
-                    bg="#4ade80"
-                    boxShadow="0 0 8px rgba(74,222,128,0.8)"
-                    style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }}
-                  />
-                  <Heading
-                    fontSize={{ base: "xl", md: "2xl", lg: "3xl" }}
-                    fontWeight="800"
-                    bgGradient="linear(135deg, #a855f7 0%, #22c55e 50%, #38bdf8 100%)"
-                    bgClip="text"
-                    letterSpacing="-0.03em"
-                    fontFamily="'Space Grotesk', sans-serif"
-                    style={{ animation: "neonGlow 2s infinite alternate" }}
-                  >
-                    PulseCards
-                  </Heading>
-                  <Badge
-                    bg="rgba(168,85,247,0.1)"
-                    color="#a855f7"
-                    fontSize="9px"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    border="1px solid rgba(168,85,247,0.2)"
-                    fontFamily="'Space Mono', monospace"
-                  >
-                    Season 10
-                  </Badge>
-                </HStack>
+              <HStack spacing={2.5}>
+                <Box
+                  w="7px"
+                  h="7px"
+                  borderRadius="full"
+                  bg="#4ade80"
+                  boxShadow="0 0 8px rgba(74,222,128,0.8)"
+                  style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }}
+                />
                 <Text
-                  color="gray.600"
-                  fontSize={{ base: "9px", md: "10px" }}
-                  letterSpacing="0.2em"
-                  fontFamily="'Space Mono', monospace"
-                  textTransform="uppercase"
+                  fontSize={{ base: "sm", md: "md" }}
+                  fontWeight="700"
+                  color="white"
+                  letterSpacing="-0.01em"
+                  fontFamily="'Space Grotesk', sans-serif"
                 >
-                  Soulbound · Puzzle · Rewards
+                  PulseCards
                 </Text>
-              </VStack>
+                <Badge
+                  bgGradient="linear(135deg, rgba(168,85,247,0.55), rgba(56,189,248,0.4), rgba(34,197,94,0.45), rgba(168,85,247,0.55))"
+                  backgroundSize="300% auto"
+                  color="#f5f3ff"
+                  fontSize="11px"
+                  fontWeight="800"
+                  px={3.5}
+                  py={1.5}
+                  borderRadius="full"
+                  border="1px solid rgba(196,181,253,0.6)"
+                  fontFamily="'Space Mono', monospace"
+                  letterSpacing="0.03em"
+                  boxShadow="0 0 20px rgba(168,85,247,0.5), 0 0 8px rgba(56,189,248,0.3)"
+                  style={{ animation: "shimmerBorder 2.5s linear infinite, pulseGlow 2s ease-in-out infinite" }}
+                >
+                  ✨ Season 10
+                </Badge>
+              </HStack>
             </HStack>
 
             <Box display={{ base: "none", md: "block" }} _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
@@ -952,12 +1206,63 @@ export default function BadgePage() {
             </MotionBox>
           )}
 
-          {/* Stats */}
-          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2.5, md: 5 }} mb={{ base: 7, md: 10 }}>
-            {stats.map((stat, i) => (
-              <StatCard key={stat.label} stat={stat} index={i} />
-            ))}
-          </SimpleGrid>
+          {/* ─── Hero ─── */}
+          <Box mb={{ base: 10, md: 14 }}>
+            <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <VStack spacing={4} textAlign="center" maxW="700px" mx="auto" mb={{ base: 7, md: 9 }}>
+                <Badge
+                  bg="rgba(168,85,247,0.1)"
+                  color="#c4b5fd"
+                  fontSize="10px"
+                  px={3}
+                  py={1.5}
+                  borderRadius="full"
+                  border="1px solid rgba(168,85,247,0.25)"
+                  fontFamily="'Space Mono', monospace"
+                  letterSpacing="0.1em"
+                >
+                  <HStack spacing={1.5} align="center">
+                    <Image
+                      src="/soneium.png"
+                      alt="Soneium"
+                      boxSize="14px"
+                      borderRadius="full"
+                      fallbackSrc={IMAGE_FALLBACK}
+                    />
+                    <Text as="span">SONEIUM · SOULBOUND IDENTITY</Text>
+                  </HStack>
+                </Badge>
+                <Heading
+                  fontSize={{ base: "3xl", md: "5xl" }}
+                  fontWeight="800"
+                  letterSpacing="-0.03em"
+                  lineHeight="1.1"
+                  bgGradient="linear(120deg, #f5f3ff 0%, #c4b5fd 35%, #86efac 70%, #f5f3ff 100%)"
+                  backgroundSize="220% auto"
+                  bgClip="text"
+                  fontFamily="'Space Grotesk', sans-serif"
+                  style={{ animation: "shimmerBorder 7s linear infinite" }}
+                >
+                  Turn daily consistency
+                  <br />
+                  into permanent proof.
+                </Heading>
+                <Text fontSize={{ base: "sm", md: "md" }} color="gray.400" fontFamily="'Space Grotesk', sans-serif" maxW="540px" lineHeight="1.7">
+                  Mint your PulseEntry, boost once a day for nine days, and earn a
+                  non-transferable PulseCards badge — on-chain reputation that can't be
+                  bought, only earned.
+                </Text>
+              </VStack>
+            </MotionBox>
+
+            <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
+              <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2.5, md: 4 }}>
+                {stats.map((stat, i) => (
+                  <StatCard key={stat.label} stat={stat} index={i} />
+                ))}
+              </SimpleGrid>
+            </MotionBox>
+          </Box>
 
           {/* ─── Main Content ─── */}
           <Flex
@@ -966,63 +1271,67 @@ export default function BadgePage() {
             align={{ base: "center", lg: "flex-start" }}
             justify="center"
           >
-            {/* LEFT - Puzzle Grid - MAI MARE PENTRU A ÎNCĂPEA TOATE IMAGINILE */}
-            <Box flex="1.2" w="full" minW="0" maxW={{ lg: "620px" }}>
+            {/* LEFT — Puzzle */}
+            <Box flex="1.15" w="full" minW="0" maxW={{ lg: "680px" }}>
               <Box
                 bg="rgba(4,4,14,0.85)"
                 backdropFilter="blur(20px)"
                 borderRadius="2xl"
-                border="1px solid rgba(255,255,255,0.06)"
-                p={{ base: 3, md: 5 }}
-                _hover={{ borderColor: "rgba(168,85,247,0.3)", boxShadow: "0 20px 60px rgba(168,85,247,0.05)" }}
-                transition="all 0.35s ease"
+                border="1px solid rgba(255,255,255,0.07)"
+                p={{ base: 3, md: 4 }}
+                position="relative"
                 overflow="hidden"
+                _hover={{ borderColor: "rgba(168,85,247,0.25)" }}
+                transition="all 0.35s ease"
               >
-                <VStack spacing={3} align="stretch">
+                <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  h="1px"
+                  bgGradient="linear(90deg, transparent, rgba(168,85,247,0.5), transparent)"
+                />
+                <VStack spacing={4} align="stretch">
                   <HStack justify="space-between" w="full" px={1}>
                     <Heading size="sm" color="white" fontFamily="'Space Grotesk', sans-serif" fontWeight="700">
                       🧩 Pulse Puzzle
                     </Heading>
                     <Badge
-                      colorScheme="purple"
-                      variant="solid"
+                      bg="rgba(168,85,247,0.12)"
+                      color="#c4b5fd"
                       fontSize="10px"
                       px={3}
                       py={1}
                       borderRadius="full"
                       fontFamily="'Space Mono', monospace"
                     >
-                      {piecesUnlocked}/9
+                      {piecesUnlocked}/{TOTAL_PIECES}
                     </Badge>
                   </HStack>
 
-                  <Box
-                    w="full"
-                    overflow="hidden"
-                    borderRadius="xl"
-                    position="relative"
-                  >
+                  <Box w="full" overflow="hidden" borderRadius="xl" position="relative">
                     <PuzzleGrid piecesUnlocked={piecesUnlocked} images={PUZZLE_IMAGES} />
                   </Box>
 
-                  {/* ===== SECȚIUNEA PROGRESS CU ANIMAȚII ===== */}
+                  {/* Progress bar */}
                   <Box w="full" px={1}>
-                    <Box position="relative" mb={1}>
+                    <Box position="relative" mb={2}>
                       <Progress
-                        value={(piecesUnlocked / 9) * 100}
+                        value={(piecesUnlocked / TOTAL_PIECES) * 100}
                         size="sm"
                         colorScheme="green"
                         bg="rgba(255,255,255,0.05)"
                         borderRadius="full"
                         sx={{
                           "& > div": {
-                            bgGradient: piecesUnlocked === 9 
-                              ? "linear(135deg, #22c55e, #4ade80, #22c55e)" 
+                            bgGradient: piecesUnlocked === TOTAL_PIECES
+                              ? "linear(135deg, #22c55e, #4ade80, #22c55e)"
                               : "linear(135deg, #a855f7, #22c55e)",
                             borderRadius: "full",
                             transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-                            backgroundSize: piecesUnlocked === 9 ? "200% 100%" : "100%",
-                            animation: piecesUnlocked === 9 ? "progressGlow 1.5s ease-in-out infinite" : "none",
+                            backgroundSize: piecesUnlocked === TOTAL_PIECES ? "200% 100%" : "100%",
+                            animation: piecesUnlocked === TOTAL_PIECES ? "progressGlow 1.5s ease-in-out infinite" : "none",
                             position: "relative",
                             "&::after": {
                               content: '""',
@@ -1037,109 +1346,35 @@ export default function BadgePage() {
                           },
                         }}
                       />
-                      
-                      {/* Efect sparkle la final */}
-                      {piecesUnlocked === 9 && (
-                        <Box
-                          position="absolute"
-                          top="-3px"
-                          left="-3px"
-                          right="-3px"
-                          bottom="-3px"
-                          borderRadius="full"
-                          bg="linear-gradient(90deg, #22c55e, #4ade80, #22c55e)"
-                          backgroundSize="200% 100%"
-                          animation="progressGlow 1.2s ease-in-out infinite"
-                          opacity={0.25}
-                        />
-                      )}
                     </Box>
-                    
-                    <Flex justify="space-between" align="center" mt={1.5}>
-                      <HStack spacing={2}>
-                        <Text fontSize="10px" color="gray.300" fontFamily="'Space Mono', monospace" fontWeight="600">
-                          {piecesUnlocked} / 9
-                        </Text>
-                        {piecesUnlocked === 9 && (
-                          <Badge
-                            colorScheme="green"
-                            variant="solid"
-                            fontSize="9px"
-                            px={2.5}
-                            py={0.5}
-                            borderRadius="full"
-                            animation="completePulse 1s ease-in-out infinite"
-                          >
-                            ✨ Complete
-                          </Badge>
-                        )}
-                        {piecesUnlocked > 0 && piecesUnlocked < 9 && (
-                          <Badge
-                            colorScheme="purple"
-                            variant="subtle"
-                            fontSize="9px"
-                            px={2}
-                            py={0.5}
-                            borderRadius="full"
-                            animation={cooldownReady ? "completePulse 1.2s ease-in-out infinite" : "none"}
-                            border={cooldownReady ? "1px solid rgba(34,197,94,0.3)" : "none"}
-                          >
-                            {cooldownReady ? "⚡ Ready" : `${Math.round((piecesUnlocked / 9) * 100)}%`}
-                          </Badge>
-                        )}
-                      </HStack>
-                      <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">
-                        {9 - piecesUnlocked} left
-                      </Text>
-                    </Flex>
 
-                    {/* Indicator puncte - 9 puncte care se colorează */}
-                    {piecesUnlocked > 0 && piecesUnlocked < 9 && (
-                      <HStack spacing={1} justify="center" mt={2}>
-                        {[...Array(9)].map((_, i) => (
-                          <Box
-                            key={i}
-                            w="8px"
-                            h="8px"
-                            borderRadius="full"
-                            bg={i < piecesUnlocked ? "#22c55e" : "rgba(255,255,255,0.08)"}
-                            transition="all 0.4s ease"
-                            boxShadow={i < piecesUnlocked ? "0 0 8px rgba(34,197,94,0.4)" : "none"}
-                            border={i < piecesUnlocked ? "1px solid rgba(34,197,94,0.2)" : "none"}
-                          />
-                        ))}
-                      </HStack>
-                    )}
+                    {/* Milestone node tracker — replaces the old plain dot row */}
+                    <MilestoneTracker piecesUnlocked={piecesUnlocked} cooldownReady={cooldownReady} />
 
-                    {/* Efect de stea când se completează */}
-                    {piecesUnlocked === 9 && (
+                    {piecesUnlocked === TOTAL_PIECES ? (
                       <HStack spacing={2} justify="center" mt={2}>
                         <Text fontSize="16px" animation="starFloat 1.5s ease-in-out infinite">⭐</Text>
                         <Text fontSize="13px" color="#4ade80" fontWeight="700" fontFamily="'Space Grotesk', sans-serif" animation="completePulse 1.2s ease-in-out infinite">
-                          Puzzle Complete! 🎉
+                          Puzzle Complete!
                         </Text>
                         <Text fontSize="16px" animation="starFloat 1.5s ease-in-out infinite" style={{ animationDelay: "0.3s" }}>⭐</Text>
                       </HStack>
-                    )}
-
-                    {/* Mesaj când e gata de boost */}
-                    {cooldownReady && piecesUnlocked > 0 && piecesUnlocked < 9 && (
+                    ) : cooldownReady && piecesUnlocked > 0 ? (
                       <Text
                         fontSize="9px"
                         color="#22c55e"
                         fontFamily="'Space Mono', monospace"
                         textAlign="center"
-                        mt={1.5}
+                        mt={2}
                         animation="progressPop 0.4s ease-out"
                         fontWeight="600"
                       >
-                        ⚡ Boost ready! Click to unlock next piece
+                        ⚡ Boost ready — click to unlock the next piece
                       </Text>
-                    )}
+                    ) : null}
                   </Box>
 
-                  {/* Badge-uri (rămân neschimbate) */}
-                  {piecesUnlocked > 0 && piecesUnlocked < 9 && (
+                  {piecesUnlocked > 0 && piecesUnlocked < TOTAL_PIECES && (
                     <HStack spacing={2} justify="center" w="full" flexWrap="wrap">
                       <Badge
                         variant="subtle"
@@ -1152,7 +1387,7 @@ export default function BadgePage() {
                       >
                         {piecesUnlocked >= 6 ? "⭐ Collector" : piecesUnlocked >= 3 ? "🧩 Novice" : "🚀 Started"}
                       </Badge>
-                      {cooldownReady && hasEntry && piecesUnlocked < 9 && (
+                      {cooldownReady && hasEntry && (
                         <Badge colorScheme="green" borderRadius="full" px={3} py={1} fontSize="9px" fontFamily="'Space Mono', monospace">
                           ✅ Ready to Boost
                         </Badge>
@@ -1163,81 +1398,85 @@ export default function BadgePage() {
               </Box>
             </Box>
 
-            {/* RIGHT - Preview & Actions */}
-            <Box flex="1" w="full" maxW={{ lg: "400px" }}>
+            {/* RIGHT — Preview & Actions */}
+            <Box flex="1" w="full" maxW={{ lg: "440px" }}>
               <VStack spacing={5} align="stretch" w="full">
                 <Box
                   w="full"
-                  bg="rgba(4,4,14,0.85)"
-                  backdropFilter="blur(20px)"
-                  borderRadius="2xl"
-                  border="2px solid"
+                  bg="linear-gradient(180deg, rgba(22,16,36,0.92) 0%, rgba(4,4,14,0.94) 100%)"
+                  backdropFilter="blur(24px)"
+                  borderRadius="24px"
+                  border="1px solid"
                   borderColor={
                     hasMintedPulseCards
-                      ? "rgba(74,222,128,0.4)"
+                      ? "rgba(74,222,128,0.35)"
                       : canMintPulseCards
-                        ? "rgba(74,222,128,0.3)"
+                        ? "rgba(74,222,128,0.28)"
                         : hasEntry
-                          ? "rgba(168,85,247,0.3)"
-                          : "rgba(255,255,255,0.06)"
+                          ? "rgba(168,85,247,0.25)"
+                          : "rgba(255,255,255,0.08)"
                   }
-                  p={{ base: 4, md: 5 }}
+                  p={{ base: 5, md: 6 }}
                   textAlign="center"
                   position="relative"
                   overflow="visible"
+                  boxShadow="0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)"
                   transition="all 0.5s ease"
-                  _hover={{
-                    borderColor: hasEntry ? "rgba(168,85,247,0.5)" : "rgba(255,255,255,0.1)",
-                    boxShadow: canMintPulseCards || hasMintedPulseCards ? "0 0 60px rgba(74,222,128,0.1)" : "none",
-                  }}
+                  _hover={{ borderColor: hasEntry ? "rgba(168,85,247,0.45)" : "rgba(255,255,255,0.14)" }}
                 >
+                  {/* corner accents — a small HUD-style detail that reads as more "engineered" */}
+                  <Box position="absolute" top="14px" left="14px" w="14px" h="14px" borderTop="2px solid" borderLeft="2px solid" borderColor="rgba(168,85,247,0.35)" borderTopLeftRadius="6px" pointerEvents="none" />
+                  <Box position="absolute" top="14px" right="14px" w="14px" h="14px" borderTop="2px solid" borderRight="2px solid" borderColor="rgba(168,85,247,0.35)" borderTopRightRadius="6px" pointerEvents="none" />
+                  <Box position="absolute" bottom="14px" left="14px" w="14px" h="14px" borderBottom="2px solid" borderLeft="2px solid" borderColor="rgba(168,85,247,0.2)" borderBottomLeftRadius="6px" pointerEvents="none" />
+                  <Box position="absolute" bottom="14px" right="14px" w="14px" h="14px" borderBottom="2px solid" borderRight="2px solid" borderColor="rgba(168,85,247,0.2)" borderBottomRightRadius="6px" pointerEvents="none" />
+
                   <Box
                     position="absolute"
                     top={0}
                     left={0}
                     right={0}
-                    h="3px"
+                    h="1px"
                     bgGradient={
                       hasMintedPulseCards
-                        ? "linear(90deg, #4ade80, #22c55e, #4ade80)"
+                        ? "linear(90deg, transparent, #4ade80, transparent)"
                         : canMintPulseCards
-                          ? "linear(90deg, #a855f7, #22c55e, #a855f7)"
+                          ? "linear(90deg, transparent, #22c55e, transparent)"
                           : hasEntry
-                            ? "linear(90deg, #a855f7, #8b5cf6, #a855f7)"
-                            : "linear(90deg, #6b7280, #4b5563, #6b7280)"
+                            ? "linear(90deg, transparent, #a855f7, transparent)"
+                            : "linear(90deg, transparent, #6b7280, transparent)"
                     }
-                    backgroundSize="200% 100%"
-                    style={{ animation: "shimmerBorder 3s infinite" }}
                   />
 
-                  {/* PulseEntry Owned Badge - DEPĂȘEȘTE MARGINEA DE SUS */}
                   {hasEntry && (
                     <Box
                       position="absolute"
-                      top="-14px"
+                      top="-16px"
                       left="50%"
                       transform="translateX(-50%)"
-                      bg="rgba(168,85,247,0.15)"
+                      bg="linear-gradient(135deg, rgba(168,85,247,0.28), rgba(139,92,246,0.16))"
                       backdropFilter="blur(12px)"
                       px={4}
                       py={1.5}
                       borderRadius="full"
-                      border="1px solid rgba(168,85,247,0.4)"
+                      border="1px solid rgba(168,85,247,0.5)"
                       whiteSpace="nowrap"
-                      boxShadow="0 0 30px rgba(168,85,247,0.3), 0 4px 20px rgba(0,0,0,0.3)"
+                      boxShadow="0 4px 24px rgba(168,85,247,0.25), inset 0 1px 0 rgba(255,255,255,0.1)"
                       zIndex={10}
                     >
                       <HStack spacing={2}>
-                        <Image 
-                          src={PULSE_ENTRY_IMAGE} 
-                          alt="PulseEntry" 
-                          boxSize="20px" 
-                          borderRadius="full" 
-                          objectFit="cover" 
+                        <Image
+                          src={PULSE_ENTRY_IMAGE}
+                          alt="PulseEntry"
+                          boxSize="18px"
+                          borderRadius="full"
+                          objectFit="cover"
+                          border="1px solid rgba(255,255,255,0.25)"
+                          fallbackSrc={IMAGE_FALLBACK}
                         />
-                        <Text fontSize="11px" fontWeight="700" color="#a855f7" fontFamily="'Space Mono', monospace">
-                          PulseEntry Owned
+                        <Text fontSize="10px" fontWeight="700" color="#e9d5ff" fontFamily="'Space Mono', monospace" letterSpacing="0.06em">
+                          PULSEENTRY VERIFIED
                         </Text>
+                        <CheckCircleIcon color="#c4b5fd" boxSize={2.5} />
                       </HStack>
                     </Box>
                   )}
@@ -1251,6 +1490,7 @@ export default function BadgePage() {
                           boxSize={{ base: "170px", md: "200px" }}
                           objectFit="contain"
                           mx="auto"
+                          fallbackSrc={IMAGE_FALLBACK}
                           filter={
                             hasMintedPulseCards
                               ? "none"
@@ -1274,7 +1514,7 @@ export default function BadgePage() {
                             backdropFilter="blur(4px)"
                           >
                             <Badge colorScheme="purple" fontSize="sm" px={4} py={2} borderRadius="full" fontFamily="'Space Mono', monospace">
-                              {9 - piecesUnlocked} Boost{9 - piecesUnlocked !== 1 ? "s" : ""} remaining
+                              {TOTAL_PIECES - piecesUnlocked} Boost{TOTAL_PIECES - piecesUnlocked !== 1 ? "s" : ""} remaining
                             </Badge>
                           </Box>
                         )}
@@ -1287,42 +1527,156 @@ export default function BadgePage() {
                         objectFit="contain"
                         mx="auto"
                         borderRadius="2xl"
-                        boxShadow="0 0 40px rgba(168,85,247,0.2)"
+                        boxShadow="0 0 40px rgba(168,85,247,0.18)"
+                        fallbackSrc={IMAGE_FALLBACK}
                       />
                     )}
                   </Box>
 
-                  {/* Status Text */}
                   {hasMintedPulseCards ? (
-                    <Text fontSize="md" fontWeight="700" color="#4ade80" fontFamily="'Space Grotesk', sans-serif" mt={2}>
-                      ✦ Soulbound PulseCards Minted! ✦
+                    <Text fontSize="md" fontWeight="700" color="#4ade80" fontFamily="'Space Grotesk', sans-serif" mt={3}>
+                      ✦ Soulbound PulseCards Minted ✦
                     </Text>
                   ) : canMintPulseCards ? (
-                    <Text fontSize="md" fontWeight="700" color="#22c55e" fontFamily="'Space Grotesk', sans-serif" mt={2} style={{ animation: "pulseAnimation 1.5s infinite" }}>
-                      🔓 Achievement Unlocked!
+                    <Text fontSize="md" fontWeight="700" color="#22c55e" fontFamily="'Space Grotesk', sans-serif" mt={3} style={{ animation: "pulseAnimation 1.5s infinite" }}>
+                      🔓 Achievement Unlocked
                     </Text>
                   ) : hasEntry ? (
-                    <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={2}>
-                      {9 - piecesUnlocked} Boost{9 - piecesUnlocked !== 1 ? "s" : ""} remaining
-                    </Text>
+                    <HStack justify="center" spacing={2} mt={3}>
+                      <Badge
+                        bg="rgba(168,85,247,0.1)"
+                        color="#c4b5fd"
+                        fontSize="10px"
+                        px={2.5}
+                        py={1}
+                        borderRadius="full"
+                        border="1px solid rgba(168,85,247,0.2)"
+                        fontFamily="'Space Mono', monospace"
+                      >
+                        {TOTAL_PIECES - piecesUnlocked} Boost{TOTAL_PIECES - piecesUnlocked !== 1 ? "s" : ""} remaining
+                      </Badge>
+                    </HStack>
                   ) : (
-                    <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={2}>
+                    <Text fontSize="sm" color="gray.400" fontFamily="'Space Grotesk', sans-serif" mt={3}>
                       Mint PulseEntry to start your journey
                     </Text>
                   )}
 
-                  {/* Cooldown Timer */}
-                  {hasEntry && !canBoost && piecesUnlocked < 9 && (
-                    <HStack spacing={3} justify="center" bg="rgba(168,85,247,0.05)" px={4} py={2} borderRadius="full" mt={3}>
-                      <Badge colorScheme="orange" variant="solid" borderRadius="full" px={2} fontSize="9px" fontFamily="'Space Mono', monospace">
-                        ⏱️
-                      </Badge>
-                      <Text fontSize="md" color="#a855f7" fontWeight="600" fontFamily="'Space Mono', monospace">
+                  {hasEntry && !canBoost && piecesUnlocked < TOTAL_PIECES && (
+                    <Box
+                      mt={4}
+                      bg="linear-gradient(135deg, rgba(168,85,247,0.08), rgba(139,92,246,0.04))"
+                      border="1px solid rgba(168,85,247,0.2)"
+                      borderRadius="16px"
+                      px={5}
+                      py={3}
+                    >
+                      <Text
+                        fontSize="8px"
+                        color="gray.500"
+                        textTransform="uppercase"
+                        letterSpacing="0.18em"
+                        fontFamily="'Space Mono', monospace"
+                        mb={1}
+                      >
+                        ⏱ Next boost available in
+                      </Text>
+                      <Text
+                        fontSize="xl"
+                        color="#c4b5fd"
+                        fontWeight="800"
+                        fontFamily="'Space Mono', monospace"
+                        letterSpacing="0.03em"
+                      >
                         {timeLeft}
                       </Text>
-                    </HStack>
+                    </Box>
                   )}
                 </Box>
+
+                {/* Entry Details — fills out the panel with real, useful info instead of
+                    empty space, and doubles as another small transparency touch. */}
+                {hasEntry && (
+                  <Box
+                    w="full"
+                    bg="rgba(255,255,255,0.02)"
+                    border="1px solid rgba(255,255,255,0.07)"
+                    borderRadius="16px"
+                    p={4}
+                  >
+                    <Text
+                      fontSize="9px"
+                      color="gray.500"
+                      textTransform="uppercase"
+                      letterSpacing="0.16em"
+                      fontFamily="'Space Mono', monospace"
+                      fontWeight="700"
+                      mb={2.5}
+                    >
+                      Entry Details
+                    </Text>
+                    <VStack spacing={2} align="stretch">
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                          Token ID
+                        </Text>
+                        <Text fontSize="xs" color="gray.200" fontFamily="'Space Mono', monospace">
+                          #{entryTokenId !== undefined ? entryTokenId.toString() : "—"}
+                        </Text>
+                      </Flex>
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                          Level
+                        </Text>
+                        <Badge
+                          bg="rgba(251,191,36,0.1)"
+                          color="#fbbf24"
+                          fontSize="9px"
+                          px={2}
+                          py={0.5}
+                          borderRadius="full"
+                          fontFamily="'Space Mono', monospace"
+                        >
+                          ⭐ {entryLevel.toString()}
+                        </Badge>
+                      </Flex>
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                          Puzzle Progress
+                        </Text>
+                        <Text fontSize="xs" color="gray.200" fontFamily="'Space Mono', monospace">
+                          {piecesUnlocked}/{TOTAL_PIECES} pieces
+                        </Text>
+                      </Flex>
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                          Network
+                        </Text>
+                        <HStack spacing={1.5}>
+                          <Box w="6px" h="6px" borderRadius="full" bg="#4ade80" boxShadow="0 0 6px rgba(74,222,128,0.7)" />
+                          <Text fontSize="xs" color="gray.200" fontFamily="'Space Mono', monospace">
+                            Soneium
+                          </Text>
+                        </HStack>
+                      </Flex>
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                          Soulbound Status
+                        </Text>
+                        <Text fontSize="xs" color={hasMintedPulseCards ? "#4ade80" : "gray.400"} fontFamily="'Space Mono', monospace">
+                          {hasMintedPulseCards ? "Minted" : "Not yet minted"}
+                        </Text>
+                      </Flex>
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Fee disclosure */}
+                {mainActionType && currentFee !== undefined && (
+                  <Text fontSize="xs" color="gray.500" textAlign="center" fontFamily="'Space Mono', monospace">
+                    Fee: {(Number(currentFee) / 1e18).toFixed(6)} ETH
+                  </Text>
+                )}
 
                 {/* Main Action Button */}
                 {isConnected ? (
@@ -1347,10 +1701,15 @@ export default function BadgePage() {
                     color="white"
                     borderRadius="xl"
                     onClick={handleMainClick}
-                    isDisabled={isMainDisabled || (mainActionType === "boost" && !canBoost) || (mainActionType === "mintEntry" && hasEntry)}
+                    isDisabled={
+                      isMainDisabled ||
+                      (mainActionType === "boost" && !canBoost) ||
+                      (mainActionType === "mintEntry" && hasEntry) ||
+                      hasInsufficientBalance
+                    }
                     isLoading={isTxPending}
                     _hover={
-                      !isMainDisabled && mainActionType
+                      !isMainDisabled && mainActionType && !hasInsufficientBalance
                         ? {
                             transform: "translateY(-3px)",
                             boxShadow: `0 10px 40px ${
@@ -1376,38 +1735,95 @@ export default function BadgePage() {
                   </Box>
                 )}
 
+                {hasInsufficientBalance && (
+                  <Text fontSize="xs" color="#f87171" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
+                    Insufficient ETH balance on Soneium to cover this action's fee
+                  </Text>
+                )}
+
+                {/* Separator — pushes the teaser down a bit and visually detaches it from
+                    the primary action above, so it reads as a secondary, optional card. */}
+                <Box h="1px" bg="linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" mt={2} />
+
                 {/* SBT Utility Teaser */}
                 <Box
                   w="full"
-                  bg="rgba(168,85,247,0.05)"
-                  border="1px solid rgba(168,85,247,0.15)"
-                  borderRadius="xl"
-                  p={3.5}
-                  _hover={{
-                    borderColor: "rgba(168,85,247,0.3)",
-                    bg: "rgba(168,85,247,0.08)",
-                  }}
+                  bg="linear-gradient(135deg, rgba(168,85,247,0.09), rgba(34,197,94,0.05))"
+                  border="1px solid rgba(168,85,247,0.2)"
+                  borderRadius="18px"
+                  p={4}
+                  position="relative"
+                  overflow="hidden"
+                  _hover={{ borderColor: "rgba(168,85,247,0.4)", transform: "translateY(-2px)" }}
                   transition="all 0.3s ease"
                   cursor="pointer"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Learn more about PulseCards SBT utility"
                   onClick={() => setIsSbtOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setIsSbtOpen(true);
+                    }
+                  }}
                 >
-                  <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
-                    <HStack spacing={2}>
-                      <Text fontSize="lg">🎯</Text>
+                  <Box
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    right={0}
+                    h="1px"
+                    bgGradient="linear(90deg, transparent, #a855f7, #22c55e, transparent)"
+                  />
+                  <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
+                    <HStack spacing={3}>
+                      <Flex
+                        w="36px"
+                        h="36px"
+                        align="center"
+                        justify="center"
+                        bg="rgba(168,85,247,0.14)"
+                        border="1px solid rgba(168,85,247,0.3)"
+                        borderRadius="full"
+                        flexShrink={0}
+                        fontSize="15px"
+                      >
+                        🎯
+                      </Flex>
                       <Box>
-                        <Text fontSize="xs" fontWeight="600" color="white" fontFamily="'Space Grotesk', sans-serif">
+                        <Text fontSize="xs" fontWeight="700" color="white" fontFamily="'Space Grotesk', sans-serif">
                           PulseCards SBT Utility
                         </Text>
-                        <Text fontSize="9px" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                        <Text fontSize="10px" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
                           Free daily on-chain actions
                         </Text>
                       </Box>
                     </HStack>
                     <HStack spacing={2}>
-                      <Badge colorScheme="green" borderRadius="full" px={2} py={0.5} fontSize="8px" fontFamily="'Space Mono', monospace">
+                      <Badge
+                        bg="rgba(74,222,128,0.12)"
+                        color="#4ade80"
+                        borderRadius="full"
+                        px={2.5}
+                        py={0.5}
+                        fontSize="8px"
+                        fontFamily="'Space Mono', monospace"
+                        border="1px solid rgba(74,222,128,0.25)"
+                      >
                         ● LIVE
                       </Badge>
-                      <Button size="xs" colorScheme="purple" variant="ghost" borderRadius="full" fontSize="9px" fontWeight="600">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        borderRadius="full"
+                        fontSize="9px"
+                        fontWeight="700"
+                        color="#c4b5fd"
+                        borderColor="rgba(168,85,247,0.35)"
+                        _hover={{ bg: "rgba(168,85,247,0.12)" }}
+                        fontFamily="'Space Grotesk', sans-serif"
+                      >
                         Learn More →
                       </Button>
                     </HStack>
@@ -1417,14 +1833,15 @@ export default function BadgePage() {
             </Box>
           </Flex>
 
-          {/* ─── How It Works ─── */}
+
+          {/* ─── How It Works — connected stepper ─── */}
           <Box mt={16}>
             <Box
               bg="rgba(4,4,14,0.85)"
               backdropFilter="blur(20px)"
               borderRadius="2xl"
               border="1px solid rgba(255,255,255,0.06)"
-              p={{ base: 5, md: 7 }}
+              p={{ base: 5, md: 8 }}
               overflow="hidden"
               position="relative"
             >
@@ -1436,10 +1853,10 @@ export default function BadgePage() {
                 h="2px"
                 bgGradient="linear(90deg, #a855f7, #22c55e, #38bdf8, #a855f7)"
                 backgroundSize="300% 100%"
-                style={{ animation: "shimmerBorder 4s infinite" }}
+                style={{ animation: "shimmerBorder 5s infinite" }}
               />
 
-              <VStack spacing={6} align="stretch" position="relative" zIndex={1}>
+              <VStack spacing={8} align="stretch" position="relative" zIndex={1}>
                 <HStack spacing={3}>
                   <Flex
                     w="34px"
@@ -1457,88 +1874,105 @@ export default function BadgePage() {
                       How It Works
                     </Heading>
                     <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
-                      Complete the puzzle to earn your Soulbound PulseCards
+                      Four steps from zero to Soulbound
                     </Text>
                   </Box>
                 </HStack>
 
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
-                  {[
-                    {
-                      num: "01",
-                      icon: "🎫",
-                      title: "Mint PulseEntry",
-                      desc: "Mint your PulseEntry NFT (one per wallet) – your entry ticket to start the daily boosting journey",
-                      color: "#a855f7",
-                    },
-                    {
-                      num: "02",
-                      icon: "⚡",
-                      title: "Daily Boosts",
-                      desc: "Boost once every 24 hours (max 9 times total) – each successful boost unlocks one puzzle piece",
-                      color: "#22c55e",
-                    },
-                    {
-                      num: "03",
-                      icon: "🧩",
-                      title: "Complete Puzzle",
-                      desc: "Reach level 2 through consistent boosting and complete the 9-piece puzzle",
-                      color: "#38bdf8",
-                    },
-                    {
-                      num: "04",
-                      icon: "🏆",
-                      title: "Mint Soulbound",
-                      desc: "Mint your permanent Soulbound PulseCards NFT – proof of daily activity on Soneium",
-                      color: "#fbbf24",
-                    },
-                  ].map((step, index) => (
-                    <MotionBox
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <Box
-                        p={4}
-                        bg="rgba(255,255,255,0.02)"
-                        borderRadius="xl"
-                        border="1px solid rgba(255,255,255,0.04)"
-                        _hover={{
-                          bg: `rgba(255,255,255,0.04)`,
-                          borderColor: `${step.color}30`,
-                          transform: "translateY(-4px)",
-                        }}
-                        transition="all 0.3s ease"
+                <Box position="relative">
+                  <Box
+                    display={{ base: "none", md: "block" }}
+                    position="absolute"
+                    top="20px"
+                    left="12%"
+                    right="12%"
+                    h="1px"
+                    bg="linear-gradient(90deg, rgba(168,85,247,0.4), rgba(34,197,94,0.4), rgba(56,189,248,0.4), rgba(251,191,36,0.4))"
+                    zIndex={0}
+                  />
+                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={{ base: 6, md: 4 }} position="relative" zIndex={1}>
+                    {[
+                      { num: "01", icon: "🎫", title: "Mint PulseEntry", desc: "One NFT per wallet — your ticket into the daily boosting journey.", color: "#a855f7" },
+                      { num: "02", icon: "⚡", title: "Daily Boosts", desc: "Boost once every 24h, up to 9 times. Each boost reveals a puzzle piece.", color: "#22c55e" },
+                      { num: "03", icon: "🧩", title: "Complete the Puzzle", desc: "Reach level 2 through consistent boosting and unlock all 9 pieces.", color: "#38bdf8" },
+                      { num: "04", icon: "🏆", title: "Mint Soulbound", desc: "Claim your permanent, non-transferable PulseCards badge.", color: "#fbbf24" },
+                    ].map((step, index) => (
+                      <MotionBox
+                        key={step.num}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
                       >
-                        <VStack align="start" spacing={2}>
-                          <HStack spacing={2}>
-                            <Text fontSize="18px">{step.icon}</Text>
-                            <Badge
-                              colorScheme="purple"
-                              variant="subtle"
-                              fontSize="9px"
-                              px={2}
-                              py={0.5}
-                              borderRadius="full"
-                              fontFamily="'Space Mono', monospace"
-                              color={step.color}
-                            >
-                              {step.num}
-                            </Badge>
-                          </HStack>
-                          <Text fontWeight="700" fontSize="sm" color="white" fontFamily="'Space Grotesk', sans-serif">
-                            {step.title}
-                          </Text>
-                          <Text fontSize="xs" color="gray.400" lineHeight="1.5" fontFamily="'Space Grotesk', sans-serif">
-                            {step.desc}
-                          </Text>
+                        <VStack align={{ base: "start", md: "center" }} spacing={3} textAlign={{ base: "left", md: "center" }}>
+                          <Flex
+                            w="40px"
+                            h="40px"
+                            borderRadius="full"
+                            align="center"
+                            justify="center"
+                            bg="#0a0a16"
+                            border={`2px solid ${step.color}`}
+                            fontSize="16px"
+                            boxShadow={`0 0 16px ${step.color}40`}
+                            flexShrink={0}
+                          >
+                            {step.icon}
+                          </Flex>
+                          <Box>
+                            <Text fontSize="9px" color={step.color} fontFamily="'Space Mono', monospace" fontWeight="700" letterSpacing="0.15em" mb={1}>
+                              STEP {step.num}
+                            </Text>
+                            <Text fontWeight="700" fontSize="sm" color="white" fontFamily="'Space Grotesk', sans-serif" mb={1}>
+                              {step.title}
+                            </Text>
+                            <Text fontSize="xs" color="gray.400" lineHeight="1.6" fontFamily="'Space Grotesk', sans-serif">
+                              {step.desc}
+                            </Text>
+                          </Box>
                         </VStack>
-                      </Box>
-                    </MotionBox>
-                  ))}
-                </SimpleGrid>
+                      </MotionBox>
+                    ))}
+                  </SimpleGrid>
+                </Box>
               </VStack>
+            </Box>
+          </Box>
+
+          {/* ─── Contract Transparency ─── */}
+          <Box mt={6}>
+            <Box
+              bg="rgba(4,4,14,0.85)"
+              backdropFilter="blur(20px)"
+              borderRadius="2xl"
+              border="1px solid rgba(255,255,255,0.06)"
+              p={{ base: 5, md: 6 }}
+            >
+              <HStack spacing={3} mb={3}>
+                <Flex
+                  w="30px"
+                  h="30px"
+                  align="center"
+                  justify="center"
+                  bg="rgba(74,222,128,0.1)"
+                  border="1px solid rgba(74,222,128,0.2)"
+                  borderRadius="lg"
+                >
+                  <CheckCircleIcon color="#4ade80" boxSize={3.5} />
+                </Flex>
+                <Box>
+                  <Heading size="sm" color="white" fontWeight="700" fontFamily="'Space Grotesk', sans-serif">
+                    Verified Contracts
+                  </Heading>
+                  <Text fontSize="xs" color="gray.500" fontFamily="'Space Grotesk', sans-serif">
+                    Deployed on Soneium — check them yourself
+                  </Text>
+                </Box>
+              </HStack>
+              <Box>
+                {CONTRACTS_INFO.map((c) => (
+                  <ContractRow key={c.address} name={c.name} description={c.description} address={c.address} />
+                ))}
+              </Box>
             </Box>
           </Box>
 

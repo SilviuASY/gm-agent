@@ -31,7 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/" element={<App />} />
                 <Route path="/activity-reputation" element={<ActivityReputation />} />
                 <Route path="/activity-reputation/*" element={<ActivityReputation />} />
-                <Route path="/badge-season-12" element={<ActivityReputation />} />
+                <Route path="/agent-reputation" element={<ActivityReputation />} />
                 <Route path="/gmorning/*" element={<GMPage />} />
                 <Route path="/gmorning" element={<GMPage />} />
                 <Route path="/gmorning/*" element={<GMPage />} />

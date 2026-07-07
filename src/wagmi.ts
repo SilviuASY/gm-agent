@@ -30,8 +30,8 @@ export const optimismChain = {
   name: 'Optimism',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://optimism-mainnet.gateway.tatum.io'] },
-    public: { http: ['https://optimism-mainnet.gateway.tatum.io'] },
+    default: { http: ['https://optimism-public.nodies.app'] },
+    public: { http: ['https://optimism-public.nodies.app'] },
   },
   iconUrl: '/optimism.png',
 } as const

@@ -30,8 +30,8 @@ export const optimismChain = {
   name: 'Optimism',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://mainnet.optimism.io'] },
-    public: { http: ['https://mainnet.optimism.io'] },
+    default: { http: ['https://optimism.drpc.org'] },
+    public: { http: ['https://optimism.drpc.org'] },
   },
   iconUrl: '/optimism.png',
 } as const

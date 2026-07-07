@@ -689,18 +689,8 @@ export default function Academy() {
             </HStack>
 
             <HStack spacing={3} display={{ base: "none", md: "flex" }}>
-              {balance && (
-                <HStack spacing={2} bg="rgba(34,197,94,0.06)" border="1px solid rgba(34,197,94,0.15)"
-                  borderRadius="full" px={4} py={2}>
-                  <Box w="6px" h="6px" borderRadius="full" bg="#4ade80"
-                    style={{ animation: "pulseGlow 2s ease-in-out infinite" }} />
-                  <Text color="#4ade80" fontSize="xs" fontFamily="'Space Mono', monospace" fontWeight="700">
-                    {Number(balance.formatted).toFixed(4)} ETH
-                  </Text>
-                </HStack>
-              )}
               <Box _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
-                <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+              <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: true }} />
               </Box>
             </HStack>
           </Flex>
@@ -708,7 +698,7 @@ export default function Academy() {
           {/* Mobile wallet */}
           <VStack spacing={3} display={{ base: "flex", md: "none" }} w="full" mb={5}>
             <Box w="full" display="flex" justifyContent="center">
-              <ConnectButton chainStatus="full" accountStatus="full" showBalance={false} />
+              <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: true }} />
             </Box>
           </VStack>
 

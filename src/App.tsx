@@ -827,7 +827,7 @@ export default function App() {
                     <Box h="1px" bg="gray.100" />
                     <Button
                       onClick={() => {
-                        navigate("/badge-season-10");
+                        navigate("/pulse-cards");
                         setIsToolsOpen(false);
                       }}
                       variant="ghost"
@@ -1242,12 +1242,12 @@ export default function App() {
                       <Button
                         onClick={() => {
                           setIsToolsOpen(false);
-                          navigate("/badge-season-10");
+                          navigate("/pulse-cards");
                         }}
                         onTouchStart={() => {
                           setTimeout(() => {
                             setIsToolsOpen(false);
-                            navigate("/badge-season-10");
+                            navigate("/pulse-cards");
                           }, 50);
                         }}
                         variant="ghost"

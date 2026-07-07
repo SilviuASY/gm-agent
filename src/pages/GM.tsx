@@ -1830,14 +1830,14 @@ export default function GMPage() {
               </InputGroup>
 
               <Box className="wallet-connect-btn" display={{ base: 'none', md: 'block' }} _hover={{ transform: 'scale(1.02)' }} transition="transform 0.2s">
-                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: true }} />
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: false }} />
               </Box>
             </HStack>
           </Flex>
 
           {/* Mobile wallet */}
           <Box className="wallet-connect-btn" display={{ base: 'flex', md: 'none' }} justifyContent="center" mb={5}>
-            <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: true }} />
+            <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: false }} />
           </Box>
 
           {/* SBT Banner */}

@@ -579,7 +579,7 @@ const updateLeaderboardScore = async () => {
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
   };
 
-  // ================= MINT BADGE HANDLER =================
+// ================= MINT BADGE HANDLER =================
   const handleMintBadge = async () => {
     if (!address || !isCorrectChain || userBadgeBalance > 0n) {
       toast({
@@ -591,42 +591,41 @@ const updateLeaderboardScore = async () => {
       });
       return;
     }
-    
-    const score = userTotalScore;
-    if (score < minReputationScore) {
+
+    if (userTotalScore < minReputationScore) {
       toast({
         title: "Insufficient Score",
-        description: `You need at least ${minReputationScore} points (you have ${score})`,
+        description: `You need at least ${minReputationScore} points (you have ${userTotalScore})`,
         status: "warning",
         duration: 4000,
         position: "top-right",
       });
       return;
     }
-    
+
     setIsTxPending(true);
     setTxOpen(true);
     setTxStatus("wallet");
     setTxTitle("🏅 Mint Reputation Badge");
     setTxDesc("Generating signature...");
-    
+
     try {
       const response = await fetch(`${API_URL}/generate-mint-signature`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userAddress: address, score, nonce: userNonce.toString() }),
+        body: JSON.stringify({ userAddress: address, nonce: userNonce.toString() }),
       });
       const data = await response.json();
       if (!response.ok || !data.signature) throw new Error(data.error || "Error generating signature");
 
-      const { signature, deadline } = data;
+      const { signature, deadline, score: realScore } = data;
 
       setTxDesc("Confirm mint on Soneium...");
       const hash = await writeContractAsync({
         address: toHexAddress(BADGE_CONTRACT),
         abi: extendedBadgeABI,
         functionName: "mint",
-        args: [BigInt(score), signature, BigInt(deadline)],
+        args: [BigInt(realScore), signature, BigInt(deadline)],
       });
       setTxStatus("pending");
       setTxDesc("Waiting for blockchain confirmation...");
@@ -650,10 +649,12 @@ const updateLeaderboardScore = async () => {
       const rejected = err?.message?.includes("rejected") || err?.code === 4001;
       setTxStatus(rejected ? "rejected" : "failed");
       setTxTitle(rejected ? "Mint Cancelled" : "Mint Failed");
+      setTxDesc(rejected ? "You cancelled the transaction." : err?.message || "Something went wrong.");
     } finally {
       setIsTxPending(false);
     }
   };
+
 
   // ================= BUY BADGE HANDLER =================
   const handleBuyBadge = async () => {

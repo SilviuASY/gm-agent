@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { ethers } from 'ethers';
+import { PARTNER_ACTIONS } from '../../src/constants/partnerActions.js';
 
 // ============ CONFIG ============
 // Turso DB
@@ -8,12 +9,8 @@ const turso = createClient({
   authToken: process.env.TURSO_DB_TOKEN,
 });
 
-// RPC provider pentru Soneium (adaugă variabila asta în Netlify env vars)
-// ex: https://rpc.soneium.org sau alt endpoint pe care îl folosești deja
 const provider = new ethers.JsonRpcProvider(process.env.SONEIUM_RPC_URL);
 
-// Adresele contractelor — identice cu cele din src/constants/contracts.ts
-// (nu sunt secrete, sunt adrese publice pe Soneium, deci e ok să fie hardcodate)
 const GM_CONTRACT = "0x92030EB87e27ED80351f346dea4B14Ac61a1f57C";
 const DEPLOY_CONTRACT = "0x539040c447A4a0D61C396b74308efe959A2eD86a";
 const VOTE_CONTRACT = "0xd01c919c63856a9732a6A0BAfc63eb2494e4a19F";
@@ -24,8 +21,7 @@ const AGENT_GATEWAY_CONTRACT = "0x2356e0c4475d8BfE1c9Fe004715a2808AB0eB72E";
 
 const SONEIUM_CHAIN_ID = 1868;
 
-// ABI-uri minime, doar funcțiile de citire de care avem nevoie
-// (trebuie să corespundă exact cu semnăturile din gmABI / VoteABI / checkInABI / DeployABI / agentGMABI)
+
 const gmABI = [
   "function balanceOf(address owner) view returns (uint256)",
 ];
@@ -45,10 +41,6 @@ const agentGatewayABI = [
   "function getUserActionCount(address user, uint256 actionId) view returns (uint256)",
 ];
 
-// Trebuie doar numărul total de acțiuni partenere existente (lungimea PARTNER_ACTIONS
-// din src/constants/partnerActions.ts). Acum sunt 30 (id 0 -> 29).
-// Dacă adaugi/elimini acțiuni partenere, actualizează numărul de mai jos.
-const PARTNER_ACTIONS_COUNT = 30;
 
 function getUserBadge(score) {
   if (score >= 1000) return "LEGEND";
@@ -75,15 +67,9 @@ async function getOnChainScore(address) {
     agentGm.totalUserGM(address),
   ]);
 
-  // userPartnerTotal — identic cu logica din usePartnerActions.ts:
-  // sumă simplă a getUserActionCount(user, actionId) pentru toate cele 30 de
-  // acțiuni partenere, FĂRĂ ponderare cu action.points (frontend-ul nu ponderează,
-  // doar adună count-urile brute — toate acțiunile au oricum points: 1 acum).
   const gateway = new ethers.Contract(AGENT_GATEWAY_CONTRACT, agentGatewayABI, provider);
   const partnerCounts = await Promise.all(
-    Array.from({ length: PARTNER_ACTIONS_COUNT }, (_, actionId) =>
-      gateway.getUserActionCount(address, actionId)
-    )
+    PARTNER_ACTIONS.map((_, actionId) => gateway.getUserActionCount(address, actionId))
   );
   const userPartnerTotal = partnerCounts.reduce((sum, count) => sum + Number(count), 0);
 
@@ -117,8 +103,6 @@ export const handler = async (event) => {
       )
     `);
 
-    // Observă: NU mai citim "points" din body. Chiar dacă cineva îl trimite,
-    // e complet ignorat — nu are niciun efect asupra scorului final.
     const { address } = JSON.parse(event.body || '{}');
 
     if (!address || typeof address !== "string" || !address.startsWith("0x") || address.length !== 42) {
@@ -130,7 +114,6 @@ export const handler = async (event) => {
 
     const addressLower = address.toLowerCase();
 
-    // Scorul real, calculat direct din contracte — nu din ce trimite clientul
     const newScore = await getOnChainScore(addressLower);
     const newBadge = getUserBadge(newScore);
 

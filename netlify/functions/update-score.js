@@ -1,6 +1,5 @@
 import { createClient } from '@libsql/client';
 import { ethers } from 'ethers';
-import { PARTNER_ACTIONS } from '../../src/constants/partnerActions.js';
 
 // ============ CONFIG ============
 // Turso DB
@@ -21,7 +20,6 @@ const AGENT_GATEWAY_CONTRACT = "0x2356e0c4475d8BfE1c9Fe004715a2808AB0eB72E";
 
 const SONEIUM_CHAIN_ID = 1868;
 
-
 const gmABI = [
   "function balanceOf(address owner) view returns (uint256)",
 ];
@@ -39,6 +37,7 @@ const agentGMABI = [
 ];
 const agentGatewayABI = [
   "function getUserActionCount(address user, uint256 actionId) view returns (uint256)",
+  "function getUserTotalActions(address user) view returns (uint256)",
 ];
 
 
@@ -67,11 +66,9 @@ async function getOnChainScore(address) {
     agentGm.totalUserGM(address),
   ]);
 
+
   const gateway = new ethers.Contract(AGENT_GATEWAY_CONTRACT, agentGatewayABI, provider);
-  const partnerCounts = await Promise.all(
-    PARTNER_ACTIONS.map((_, actionId) => gateway.getUserActionCount(address, actionId))
-  );
-  const userPartnerTotal = partnerCounts.reduce((sum, count) => sum + Number(count), 0);
+  const userPartnerTotal = Number(await gateway.getUserTotalActions(address));
 
   const total =
     Number(gmCount) +

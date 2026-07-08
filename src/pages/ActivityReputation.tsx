@@ -669,6 +669,17 @@ const updateLeaderboardScore = async () => {
       return;
     }
 
+    if (!userIsAgent) {
+      toast({
+        title: "Agent Registration Required",
+        description: "You must register as an Agent before purchasing the Reputation Badge. Click 'Register as Agent' to get started.",
+        status: "warning",
+        duration: 6000,
+        position: "top-right",
+      });
+      return;
+    }
+
     if (userBadgeBalance > 0n) {
       toast({
         title: "Badge Already Minted",
@@ -1413,8 +1424,8 @@ const updateLeaderboardScore = async () => {
                     </Alert>
                   </MotionBox>
 
-                  {/* Buy Badge Card - only show if user can buy */}
-                  {canBuyBadge && (
+                  {/* Buy Badge Card - only show if user can buy OR needs to register to unlock it */}
+                  {(canBuyBadge || (!hasBadge && buyActive && !userIsAgent)) && (
                     <MotionBox initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
                       <Box
                         bg="rgba(251,191,36,0.06)"
@@ -1437,25 +1448,55 @@ const updateLeaderboardScore = async () => {
                               <Text fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif">
                                 Buy badge directly for {formatPriceWithFourDecimals(buyPrice)} ETH
                               </Text>
+                              {!userIsAgent && (
+                                <HStack spacing={1} mt={1}>
+                                  <Text fontSize="9px" color="#fbbf24" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">
+                                    🔒 Requires Agent registration —
+                                  </Text>
+                                  <Button
+                                    onClick={() => navigate("/")}
+                                    variant="link"
+                                    size="xs"
+                                    color="#c084fc"
+                                    fontSize="9px"
+                                    fontWeight="700"
+                                    fontFamily="'Space Grotesk', sans-serif"
+                                    _hover={{ color: "#a855f7", textDecoration: "underline" }}
+                                  >
+                                    Register now
+                                  </Button>
+                                </HStack>
+                              )}
                             </Box>
                           </HStack>
-                          <Button
-                            onClick={() => setShowBuyModal(true)}
-                            size="sm"
-                            bgGradient="linear(135deg, #fbbf24, #f59e0b)"
-                            color="white"
-                            fontWeight="700"
-                            fontSize="xs"
-                            fontFamily="'Space Grotesk', sans-serif"
-                            _hover={{ transform: "scale(1.02)", boxShadow: "0 0 20px rgba(251,191,36,0.2)" }}
-                            transition="all 0.3s"
-                            borderRadius="full"
-                            px={4}
-                            py={1.5}
-                            flexShrink={0}
+                          <Tooltip
+                            label={!userIsAgent ? "Register as an Agent first to unlock this purchase" : ""}
+                            hasArrow
+                            isDisabled={userIsAgent}
                           >
-                            🛒 Buy Now
-                          </Button>
+                            <Button
+                              onClick={() => userIsAgent && setShowBuyModal(true)}
+                              size="sm"
+                              bgGradient="linear(135deg, #fbbf24, #f59e0b)"
+                              color="white"
+                              fontWeight="700"
+                              fontSize="xs"
+                              fontFamily="'Space Grotesk', sans-serif"
+                              _hover={userIsAgent ? { transform: "scale(1.02)", boxShadow: "0 0 20px rgba(251,191,36,0.2)" } : {}}
+                              transition="all 0.3s"
+                              borderRadius="full"
+                              px={4}
+                              py={1.5}
+                              flexShrink={0}
+                              isDisabled={!userIsAgent}
+                              opacity={userIsAgent ? 1 : 0.4}
+                              cursor={userIsAgent ? "pointer" : "not-allowed"}
+                              filter={userIsAgent ? "none" : "grayscale(40%)"}
+                              _disabled={{ opacity: 0.4, cursor: "not-allowed" }}
+                            >
+                              🛒 Buy Now
+                            </Button>
+                          </Tooltip>
                         </Flex>
                       </Box>
                     </MotionBox>

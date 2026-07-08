@@ -552,18 +552,18 @@ export default function ActivityReputation() {
   };
 
   // Update leaderboard score
-  const updateLeaderboardScore = async (points: number) => {
-    if (!address) return;
-    try {
-      await fetch("/.netlify/functions/update-score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, points }),
-      });
-    } catch (err) {
-      console.error("Failed to update leaderboard:", err);
-    }
-  };
+const updateLeaderboardScore = async () => {
+  if (!address) return;
+  try {
+    await fetch("/.netlify/functions/update-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address }),
+    });
+  } catch (err) {
+    console.error("Failed to update leaderboard:", err);
+  }
+};
 
   // Share on X
   const shareOnX = (actionName: string, actionHandle: string | undefined, points: number) => {
@@ -637,7 +637,7 @@ export default function ActivityReputation() {
         setTxDesc("Congratulations! You received the Reputation Badge!");
         confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 } });
         await refetchBadgeBalance();
-        await updateLeaderboardScore(0);
+        await updateLeaderboardScore();
         toast({
           title: "🎉 Success!",
           description: "Badge minted successfully!",
@@ -716,7 +716,7 @@ export default function ActivityReputation() {
         setTxDesc("You successfully purchased the Reputation Badge!");
         confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 } });
         await refetchBadgeBalance();
-        await updateLeaderboardScore(0);
+        await updateLeaderboardScore();
         setShowBuyModal(false);
         toast({
           title: "🎉 Success!",
@@ -785,6 +785,7 @@ export default function ActivityReputation() {
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
 
         await refetchAllData();
+        await updateLeaderboardScore();
         setTxOpen(false);
         setPaymentData({ action, txHash: hash });
         setShowPaymentModal(true);
@@ -842,7 +843,7 @@ export default function ActivityReputation() {
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
 
         await refetchAllData();
-        await updateLeaderboardScore(action.points);
+        await updateLeaderboardScore();
 
         setActionPendingPayment((prev) => ({ ...prev, [action.id]: false }));
         setTxOpen(false);
@@ -955,7 +956,7 @@ export default function ActivityReputation() {
           colors: ["#8b5cf6", "#ec4899", "#3b82f6", "#22c55e", "#fbbf24"],
         });
         await refetchAllData();
-        await updateLeaderboardScore(1);
+        await updateLeaderboardScore();
 
         if (type === "gm") {
           setSuccessData({

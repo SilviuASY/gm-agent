@@ -1064,7 +1064,7 @@ const updateLeaderboardScore = async () => {
   const hasBadge = userBadgeBalance > 0n;
 
   // Verifică dacă utilizatorul poate cumpăra badge (este agent, nu are badge, și cumpărarea e activă)
-  const canBuyBadge = userIsAgent && !hasBadge && buyActive;
+  const canBuyBadge = !hasBadge && buyActive;
 
   return (
     <>

@@ -3,7 +3,6 @@ import express from "express";
 import serverless from "serverless-http";
 import cors from "cors";
 import { ethers } from "ethers";
-import { PARTNER_ACTIONS } from "../../src/constants/partnerActions.js";
 
 const app = express();
 app.use(
@@ -33,6 +32,7 @@ const deployABI = ["function getUserDeploymentCount(address user) view returns (
 const agentGMABI = ["function totalUserGM(address user) view returns (uint256)"];
 const agentGatewayABI = [
   "function getUserActionCount(address user, uint256 actionId) view returns (uint256)",
+  "function getUserTotalActions(address user) view returns (uint256)",
 ];
 const badgeReadABI = [
   "function minReputationScore() view returns (uint256)",
@@ -58,10 +58,7 @@ async function getOnChainScore(address) {
     agentGm.totalUserGM(address),
   ]);
 
-  const partnerCounts = await Promise.all(
-    PARTNER_ACTIONS.map((_, actionId) => gateway.getUserActionCount(address, actionId))
-  );
-  const userPartnerTotal = partnerCounts.reduce((sum, count) => sum + Number(count), 0);
+  const userPartnerTotal = Number(await gateway.getUserTotalActions(address));
 
   return (
     Number(gmCount) +
@@ -119,9 +116,11 @@ const QUEST_QUESTIONS = {
 
 // ============ ENDPOINTS ============
 
+// Health check
 app.get("/api/", (req, res) => {
   res.send("<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
+
 
 app.post("/api/generate-mint-signature", async (req, res) => {
   const { userAddress, nonce } = req.body;
@@ -214,6 +213,7 @@ app.get("/api/agent-quest/:questId", async (req, res) => {
   }
 });
 
+
 app.post("/api/verify-quiz-answers", async (req, res) => {
   try {
     const { questId, userAddress, answers } = req.body;
@@ -263,7 +263,7 @@ app.post("/api/verify-quiz-answers", async (req, res) => {
 
     const wallet = new ethers.Wallet(signerPk);
     const chainId = req.headers["x-chain-id"] || 1868;
-    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
 
     const messageHash = ethers.solidityPackedKeccak256(
       ["uint256", "address", "uint256", "uint256"],

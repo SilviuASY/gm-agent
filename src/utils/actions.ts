@@ -90,9 +90,7 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       const currentDate = BigInt(parseInt(todayDate.getFullYear().toString() + (todayDate.getMonth() + 1).toString().padStart(2, '0') + todayDate.getDate().toString().padStart(2, '0')));
       return [currentDate, BigInt(PARTNER_ACTIONS[8].externalFee)];
     case 9: // NekoKat
-      const startDate = new Date(2026, 4, 1);
-      const dayNum = BigInt(Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-      return ["GMeow", dayNum, BigInt(1)];
+      return [];
     case 12: // MetaMap
       return [1n, "https://gm-agent.xyz/"];
     case 13: // Dmail

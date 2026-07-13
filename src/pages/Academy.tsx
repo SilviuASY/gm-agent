@@ -53,8 +53,8 @@ import { AgentQuestABI } from "../abi/AgentQuestABI";
 import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
-const AGENT_QUEST_ADDRESS = "0xD6e8C8c6B2b9ee50759fd3484e2ebCA7a208bf85";
-const AGENT_GRADUATE_ADDRESS = "0x12C53cDC9BD11660b1Cc95Ab5bd0560bEb78E4C7";
+const AGENT_QUEST_ADDRESS = "0x60f7DB846Be8B9dc0E85F7cF09A40663FF73234c";
+const AGENT_GRADUATE_ADDRESS = "0x065A754acF66A5e81AdDDa4780c4820a3A82f441";
 
 const BLOCKSCOUT_URL = "https://soneium.blockscout.com";
 
@@ -73,11 +73,6 @@ interface QuestProgress {
 }
 
 // ============= Styles =============
-// Design tokens (kept close to the original palette — purple / pink / cyan / blue / gold / green —
-// but pushed into a more deliberate "signal on a dark motherboard" system: everything sits on a
-// near-black surface, and each quest track owns exactly one accent color end-to-end (icon, rail,
-// glow, badge). Space Grotesk stays for the display face (it already reads technical/web3), Space
-// Mono is reserved strictly for anything that resembles data: fees, hashes, timers, counters.
 const pageStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 

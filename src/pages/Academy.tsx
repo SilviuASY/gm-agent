@@ -53,8 +53,8 @@ import { AgentQuestABI } from "../abi/AgentQuestABI";
 import { AgentGraduateABI } from "../abi/AgentGraduateABI";
 
 // Contract addresses
-const AGENT_QUEST_ADDRESS = "0xae7B2F331d941777c393A7CFf4C4EA7BB811F8d5";
-const AGENT_GRADUATE_ADDRESS = "0x9b65f4D6f6D341455312b016bA5A1Ac513CF65eb";
+const AGENT_QUEST_ADDRESS = "0xED6F70AFD5A622d71885b74DE0F0eD812fc0c389";
+const AGENT_GRADUATE_ADDRESS = "0xbCc5358C06C980598A674FEDA35Ab7A7E833D54c";
 
 const BLOCKSCOUT_URL = "https://soneium.blockscout.com";
 

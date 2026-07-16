@@ -627,7 +627,7 @@ export default function App() {
       isMainDisabled = false;
       buttonGradient = `linear(135deg, ${chainAccent.primary}, ${chainAccent.secondary})`;
     } else if (canSendGM) {
-      mainButtonLabel = "Send GM now";
+      mainButtonLabel = "Send GM";
       mainActionType = "gm";
       isMainDisabled = false;
       buttonGradient = "linear(135deg, #22c55e, #16a34a)";

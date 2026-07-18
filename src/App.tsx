@@ -904,9 +904,9 @@ export default function App() {
                       color="gray.700"
                       _hover={{ bg: "rgba(239,68,68,0.06)", color: "#ef4444" }}
                       transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🔑</Text>}
+                      leftIcon={<Text fontSize="16px">🛡️</Text>}
                     >
-                      Revoke Permissions
+                      Revoke Approval
                     </Button>
                     <Box h="1px" bg="gray.100" />
                     <Button
@@ -1369,11 +1369,11 @@ export default function App() {
                         color="gray.700"
                         _hover={{ bg: "rgba(239,68,68,0.08)", color: "#ef4444" }}
                         _active={{ bg: "rgba(239,68,68,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🔑</Text>}
+                        leftIcon={<Text fontSize="16px">🛡️</Text>}
                         width="100%"
                         _focus={{ bg: "rgba(239,68,68,0.12)" }}
                       >
-                        Revoke Permissions
+                        Revoke Approval
                       </Button>
                       <Box h="1px" bg="gray.100" />
                       <Button

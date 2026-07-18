@@ -889,6 +889,27 @@ export default function App() {
                     </Button>
                     <Box h="1px" bg="gray.100" />
                     <Button
+                      onClick={() => {
+                        navigate("/revoke");
+                        setIsToolsOpen(false);
+                      }}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      borderRadius="0"
+                      px={4}
+                      py={3}
+                      h="44px"
+                      fontWeight="600"
+                      fontSize="sm"
+                      color="gray.700"
+                      _hover={{ bg: "rgba(239,68,68,0.06)", color: "#ef4444" }}
+                      transition="all 0.2s"
+                      leftIcon={<Text fontSize="16px">🔑</Text>}
+                    >
+                      Revoke Permissions
+                    </Button>
+                    <Box h="1px" bg="gray.100" />
+                    <Button
                       as="a"
                       href="https://docs.gm-agent.xyz"
                       target="_blank"
@@ -1324,6 +1345,35 @@ export default function App() {
                         _focus={{ bg: "rgba(59,130,246,0.12)" }}
                       >
                         Cross-Chain Bridge
+                      </Button>
+                      <Box h="1px" bg="gray.100" />
+                      <Button
+                        onClick={() => {
+                          setIsToolsOpen(false);
+                          navigate("/revoke");
+                        }}
+                        onTouchStart={() => {
+                          setTimeout(() => {
+                            setIsToolsOpen(false);
+                            navigate("/revoke");
+                          }, 50);
+                        }}
+                        variant="ghost"
+                        justifyContent="flex-start"
+                        borderRadius="0"
+                        px={4}
+                        py={3.5}
+                        h="48px"
+                        fontWeight="600"
+                        fontSize="sm"
+                        color="gray.700"
+                        _hover={{ bg: "rgba(239,68,68,0.08)", color: "#ef4444" }}
+                        _active={{ bg: "rgba(239,68,68,0.12)" }}
+                        leftIcon={<Text fontSize="16px">🔑</Text>}
+                        width="100%"
+                        _focus={{ bg: "rgba(239,68,68,0.12)" }}
+                      >
+                        Revoke Permissions
                       </Button>
                       <Box h="1px" bg="gray.100" />
                       <Button

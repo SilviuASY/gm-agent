@@ -744,8 +744,8 @@ export const arcTestnetChain = {
   name: 'Arc',
   nativeCurrency: { name: 'Arc', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.testnet.arc.network'] },
-    public: { http: ['https://rpc.testnet.arc.network'] },
+    default: { http: ['https://arc-testnet.drpc.org'] },
+    public: { http: ['https://arc-testnet.drpc.org'] },
   },
   iconUrl: '/arc.png',
 } as const

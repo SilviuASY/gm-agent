@@ -720,7 +720,7 @@ export default function App() {
                 _hover={{ filter: "brightness(1.1)" }}
                 transition="filter 0.3s"
               >
-                Agent GM Protocol
+                Agent Protocol
               </Heading>
             </HStack>
             <HStack spacing={2} pl={{ base: 0, md: "37px" }}>
@@ -1560,7 +1560,7 @@ export default function App() {
                 ⚠️ Unsupported Network
               </Text>
               <Text color="gray.400" fontSize="sm">
-                The Agent GM Protocol is currently deployed on <Text as="span" fontWeight="600" color="#fbbf24">Soneium</Text>,{' '}
+                The Agent Protocol is currently deployed on <Text as="span" fontWeight="600" color="#fbbf24">Soneium</Text>,{' '}
                 <Text as="span" fontWeight="600" color="#fbbf24">Ink</Text>,{' '}
                 <Text as="span" fontWeight="600" color="#fbbf24">Optimism</Text>,{' '}
                 <Text as="span" fontWeight="600" color="#fbbf24">Base</Text>, and{' '}
@@ -2219,7 +2219,7 @@ export default function App() {
 
             <VStack spacing={4} flex="2">
               <Text color="gray.300" fontSize="sm" fontFamily="mono" fontWeight="500" textAlign="center">
-                © 2026 Agent GM Protocol · ERC-8004
+                © 2026 Agent Protocol · ERC-8004
               </Text>
 
               <HStack spacing={4} wrap="wrap" justify="center">

@@ -33,6 +33,7 @@ import {
   resonanceABI,
   omnihubABI,
   stargateABI,
+  sakeABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -69,6 +70,7 @@ export const getPartnerABI = (actionId: number) => {
     case 28: return resonanceABI;
     case 29: return omnihubABI;
     case 30: return stargateABI;
+    case 31: return sakeABI;
 
     default: throw new Error("Unknown action id");
   }
@@ -123,6 +125,8 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return [{ name: "PulseCards", symbol: "PCARDS", description: "No bio yet", supply: 0n, royalty: 500n, transferable: true, phase: { title: "Public Mint", from: 1783366263n, to: 1998918263n, price: 0n, maxPerAddress: 0n, merkleRoot: "0x0000000000000000000000000000000000000000000000000000000000000000" }, metadata: { contractURI: "https://gm-agent.xyz/twitter-image.png", baseURI: "https://gm-agent.xyz/twitter-image.png", imageURI: "https://gm-agent.xyz/twitter-image.png", jsonFormat: false } }];
     case 30: // Stargate - deposit
       return [address || zeroAddress, 25000000000000n];
+    case 31: // SakeFinance - depositETH
+      return ["0x3C3987A310ee13F7B8cBBe21D97D4436ba5E4B5f" as `0x${string}`, address || zeroAddress, 0n];
     default:
       return [];
   }

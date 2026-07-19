@@ -32,6 +32,7 @@ import {
   nfts2meABI,
   resonanceABI,
   omnihubABI,
+  stargateABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -67,6 +68,7 @@ export const getPartnerABI = (actionId: number) => {
     case 27: return nfts2meABI;
     case 28: return resonanceABI;
     case 29: return omnihubABI;
+    case 30: return stargateABI;
 
     default: throw new Error("Unknown action id");
   }
@@ -117,8 +119,10 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return [0n, []];
     case 28: // Resonance - createCollection
       return ["Agent Protocol", "https://gm-agent.xyz/twitter-image.png", 1n, 1n];
-    case 29:  // OmniHub - create
+    case 29: // OmniHub - create
       return [{ name: "PulseCards", symbol: "PCARDS", description: "No bio yet", supply: 0n, royalty: 500n, transferable: true, phase: { title: "Public Mint", from: 1783366263n, to: 1998918263n, price: 0n, maxPerAddress: 0n, merkleRoot: "0x0000000000000000000000000000000000000000000000000000000000000000" }, metadata: { contractURI: "https://gm-agent.xyz/twitter-image.png", baseURI: "https://gm-agent.xyz/twitter-image.png", imageURI: "https://gm-agent.xyz/twitter-image.png", jsonFormat: false } }];
+    case 30: // Stargate - deposit
+      return [address || zeroAddress, 25000000000000n];
     default:
       return [];
   }

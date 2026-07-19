@@ -31,7 +31,7 @@ export const optimismChain = {
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://mainnet.optimism.io'] },
-    public: { http: ['https://optimism-public.nodies.app'] },
+    public: { http: ['https://mainnet.optimism.io'] },
   },
   iconUrl: '/optimism.png',
 } as const
@@ -792,6 +792,16 @@ export const ecochainChain = {
   iconUrl: '/ecochain.png',
 } as const
 
+export const giwaChain = {
+  id: 91342,
+  name: 'Giwa',
+  nativeCurrency: { name: 'Giwa', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://sepolia-rpc.giwa.io'] },
+    public: { http: ['https://sepolia-rpc.giwa.io'] },
+  },
+  iconUrl: '/giwa.png',
+} as const
 // ============= Configurația principală =============
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',
@@ -873,7 +883,8 @@ export const config = getDefaultConfig({
     opSepoliaChain,
     tronChain,
     liteforgeChain,
-    ecochainChain
+    ecochainChain,
+    giwaChain
   ],
   transports: {
     [soneiumChain.id]: http(),
@@ -953,5 +964,6 @@ export const config = getDefaultConfig({
     [tronChain.id]: http(),
     [liteforgeChain.id]: http(),
     [ecochainChain.id]: http(),
+    [giwaChain.id]: http(),
   },
 })

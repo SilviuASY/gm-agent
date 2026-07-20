@@ -24,8 +24,6 @@ const CHECKIN_CONTRACT = "0x72c89BA5def57c642582E536d351483b9D85CA8C";
 const AGENT_GM_CONTRACT = "0xb19922c27C86cc08dc4f0f3Cb4e76c30494c22dc";
 const AGENT_GATEWAY_CONTRACT = "0x2356e0c4475d8BfE1c9Fe004715a2808AB0eB72E";
 
-// Fill in after you deploy the UUPS proxy of ReputationAttester.
-const REPUTATION_ATTESTER_CONTRACT = process.env.REPUTATION_ATTESTER_CONTRACT;
 
 const gmABI = ["function balanceOf(address owner) view returns (uint256)"];
 const voteABI = ["function getUserVotes(address user) view returns (uint256)"];
@@ -40,10 +38,6 @@ const badgeReadABI = [
   "function minReputationScore() view returns (uint256)",
   "function balanceOf(address owner) view returns (uint256)",
   "function getNonce(address user) view returns (uint256)",
-];
-const attesterReadABI = [
-  "function getNonce(address wallet) view returns (uint256)",
-  "function attestFee() view returns (uint256)",
 ];
 
 const provider = new ethers.JsonRpcProvider(process.env.SONEIUM_RPC_URL);
@@ -74,117 +68,6 @@ async function getOnChainScore(address) {
     Number(agentGmCount) +
     userPartnerTotal
   );
-}
-
-// ============ ATTESTATION: BLOCKSCOUT PRO API WALLET STATS ============
-// Uses the paid Blockscout Pro API (api.blockscout.com), not the free
-// per-instance API — the Pro API's /addresses/{address} response includes
-// `transaction_count` directly (one fast call), unlike the free per-instance
-// API which requires a separate /counters call.
-//
-// Soneium's chain_id on the Pro API is 1868 (same as its EVM chain id).
-const BLOCKSCOUT_PRO_API_BASE = "https://api.blockscout.com/1868/api/v2";
-const BLOCKSCOUT_API_KEY = process.env.BLOCKSCOUT_API_KEY;
-
-/**
- * fetch() with a hard timeout — Netlify's default (synchronous) function
- * execution limit is ~10s, so no single upstream call is allowed to hang
- * anywhere near that.
- */
-async function fetchWithTimeout(url, timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function getTxCount(address) {
-  const res = await fetchWithTimeout(
-    `${BLOCKSCOUT_PRO_API_BASE}/addresses/${address}?apikey=${BLOCKSCOUT_API_KEY}`,
-    4000
-  );
-  if (!res.ok) {
-    console.warn(`Blockscout Pro address lookup returned ${res.status} for ${address}`);
-    return 0;
-  }
-  const data = await res.json();
-  return Number(data.transaction_count || 0);
-}
-
-/**
- * Walks the Pro API's keyset pagination (next_page_params) to the last page
- * to find the oldest transaction. Bounded to a small page count on purpose —
- * this is a best-effort signal, not a guarantee, and must never risk taking
- * the whole function past Netlify's timeout. If the wallet has more history
- * than the page cap allows, we return 0 rather than an inaccurate guess.
- */
-async function computeWalletAgeDays(address) {
-  const MAX_PAGES = 5;
-  let url = `${BLOCKSCOUT_PRO_API_BASE}/addresses/${address}/transactions?apikey=${BLOCKSCOUT_API_KEY}`;
-  let lastPageItems = null;
-  let pages = 0;
-  let reachedEnd = false;
-
-  while (url && pages < MAX_PAGES) {
-    const res = await fetchWithTimeout(url, 3000);
-    if (!res.ok) break;
-    const data = await res.json();
-    if (Array.isArray(data.items) && data.items.length > 0) {
-      lastPageItems = data.items;
-    }
-    pages++;
-
-    if (data.next_page_params) {
-      const params = new URLSearchParams({ apikey: BLOCKSCOUT_API_KEY });
-      for (const [key, val] of Object.entries(data.next_page_params)) {
-        if (val !== null && val !== undefined) params.set(key, val);
-      }
-      url = `${BLOCKSCOUT_PRO_API_BASE}/addresses/${address}/transactions?${params.toString()}`;
-    } else {
-      url = null;
-      reachedEnd = true;
-    }
-  }
-
-  if (reachedEnd && lastPageItems && lastPageItems.length > 0) {
-    const oldest = lastPageItems[lastPageItems.length - 1];
-    if (oldest?.timestamp) {
-      const firstTs = new Date(oldest.timestamp).getTime();
-      return Math.max(0, Math.floor((Date.now() - firstTs) / 86400000));
-    }
-  }
-  return 0; // more history than MAX_PAGES covers, or nothing found — don't guess
-}
-
-/**
- * Pulls tx count + wallet age from the Blockscout Pro API. Both calls run
- * concurrently, and wallet age is additionally capped at 5s via Promise.race
- * so a slow/very active wallet can never stall the whole signature request.
- */
-async function getWalletBlockscoutStats(address) {
-  if (!BLOCKSCOUT_API_KEY) {
-    console.warn("BLOCKSCOUT_API_KEY not set — skipping Blockscout enrichment");
-    return { txCount: 0, walletAgeDays: 0 };
-  }
-
-  const [txCount, walletAgeDays] = await Promise.all([
-    getTxCount(address).catch((err) => {
-      console.warn("Blockscout tx count failed:", err.message);
-      return 0;
-    }),
-    Promise.race([
-      computeWalletAgeDays(address).catch((err) => {
-        console.warn("Blockscout wallet-age computation failed:", err.message);
-        return 0;
-      }),
-      new Promise((resolve) => setTimeout(() => resolve(0), 5000)),
-    ]),
-  ]);
-
-  return { txCount, walletAgeDays };
 }
 
 // ============ AGENT ACADEMY QUESTIONS ============
@@ -238,6 +121,7 @@ app.get("/api/", (req, res) => {
   res.send("<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
 
+
 app.post("/api/generate-mint-signature", async (req, res) => {
   const { userAddress, nonce } = req.body;
 
@@ -252,6 +136,7 @@ app.post("/api/generate-mint-signature", async (req, res) => {
 
   try {
     const addressLower = userAddress.toLowerCase();
+
 
     const realScore = await getOnChainScore(addressLower);
 
@@ -289,95 +174,6 @@ app.post("/api/generate-mint-signature", async (req, res) => {
   }
 });
 
-// ============ ATTESTATION SIGNATURE (EAS) ============
-app.post("/api/generate-attestation-signature", async (req, res) => {
-  const { userAddress } = req.body;
-
-  if (!userAddress?.startsWith("0x")) {
-    return res.status(400).json({ error: "Invalid parameters" });
-  }
-
-  const signerPk = process.env.SIGNER_PRIVATE_KEY;
-  if (!signerPk || !REPUTATION_ATTESTER_CONTRACT) {
-    return res.status(500).json({ error: "Attestation service not configured" });
-  }
-
-  try {
-    const address = ethers.getAddress(userAddress); // validates + checksums
-
-    const [onChainScore, blockscoutStats, deployCountRaw, agentGmCountRaw] = await Promise.all([
-      getOnChainScore(address),
-      getWalletBlockscoutStats(address),
-      new ethers.Contract(DEPLOY_CONTRACT, deployABI, provider).getUserDeploymentCount(address),
-      new ethers.Contract(AGENT_GM_CONTRACT, agentGMABI, provider).totalUserGM(address),
-    ]);
-
-    const attester = new ethers.Contract(REPUTATION_ATTESTER_CONTRACT, attesterReadABI, provider);
-    const [nonce, attestFee] = await Promise.all([
-      attester.getNonce(address),
-      attester.attestFee(),
-    ]);
-
-    const deployCount = Number(deployCountRaw);
-    // NOTE: no on-chain per-day streak counter exists for Activity Reputation
-    // (only a local, client-side streak on the GM & Deploy page). Until a
-    // proper indexer/subgraph exists, "gmStreak" is populated with total
-    // Agent GM activity as an honest stand-in — not a true streak.
-    const gmStreak = Number(agentGmCountRaw);
-    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour validity
-
-    const domain = {
-      name: "ReputationAttester",
-      version: "1",
-      chainId: Number((await provider.getNetwork()).chainId),
-      verifyingContract: REPUTATION_ATTESTER_CONTRACT,
-    };
-
-    const types = {
-      ReputationAttestation: [
-        { name: "wallet", type: "address" },
-        { name: "score", type: "uint256" },
-        { name: "txCount", type: "uint256" },
-        { name: "walletAgeDays", type: "uint256" },
-        { name: "gmStreak", type: "uint256" },
-        { name: "deployCount", type: "uint256" },
-        { name: "nonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-      ],
-    };
-
-    const value = {
-      wallet: address,
-      score: BigInt(onChainScore),
-      txCount: BigInt(blockscoutStats.txCount),
-      walletAgeDays: BigInt(blockscoutStats.walletAgeDays),
-      gmStreak: BigInt(gmStreak),
-      deployCount: BigInt(deployCount),
-      nonce,
-      deadline: BigInt(deadline),
-    };
-
-    const wallet = new ethers.Wallet(signerPk);
-    const signature = await wallet.signTypedData(domain, types, value);
-
-    console.log(`✅ Attestation signature generated for ${address} — score: ${onChainScore}`);
-
-    return res.status(200).json({
-      score: onChainScore,
-      txCount: blockscoutStats.txCount,
-      walletAgeDays: blockscoutStats.walletAgeDays,
-      gmStreak,
-      deployCount,
-      nonce: nonce.toString(),
-      deadline,
-      attestFee: attestFee.toString(),
-      signature,
-    });
-  } catch (error) {
-    console.error("❌ Error generating attestation signature:", error);
-    return res.status(500).json({ error: "Error generating attestation signature" });
-  }
-});
 
 app.get("/api/agent-quests", async (req, res) => {
   try {
@@ -416,6 +212,7 @@ app.get("/api/agent-quest/:questId", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 app.post("/api/verify-quiz-answers", async (req, res) => {
   try {

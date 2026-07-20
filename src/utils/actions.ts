@@ -7,7 +7,7 @@ import {
   rubyscoreABI,
   lootcoinABI,
   presaABI,
-  onchainGMABI,
+  humanlabsABI,
   owltoABI,
   captainABI,
   arkadaABI,
@@ -44,7 +44,7 @@ export const getPartnerABI = (actionId: number) => {
     case 2: return rubyscoreABI;
     case 3: return lootcoinABI;
     case 4: return presaABI;
-    case 5: return onchainGMABI;
+    case 5: return humanlabsABI;
     case 6: return captainABI;
     case 7: return arkadaABI;
     case 8: return owltoABI;
@@ -87,8 +87,8 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
   
   switch (actionId) {
     case 3: // Lootcoin
-    case 5: // OnChain GM
-      return [zeroAddress];
+    case 5: // HumanLabs - pay
+      return ["0x0000000000000000000000000000000000000000" as `0x${string}`, 1n, "0x0000000000000000000000000000000000000000000000000000000000000000"];
     case 8: // Owlto
       const todayDate = new Date();
       const currentDate = BigInt(parseInt(todayDate.getFullYear().toString() + (todayDate.getMonth() + 1).toString().padStart(2, '0') + todayDate.getDate().toString().padStart(2, '0')));

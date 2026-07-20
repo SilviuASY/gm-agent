@@ -81,38 +81,73 @@ const BLOCKSCOUT_API = "https://soneium.blockscout.com/api/v2";
 
 /**
  * Pulls basic wallet stats from Blockscout: total tx count and wallet age
- * (days since first transaction). Best-effort — degrades to zeros rather
- * than failing the whole signature request if Blockscout is slow/unreachable.
+ * (days since first transaction).
  *
- * NOTE: verify the exact response fields/params against a live call before
- * relying on this in production — Blockscout's per-instance /api/v2
- * endpoints are being phased in favor of the Pro API, and field names or
- * supported query params can differ by deployed version.
+ * IMPORTANT: the free per-instance Blockscout API does NOT return a tx count
+ * on /addresses/{address} — that field only exists on the paid Pro API.
+ * The free equivalent is /addresses/{address}/counters -> `transactions_count`.
+ *
+ * Wallet age has no "oldest first" sort param on the free API either — it
+ * only supports keyset pagination (newest -> oldest via next_page_params).
+ * We walk pages until we reach the last one (capped, to avoid unbounded
+ * requests for very active wallets). If the cap is hit before reaching the
+ * last page, we report 0 rather than an inaccurate age.
  */
 async function getWalletBlockscoutStats(address) {
   let txCount = 0;
   let walletAgeDays = 0;
 
+  // --- Transaction count ---
   try {
-    const res = await fetch(`${BLOCKSCOUT_API}/addresses/${address}`);
+    const res = await fetch(`${BLOCKSCOUT_API}/addresses/${address}/counters`);
     if (res.ok) {
       const data = await res.json();
-      txCount = Number(data.transaction_count || 0);
+      txCount = Number(data.transactions_count || 0);
+    } else {
+      console.warn(`Blockscout counters lookup returned ${res.status} for ${address}`);
     }
   } catch (err) {
-    console.warn("Blockscout address lookup failed:", err.message);
+    console.warn("Blockscout counters lookup failed:", err.message);
   }
 
+  // --- Wallet age (walk pagination to the oldest transaction) ---
+  const MAX_PAGES = 20; // ~1000 txs at 50/page — enough for the vast majority of wallets
   try {
-    const txRes = await fetch(`${BLOCKSCOUT_API}/addresses/${address}/transactions?sort=asc&limit=1`);
-    if (txRes.ok) {
-      const txData = await txRes.json();
-      const first = txData.items?.[0];
-      if (first?.timestamp) {
-        const firstTs = new Date(first.timestamp).getTime();
+    let url = `${BLOCKSCOUT_API}/addresses/${address}/transactions`;
+    let lastPageItems = null;
+    let pages = 0;
+    let reachedEnd = false;
+
+    while (url && pages < MAX_PAGES) {
+      const res = await fetch(url);
+      if (!res.ok) break;
+      const data = await res.json();
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        lastPageItems = data.items;
+      }
+      pages++;
+
+      if (data.next_page_params) {
+        const params = new URLSearchParams();
+        for (const [key, val] of Object.entries(data.next_page_params)) {
+          if (val !== null && val !== undefined) params.set(key, val);
+        }
+        url = `${BLOCKSCOUT_API}/addresses/${address}/transactions?${params.toString()}`;
+      } else {
+        url = null;
+        reachedEnd = true;
+      }
+    }
+
+    if (reachedEnd && lastPageItems && lastPageItems.length > 0) {
+      const oldest = lastPageItems[lastPageItems.length - 1];
+      if (oldest?.timestamp) {
+        const firstTs = new Date(oldest.timestamp).getTime();
         walletAgeDays = Math.max(0, Math.floor((Date.now() - firstTs) / 86400000));
       }
     }
+    // else: wallet has more than MAX_PAGES worth of txs — we intentionally
+    // don't guess; walletAgeDays stays 0 rather than reporting something wrong.
   } catch (err) {
     console.warn("Blockscout wallet-age lookup failed:", err.message);
   }

@@ -24,6 +24,8 @@ const CHECKIN_CONTRACT = "0x72c89BA5def57c642582E536d351483b9D85CA8C";
 const AGENT_GM_CONTRACT = "0xb19922c27C86cc08dc4f0f3Cb4e76c30494c22dc";
 const AGENT_GATEWAY_CONTRACT = "0x2356e0c4475d8BfE1c9Fe004715a2808AB0eB72E";
 
+// Fill in after you deploy the UUPS proxy of ReputationAttester.
+const REPUTATION_ATTESTER_CONTRACT = process.env.REPUTATION_ATTESTER_CONTRACT;
 
 const gmABI = ["function balanceOf(address owner) view returns (uint256)"];
 const voteABI = ["function getUserVotes(address user) view returns (uint256)"];
@@ -38,6 +40,10 @@ const badgeReadABI = [
   "function minReputationScore() view returns (uint256)",
   "function balanceOf(address owner) view returns (uint256)",
   "function getNonce(address user) view returns (uint256)",
+];
+const attesterReadABI = [
+  "function getNonce(address wallet) view returns (uint256)",
+  "function attestFee() view returns (uint256)",
 ];
 
 const provider = new ethers.JsonRpcProvider(process.env.SONEIUM_RPC_URL);
@@ -68,6 +74,50 @@ async function getOnChainScore(address) {
     Number(agentGmCount) +
     userPartnerTotal
   );
+}
+
+// ============ ATTESTATION: BLOCKSCOUT WALLET STATS ============
+const BLOCKSCOUT_API = "https://soneium.blockscout.com/api/v2";
+
+/**
+ * Pulls basic wallet stats from Blockscout: total tx count and wallet age
+ * (days since first transaction). Best-effort — degrades to zeros rather
+ * than failing the whole signature request if Blockscout is slow/unreachable.
+ *
+ * NOTE: verify the exact response fields/params against a live call before
+ * relying on this in production — Blockscout's per-instance /api/v2
+ * endpoints are being phased in favor of the Pro API, and field names or
+ * supported query params can differ by deployed version.
+ */
+async function getWalletBlockscoutStats(address) {
+  let txCount = 0;
+  let walletAgeDays = 0;
+
+  try {
+    const res = await fetch(`${BLOCKSCOUT_API}/addresses/${address}`);
+    if (res.ok) {
+      const data = await res.json();
+      txCount = Number(data.transaction_count || 0);
+    }
+  } catch (err) {
+    console.warn("Blockscout address lookup failed:", err.message);
+  }
+
+  try {
+    const txRes = await fetch(`${BLOCKSCOUT_API}/addresses/${address}/transactions?sort=asc&limit=1`);
+    if (txRes.ok) {
+      const txData = await txRes.json();
+      const first = txData.items?.[0];
+      if (first?.timestamp) {
+        const firstTs = new Date(first.timestamp).getTime();
+        walletAgeDays = Math.max(0, Math.floor((Date.now() - firstTs) / 86400000));
+      }
+    }
+  } catch (err) {
+    console.warn("Blockscout wallet-age lookup failed:", err.message);
+  }
+
+  return { txCount, walletAgeDays };
 }
 
 // ============ AGENT ACADEMY QUESTIONS ============
@@ -121,7 +171,6 @@ app.get("/api/", (req, res) => {
   res.send("<h1>✅ Signature API ONLINE by SilviuASY</h1><p>CORS enabled for Signature</p>");
 });
 
-
 app.post("/api/generate-mint-signature", async (req, res) => {
   const { userAddress, nonce } = req.body;
 
@@ -136,7 +185,6 @@ app.post("/api/generate-mint-signature", async (req, res) => {
 
   try {
     const addressLower = userAddress.toLowerCase();
-
 
     const realScore = await getOnChainScore(addressLower);
 
@@ -174,6 +222,95 @@ app.post("/api/generate-mint-signature", async (req, res) => {
   }
 });
 
+// ============ ATTESTATION SIGNATURE (EAS) ============
+app.post("/api/generate-attestation-signature", async (req, res) => {
+  const { userAddress } = req.body;
+
+  if (!userAddress?.startsWith("0x")) {
+    return res.status(400).json({ error: "Invalid parameters" });
+  }
+
+  const signerPk = process.env.SIGNER_PRIVATE_KEY;
+  if (!signerPk || !REPUTATION_ATTESTER_CONTRACT) {
+    return res.status(500).json({ error: "Attestation service not configured" });
+  }
+
+  try {
+    const address = ethers.getAddress(userAddress); // validates + checksums
+
+    const [onChainScore, blockscoutStats, deployCountRaw, agentGmCountRaw] = await Promise.all([
+      getOnChainScore(address),
+      getWalletBlockscoutStats(address),
+      new ethers.Contract(DEPLOY_CONTRACT, deployABI, provider).getUserDeploymentCount(address),
+      new ethers.Contract(AGENT_GM_CONTRACT, agentGMABI, provider).totalUserGM(address),
+    ]);
+
+    const attester = new ethers.Contract(REPUTATION_ATTESTER_CONTRACT, attesterReadABI, provider);
+    const [nonce, attestFee] = await Promise.all([
+      attester.getNonce(address),
+      attester.attestFee(),
+    ]);
+
+    const deployCount = Number(deployCountRaw);
+    // NOTE: no on-chain per-day streak counter exists for Activity Reputation
+    // (only a local, client-side streak on the GM & Deploy page). Until a
+    // proper indexer/subgraph exists, "gmStreak" is populated with total
+    // Agent GM activity as an honest stand-in — not a true streak.
+    const gmStreak = Number(agentGmCountRaw);
+    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour validity
+
+    const domain = {
+      name: "ReputationAttester",
+      version: "1",
+      chainId: Number((await provider.getNetwork()).chainId),
+      verifyingContract: REPUTATION_ATTESTER_CONTRACT,
+    };
+
+    const types = {
+      ReputationAttestation: [
+        { name: "wallet", type: "address" },
+        { name: "score", type: "uint256" },
+        { name: "txCount", type: "uint256" },
+        { name: "walletAgeDays", type: "uint256" },
+        { name: "gmStreak", type: "uint256" },
+        { name: "deployCount", type: "uint256" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    };
+
+    const value = {
+      wallet: address,
+      score: BigInt(onChainScore),
+      txCount: BigInt(blockscoutStats.txCount),
+      walletAgeDays: BigInt(blockscoutStats.walletAgeDays),
+      gmStreak: BigInt(gmStreak),
+      deployCount: BigInt(deployCount),
+      nonce,
+      deadline: BigInt(deadline),
+    };
+
+    const wallet = new ethers.Wallet(signerPk);
+    const signature = await wallet.signTypedData(domain, types, value);
+
+    console.log(`✅ Attestation signature generated for ${address} — score: ${onChainScore}`);
+
+    return res.status(200).json({
+      score: onChainScore,
+      txCount: blockscoutStats.txCount,
+      walletAgeDays: blockscoutStats.walletAgeDays,
+      gmStreak,
+      deployCount,
+      nonce: nonce.toString(),
+      deadline,
+      attestFee: attestFee.toString(),
+      signature,
+    });
+  } catch (error) {
+    console.error("❌ Error generating attestation signature:", error);
+    return res.status(500).json({ error: "Error generating attestation signature" });
+  }
+});
 
 app.get("/api/agent-quests", async (req, res) => {
   try {
@@ -212,7 +349,6 @@ app.get("/api/agent-quest/:questId", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 app.post("/api/verify-quiz-answers", async (req, res) => {
   try {

@@ -15,6 +15,7 @@ import Docs from './pages/docs'
 import Academy from './pages/Academy'
 import Bridge from './pages/Bridge'
 import Revoke from './pages/Revoke'
+import Attestation from './pages/Attestation'
 
  // Pages
 
@@ -43,6 +44,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/bridge/*" element={<Bridge />} />
                 <Route path="/bridge/*" element={<Bridge />} />
                 <Route path="/revoke/*" element={<Revoke />} />
+                <Route path="/attestation/*" element={<Attestation />} />
               </Routes>
             </BrowserRouter>
           </ChakraProvider>

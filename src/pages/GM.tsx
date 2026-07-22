@@ -68,6 +68,7 @@ import {
   arbitrumChain,
   somniaChain, 
   katanaChain,
+  worldChain,
   liteforgeChain,
   ecochainChain,
   abstractChain,
@@ -124,7 +125,8 @@ const chains = [soneiumChain,
   plumeChain,
   arbitrumChain,
   somniaChain, 
-  katanaChain, 
+  katanaChain,
+  worldChain,
   liteforgeChain,
   ecochainChain,
   arcTestnetChain,
@@ -150,6 +152,7 @@ const EXPLORER_URLS: Record<number, string> = {
   [ecochainChain.id]: 'https://maculatus-scan.x1eco.com/tx/',
   [arcTestnetChain.id]: 'https://testnet.arcscan.app/tx/',
   [giwaChain.id]: 'https://sepolia-explorer.giwa.io/',
+  [worldChain.id]: 'https://worldchain-mainnet.explorer.alchemy.com/',
   
 };
 const GM_CONTRACTS: Record<number, `0x${string}`> = {
@@ -172,7 +175,9 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [ecochainChain.id]: '0x8f5F899667E301645491116ea2B79Be299c60cE4',
   [arcTestnetChain.id]: '0x5A7B96bFefE14E216E41D5E2FEF40E8dD47db0Ea',
   [giwaChain.id]: '0xc8Fa6657886B97b0D09De4A946c35A5aE10AdD48',
+  [worldChain.id]: '0xEbb225CB1139497581870b15CF759EA79F0356CA',
 };
+
 const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [soneiumChain.id]: '0xc1966b48008B7153E9B7441F06b21Ef2E52014C4',
   [inkChain.id]: '0x45bE5f350D14faC218158Fd380283C18e8df6F2B',
@@ -193,7 +198,9 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [ecochainChain.id]: '0x55231Bc7686c280f9EA6d7ddf963B2606E3D93aF',
   [arcTestnetChain.id]: '0x428066D90a5e59a9025DCFEA5edF81b02Ce6040D',
   [giwaChain.id]: '0x6573bc9090BbCae309d2A3D95fDAC05617914000',
+  [worldChain.id]: '0xd7109d454872D72e80138B65676AA67613EdE1A6',
 };
+
 const TWITTER_LINKS: Record<number, string> = {
   [soneiumChain.id]: 'https://twitter.com/soneium',
   [inkChain.id]: 'https://twitter.com/inkonchain',
@@ -214,7 +221,9 @@ const TWITTER_LINKS: Record<number, string> = {
   [ecochainChain.id]: 'https://x.com/X1_EcoChain',
   [arcTestnetChain.id]: 'https://twitter.com/arc',
   [giwaChain.id]: 'https://x.com/GIWA_by_Upbit',
+  [worldChain.id]: 'https://x.com/world_chain_',
 };
+
 const DEFAULT_TWITTER_LINK = 'https://x.com/gm_agent_xyz';
 // Cards Colour
 const chainMetadata: Record<number, { color: string; gradient: string; glowColor: string }> = {
@@ -307,6 +316,11 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#b5f3f3',
     gradient: 'linear(135deg, #202122, #92989b, #e7eef0)',
     glowColor: 'rgba(217, 232, 233, 0.35)',
+  },
+  [worldChain.id]: {
+    color: '#c2dfdf',
+    gradient: 'linear(135deg, #5e6063, #aab1b4, #f0f4f5)',
+    glowColor: 'rgba(218, 240, 241, 0.35)',
   },
 };
 // ============= Multicall layout =============

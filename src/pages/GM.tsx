@@ -228,9 +228,9 @@ const DEFAULT_TWITTER_LINK = 'https://x.com/gm_agent_xyz';
 // Cards Colour
 const chainMetadata: Record<number, { color: string; gradient: string; glowColor: string }> = {
   [soneiumChain.id]: {
-    color: '#1c97df',
-    gradient: 'linear(135deg, #0a5d8c, #1c97df, #5ebeea)',
-    glowColor: 'rgba(28,151,223,0.35)',
+    color: '#0997e9',
+    gradient: 'linear(135deg, #035381, #067abd, #0babf5)',
+    glowColor: 'rgba(8, 156, 241, 0.35)',
   },
   [inkChain.id]: {
     color: '#c026d3',
@@ -1009,7 +1009,7 @@ const SBTBadge = ({ hasSBT }: { hasSBT: boolean }) => {
     <Tooltip label="Soneium Soulbound Token — fee exempt on all actions" hasArrow placement="top">
       <Badge
         bgGradient="linear(135deg, #2dd4bf, #0d9488)"
-        color="white" fontSize="9px" px={2.5} py={1}
+        color="white" fontSize="12px" px={2.5} py={1}
         borderRadius="full" display="inline-flex" alignItems="center" gap={1.5}
         boxShadow="0 0 18px rgba(45,212,191,0.35)"
         _hover={{ transform: 'scale(1.06)' }}
@@ -1203,10 +1203,10 @@ const ActionCard = ({
       />
       <Box
         position="relative" bg="rgba(4,4,14,0.93)" backdropFilter="blur(28px)"
-        borderRadius="2xl" border="1px solid" borderColor={isExempt ? `rgba(45,212,191,0.25)` : `${meta.color}20`}
+        borderRadius="2xl" border="1px solid" borderColor={`${meta.color}20`}
         overflow="hidden" h="full" minH="470px" display="flex" flexDirection="column"
         _hover={{
-          borderColor: isExempt ? `rgba(45,212,191,0.5)` : `${meta.color}60`,
+          borderColor: `${meta.color}60`,
           boxShadow: `0 28px 80px ${meta.glowColor}, inset 0 1px 0 rgba(255,255,255,0.04)`,
         }}
         transition="all 0.38s cubic-bezier(0.175,0.885,0.32,1.275)"
@@ -1214,7 +1214,7 @@ const ActionCard = ({
         {/* top shimmer bar */}
         <Box
           position="absolute" top={0} left={0} right={0} h="2px"
-          bgGradient={isExempt ? 'linear(90deg, #2dd4bf, #0d9488, #2dd4bf)' : meta.gradient}
+          bgGradient={meta.gradient}
           backgroundSize="200% 100%"
           style={{ animation: 'shimmerBorder 3.5s infinite' }}
         />
@@ -1258,7 +1258,7 @@ const ActionCard = ({
                   borderRadius="full"
                   bg={`${meta.color}08`}
                   p={1.5}
-                  border={`2px solid ${isExempt ? '#2dd4bf' : meta.color}30`}
+                  border={`2px solid ${meta.color}30`}
                   position="relative" zIndex={1}
                   fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='70'><text y='52%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='34'>⛓️</text></svg>"
                 />
@@ -1268,7 +1268,7 @@ const ActionCard = ({
             <VStack spacing={1.5} pt={1}>
               <Heading
                 fontSize={{ base: "md", md: "lg" }} fontWeight="800"
-                bgGradient={isExempt ? 'linear(135deg, #2dd4bf, #0d9488)' : meta.gradient}
+                bgGradient={meta.gradient}
                 bgClip="text" letterSpacing="-0.015em"
                 fontFamily="'Space Grotesk', sans-serif" textAlign="center"
               >
@@ -1347,7 +1347,7 @@ const ActionCard = ({
             </Tooltip>
             <Button
               w="full" h="52px" fontWeight="700" fontSize="sm" color="white" borderRadius="xl"
-              bgGradient={isExempt ? 'linear(135deg, #2dd4bf, #0d9488)' : meta.gradient}
+              bgGradient={meta.gradient}
               backgroundSize="200% auto"
               _hover={{
                 transform: 'translateY(-2px)',

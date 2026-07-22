@@ -254,11 +254,12 @@ export const zksyncChain = {
 export const worldChain = {
   id: 480,
   name: 'World Chain',
-  nativeCurrency: { name: 'World Chain', symbol: 'WC', decimals: 18 },
+  nativeCurrency: { name: 'World Chain', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.worldchain.xyz'] },
-    public: { http: ['https://rpc.worldchain.xyz'] },
+    default: { http: ['https://worldchain-mainnet.g.alchemy.com/public'] },
+    public: { http: ['https://worldchain-mainnet.g.alchemy.com/public'] },
   },
+  iconUrl: '/world.png',
 } as const
 
 export const flowChain = {

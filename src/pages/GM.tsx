@@ -231,6 +231,16 @@ const TWITTER_LINKS: Record<number, string> = {
 };
 
 const DEFAULT_TWITTER_LINK = 'https://x.com/gm_agent_xyz';
+// Bridge — same site, different page. Shown on every card regardless of balance.
+const BRIDGE_URL = 'https://gm-agent.xyz/bridge';
+// Faucet links — only shown on testnet cards. Replace with your preferred faucet
+// if you'd rather point users somewhere else.
+const FAUCET_LINKS: Record<number, string> = {
+  [liteforgeChain.id]: 'https://liteforge.hub.caldera.xyz',
+  [ecochainChain.id]: 'https://testnet.x1ecochain.com',
+  [arcTestnetChain.id]: 'https://faucet.circle.com',
+  [giwaChain.id]: 'https://faucet.giwa.io',
+};
 // Cards Colour
 const chainMetadata: Record<number, { color: string; gradient: string; glowColor: string }> = {
   [soneiumChain.id]: {
@@ -1258,7 +1268,7 @@ const ActionCard = ({
         <Box p={{ base: 5, md: 6 }} flex="1" display="flex" flexDirection="column" position="relative" zIndex={1}>
           <VStack spacing={4} align="stretch" flex="1">
             {/* chain icon with rotating rings */}
-            <Flex justify="center" pt={4}>
+            <Flex justify="center" pt={4} position="relative">
               <Box
                 position="relative"
                 style={{ animation: `floatCard ${3.5 + index * 0.4}s ease-in-out infinite` }}
@@ -1283,6 +1293,40 @@ const ActionCard = ({
                   position="relative" zIndex={1}
                   fallbackSrc="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='70'><text y='52%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='34'>⛓️</text></svg>"
                 />
+              </Box>
+              {/* Bridge (mainnet/L2 cards) or Faucet (testnet cards) — absolutely positioned in the
+                  free space to the right of the icon, so it never touches the icon↔name spacing. */}
+              <Box position="absolute" right={{ base: "-6px", md: "-4px" }} top="105%" transform="translateY(-50%)">
+                <Tooltip
+                  label={isTestnet ? `Get free testnet funds for ${chain.name}` : 'Bridge assets on the Agent Protocol'}
+                  hasArrow
+                  placement="top"
+                >
+                  <Link
+                    href={isTestnet ? (FAUCET_LINKS[chain.id] || '#') : BRIDGE_URL}
+                    isExternal
+                    _hover={{ textDecoration: 'none' }}
+                  >
+                    <Badge
+                      bg={isTestnet ? 'rgba(11,228,236,0.16)' : 'rgba(45,212,191,0.16)'}
+                      color={isTestnet ? '#0be4ec' : '#2dd4bf'}
+                      fontSize="10px" px={3} py={1.5} borderRadius="full"
+                      border={`1px solid ${isTestnet ? 'rgba(11,228,236,0.4)' : 'rgba(45,212,191,0.4)'}`}
+                      fontFamily="'Space Mono', monospace" letterSpacing="0.06em" fontWeight="900"
+                      textTransform="none"
+                      cursor="pointer"
+                      boxShadow={isTestnet ? '0 0 14px rgba(11,228,236,0.18)' : '0 0 14px rgba(45,212,191,0.2)'}
+                      _hover={{
+                        bg: isTestnet ? 'rgba(11,228,236,0.26)' : 'rgba(45,212,191,0.28)',
+                        borderColor: isTestnet ? 'rgba(11,228,236,0.7)' : 'rgba(45,212,191,0.7)',
+                        transform: 'scale(1.06)',
+                      }}
+                      transition="all 0.2s"
+                    >
+                      {isTestnet ? 'Faucet' : 'Bridge'}
+                    </Badge>
+                  </Link>
+                </Tooltip>
               </Box>
             </Flex>
             {/* chain name + id */}
@@ -1316,10 +1360,17 @@ const ActionCard = ({
               >
                 <Text fontSize="9px" color="gray.600" fontWeight="700" textTransform="uppercase"
                   letterSpacing="0.15em" fontFamily="'Space Mono', monospace" mb={1.5}>Fee</Text>
-                <FeeDisplay
-                  fee={fee} isExempt={isExempt} chainId={chain.id}
-                  isLoading={isFeeLoading} hasError={hasFeeError} onRetry={onRetry}
-                />
+                <MotionBox
+                  key={isFeeLoading ? 'fee-loading' : 'fee-loaded'}
+                  initial={isFeeLoading ? false : { opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: isFeeLoading ? 0 : index * 0.05, ease: 'easeOut' }}
+                >
+                  <FeeDisplay
+                    fee={fee} isExempt={isExempt} chainId={chain.id}
+                    isLoading={isFeeLoading} hasError={hasFeeError} onRetry={onRetry}
+                  />
+                </MotionBox>
               </Box>
               {/* Twitter / X follow — static, doesn't touch the RPC at all */}
               <Link href={twitterUrl} isExternal _hover={{ textDecoration: 'none' }}>

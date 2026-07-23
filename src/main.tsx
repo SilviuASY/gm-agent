@@ -12,7 +12,6 @@ import ActivityReputation from "./pages/ActivityReputation";
 import GMPage from './pages/GM'
 import BadgePage from './pages/BadgePage'
 import Docs from './pages/docs'
-import Academy from './pages/Academy'
 import Bridge from './pages/Bridge'
 import Revoke from './pages/Revoke'
 
@@ -38,7 +37,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/gmorning/*" element={<GMPage />} />
                 <Route path="/pulse-cards" element={<BadgePage />} />
                 <Route path="/docs" element={<Docs />} />
-                <Route path="/academy" element={<Academy />} />
                 <Route path="/bridge" element={<Bridge />} />
                 <Route path="/bridge/*" element={<Bridge />} />
                 <Route path="/bridge/*" element={<Bridge />} />

@@ -549,6 +549,7 @@ export const zerogChain = {
     default: { http: ['https://rpc.0g.xyz'] },
     public: { http: ['https://rpc.0g.xyz'] },
   },
+  iconUrl: '/og.png',
 } as const
 
 export const apechainChain = {

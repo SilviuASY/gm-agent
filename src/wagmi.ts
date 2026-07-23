@@ -77,6 +77,7 @@ export const flareChain = {
     default: { http: ['https://rpc.ankr.com/flare'] },
     public: { http: ['https://rpc.ankr.com/flare'] },
   },
+  iconUrl: '/flare.png',
 } as const
 
 export const cronosChain = {
@@ -97,6 +98,7 @@ export const rootstockChain = {
     default: { http: ['https://public-node.rsk.co'] },
     public: { http: ['https://public-node.rsk.co'] },
   },
+  iconUrl: '/rootstock.png',
 } as const
 
 export const telosChain = {
@@ -107,6 +109,7 @@ export const telosChain = {
     default: { http: ['https://rpc.telos.net'] },
     public: { http: ['https://rpc.telos.net'] },
   },
+  iconUrl: '/telos.png',
 } as const
 
 export const xdcChain = {
@@ -138,6 +141,7 @@ export const victionChain = {
     default: { http: ['https://rpc.viction.xyz'] },
     public: { http: ['https://rpc.viction.xyz'] },
   },
+  iconUrl: '/viction.png',
 } as const
 
 export const gnosisChain = {
@@ -158,6 +162,7 @@ export const fuseChain = {
     default: { http: ['https://rpc.fuse.io'] },
     public: { http: ['https://rpc.fuse.io'] },
   },
+  iconUrl: '/fuse.png',
 } as const
 
 export const polygonChain = {
@@ -189,6 +194,7 @@ export const sonicChain = {
     default: { http: ['https://rpc.sonic.xyz'] },
     public: { http: ['https://rpc.sonic.xyz'] },
   },
+  iconUrl: '/sonic.png',
 } as const
 
 export const xlayerChain = {
@@ -199,6 +205,7 @@ export const xlayerChain = {
     default: { http: ['https://rpc.xlayer.xyz'] },
     public: { http: ['https://rpc.xlayer.xyz'] },
   },
+  iconUrl: '/xlayer.png',
 } as const
 
 export const opbnbChain = {
@@ -209,6 +216,7 @@ export const opbnbChain = {
     default: { http: ['https://opbnb-rpc.publicnode.com'] },
     public: { http: ['https://opbnb-rpc.publicnode.com'] },
   },
+  iconUrl: '/opbnb.png',
 } as const
 
 export const lensChain = {
@@ -219,6 +227,7 @@ export const lensChain = {
     default: { http: ['https://rpc.lens.xyz'] },
     public: { http: ['https://rpc.lens.xyz'] },
   },
+  iconUrl: '/lens.png',
 } as const
 
 export const fraxtalChain = {
@@ -229,6 +238,7 @@ export const fraxtalChain = {
     default: { http: ['https://rpc.fraxtal.xyz'] },
     public: { http: ['https://rpc.fraxtal.xyz'] },
   },
+  iconUrl: '/fraxtal.png',
 } as const
 
 export const bobaChain = {
@@ -239,6 +249,7 @@ export const bobaChain = {
     default: { http: ['https://mainnet.boba.network'] },
     public: { http: ['https://mainnet.boba.network'] },
   },
+  iconUrl: '/boba.png',
 } as const
 
 export const zksyncChain = {
@@ -280,6 +291,7 @@ export const stableChain = {
     default: { http: ['https://rpc.stable.xyz'] },
     public: { http: ['https://rpc.stable.xyz'] },
   },
+  iconUrl: '/stable.png',
 } as const
 
 export const hyperevmChain = {
@@ -300,6 +312,7 @@ export const metisChain = {
     default: { http: ['https://andromeda.metis.io'] },
     public: { http: ['https://andromeda.metis.io'] },
   },
+  iconUrl: '/metis.png',
 } as const
 
 export const liskChain = {
@@ -310,6 +323,7 @@ export const liskChain = {
     default: { http: ['https://rpc.lisk.com'] },
     public: { http: ['https://rpc.lisk.com'] },
   },
+  iconUrl: '/lisk.png',
 } as const
 
 export const moonbeamChain = {
@@ -320,6 +334,7 @@ export const moonbeamChain = {
     default: { http: ['https://rpc.api.moonbeam.network'] },
     public: { http: ['https://rpc.api.moonbeam.network'] },
   },
+  iconUrl: '/moonbeam.png',
 } as const
 
 export const seiChain = {
@@ -330,6 +345,7 @@ export const seiChain = {
     default: { http: ['https://evm-rpc.sei-apis.com'] },
     public: { http: ['https://evm-rpc.sei-apis.com'] },
   },
+  iconUrl: '/sei.png',
 } as const
 
 export const hyperliquidChain = {
@@ -350,6 +366,7 @@ export const vanaChain = {
     default: { http: ['https://rpc.vana.xyz'] },
     public: { http: ['https://rpc.vana.xyz'] },
   },
+  iconUrl: '/vana.png',
 } as const
 
 export const gravityChain = {
@@ -370,6 +387,7 @@ export const pharosChain = {
     default: { http: ['https://rpc.pharos.xyz'] },
     public: { http: ['https://rpc.pharos.xyz'] },
   },
+  iconUrl: '/pharos.png',
 } as const
 
 export const swellchainChain = {
@@ -380,6 +398,7 @@ export const swellchainChain = {
     default: { http: ['https://rpc.swellchain.xyz'] },
     public: { http: ['https://rpc.swellchain.xyz'] },
   },
+  iconUrl: '/swell.png',
 } as const
 
 export const roninChain = {
@@ -411,6 +430,7 @@ export const morphChain = {
     default: { http: ['https://rpc.morph.xyz'] },
     public: { http: ['https://rpc.morph.xyz'] },
   },
+  iconUrl: '/morph.png',
 } as const
 
 export const botanixChain = {
@@ -421,6 +441,7 @@ export const botanixChain = {
     default: { http: ['https://rpc.botanix.xyz'] },
     public: { http: ['https://rpc.botanix.xyz'] },
   },
+  iconUrl: '/botanix.png',
 } as const
 
 export const tempoChain = {
@@ -431,6 +452,7 @@ export const tempoChain = {
     default: { http: ['https://rpc.tempo.xyz'] },
     public: { http: ['https://rpc.tempo.xyz'] },
   },
+  iconUrl: '/tempo.png',
 } as const
 
 export const megaethChain = {
@@ -452,7 +474,7 @@ export const robinhoodChain = {
     default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
     public: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
   },
-    iconUrl: '/robinhood.png',
+  iconUrl: '/robinhood.png',
 } as const
 
 export const mantleChain = {
@@ -484,6 +506,7 @@ export const arcChain = {
     default: { http: ['https://rpc.arc.xyz'] },
     public: { http: ['https://rpc.arc.xyz'] },
   },
+  iconUrl: '/arc.png',
 } as const
 
 export const kaiaChain = {
@@ -504,6 +527,7 @@ export const plasmaChain = {
     default: { http: ['https://rpc.plasma.xyz'] },
     public: { http: ['https://rpc.plasma.xyz'] },
   },
+  iconUrl: '/plasma.png',
 } as const
 
 export const immutableChain = {
@@ -514,6 +538,7 @@ export const immutableChain = {
     default: { http: ['https://rpc.immutable.com'] },
     public: { http: ['https://rpc.immutable.com'] },
   },
+  iconUrl: '/immutable.png',
 } as const
 
 export const zerogChain = {
@@ -544,6 +569,7 @@ export const modeChain = {
     default: { http: ['https://rpc.mode.xyz'] },
     public: { http: ['https://rpc.mode.xyz'] },
   },
+  iconUrl: '/mode.png',
 } as const
 
 export const arbitrumChain = {
@@ -565,6 +591,7 @@ export const arbitrumNovaChain = {
     default: { http: ['https://nova.arbitrum.io/rpc'] },
     public: { http: ['https://nova.arbitrum.io/rpc'] },
   },
+  iconUrl: '/arbitrumnova.png',
 } as const
 
 export const celoChain = {
@@ -585,6 +612,7 @@ export const etherlinkChain = {
     default: { http: ['https://rpc.etherlink.xyz'] },
     public: { http: ['https://rpc.etherlink.xyz'] },
   },
+  iconUrl: '/etherlink.png',
 } as const
 
 export const hemiChain = {
@@ -595,6 +623,7 @@ export const hemiChain = {
     default: { http: ['https://rpc.hemi.xyz'] },
     public: { http: ['https://rpc.hemi.xyz'] },
   },
+  iconUrl: '/hemi.png',
 } as const
 
 export const avalancheChain = {
@@ -615,6 +644,7 @@ export const sophonChain = {
     default: { http: ['https://rpc.sophon.xyz'] },
     public: { http: ['https://rpc.sophon.xyz'] },
   },
+  iconUrl: '/sophon.png',
 } as const
 
 export const superpositionChain = {
@@ -646,6 +676,7 @@ export const bobChain = {
     default: { http: ['https://rpc.bob.xyz'] },
     public: { http: ['https://rpc.bob.xyz'] },
   },
+  iconUrl: '/bob.png',
 } as const
 
 export const berachainChain = {
@@ -697,6 +728,7 @@ export const taikoChain = {
     default: { http: ['https://rpc.taiko.xyz'] },
     public: { http: ['https://rpc.taiko.xyz'] },
   },
+  iconUrl: '/taiko.png',
 } as const
 
 export const arbitrumSepoliaChain = {
@@ -738,6 +770,7 @@ export const lighterChain = {
     default: { http: ['https://rpc.lighter.xyz'] },
     public: { http: ['https://rpc.lighter.xyz'] },
   },
+  iconUrl: '/lighter.png',
 } as const
 
 export const arcTestnetChain = {
@@ -769,6 +802,7 @@ export const tronChain = {
     default: { http: ['https://api.trongrid.io'] },
     public: { http: ['https://api.trongrid.io'] },
   },
+  iconUrl: '/tron.png',
 } as const
 
 export const liteforgeChain = {
@@ -803,6 +837,7 @@ export const giwaChain = {
   },
   iconUrl: '/giwa.png',
 } as const
+
 // ============= Configurația principală =============
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',

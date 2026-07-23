@@ -565,10 +565,10 @@ export const apechainChain = {
 export const modeChain = {
   id: 34443,
   name: 'Mode',
-  nativeCurrency: { name: 'Mode', symbol: 'MOD', decimals: 18 },
+  nativeCurrency: { name: 'Mode', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.mode.xyz'] },
-    public: { http: ['https://rpc.mode.xyz'] },
+    default: { http: ['https://mainnet.mode.network'] },
+    public: { http: ['https://mainnet.mode.network'] },
   },
   iconUrl: '/mode.png',
 } as const

@@ -68,6 +68,7 @@ import {
   arbitrumChain,
   somniaChain, 
   katanaChain,
+  modeChain,
   worldChain,
   liteforgeChain,
   ecochainChain,
@@ -126,6 +127,7 @@ const chains = [soneiumChain,
   arbitrumChain,
   somniaChain, 
   katanaChain,
+  modeChain,
   worldChain,
   liteforgeChain,
   ecochainChain,
@@ -153,6 +155,7 @@ const EXPLORER_URLS: Record<number, string> = {
   [arcTestnetChain.id]: 'https://testnet.arcscan.app/tx/',
   [giwaChain.id]: 'https://sepolia-explorer.giwa.io/',
   [worldChain.id]: 'https://worldchain-mainnet.explorer.alchemy.com/',
+  [modeChain.id]: 'https://explorer.mode.network/',
   
 };
 const GM_CONTRACTS: Record<number, `0x${string}`> = {
@@ -176,6 +179,7 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [arcTestnetChain.id]: '0x5A7B96bFefE14E216E41D5E2FEF40E8dD47db0Ea',
   [giwaChain.id]: '0xc8Fa6657886B97b0D09De4A946c35A5aE10AdD48',
   [worldChain.id]: '0xEbb225CB1139497581870b15CF759EA79F0356CA',
+  [modeChain.id]: '0x162f26083cA2B5405124fC532109b8b8B512951f',
 };
 
 const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
@@ -199,6 +203,7 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [arcTestnetChain.id]: '0x428066D90a5e59a9025DCFEA5edF81b02Ce6040D',
   [giwaChain.id]: '0x6573bc9090BbCae309d2A3D95fDAC05617914000',
   [worldChain.id]: '0xd7109d454872D72e80138B65676AA67613EdE1A6',
+  [modeChain.id]: '0xd4501d4246aCE784698939a9220F203c3A2c6695',
 };
 
 const TWITTER_LINKS: Record<number, string> = {
@@ -222,6 +227,7 @@ const TWITTER_LINKS: Record<number, string> = {
   [arcTestnetChain.id]: 'https://twitter.com/arc',
   [giwaChain.id]: 'https://x.com/GIWA_by_Upbit',
   [worldChain.id]: 'https://x.com/world_chain_',
+  [modeChain.id]: 'https://x.com/modenetwork',
 };
 
 const DEFAULT_TWITTER_LINK = 'https://x.com/gm_agent_xyz';
@@ -321,6 +327,11 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#c2dfdf',
     gradient: 'linear(135deg, #5e6063, #aab1b4, #f0f4f5)',
     glowColor: 'rgba(218, 240, 241, 0.35)',
+  },
+  [modeChain.id]: {
+    color: '#b0ec09',
+    gradient: 'linear(135deg, #84a707, #a5c908, #d3f705)',
+    glowColor: 'rgba(168, 235, 11, 0.35)',
   },
 };
 // ============= Multicall layout =============
@@ -1174,6 +1185,16 @@ const ActionCard = ({
   
   // Disable only the button, not the whole card
   const isButtonDisabled = !isConnected || isLoading || isGlobalLoading || hasInsufficientBalance;
+  // Button label: when the wallet doesn't have enough funds, the button itself shows
+  // that message (and stays disabled) instead of a separate line of text under the
+  // button — keeps the card's height stable no matter which chain is short on funds.
+  const buttonLabel = hasInsufficientBalance
+    ? 'Insufficient balance'
+    : isExempt
+      ? `✨ ${actionLabel}`
+      : isGM
+        ? `🌅 ${actionLabel}`
+        : `🚀 ${actionLabel}`;
   const handleShare = async () => {
     const url = `${window.location.origin}${window.location.pathname}?chainId=${chain.id}`;
     try {
@@ -1375,16 +1396,11 @@ const ActionCard = ({
               }}
               opacity={isButtonDisabled && !isLoading ? 0.6 : 1}
             >
-              {isExempt ? `✨ ${actionLabel}` : isGM ? `🌅 ${actionLabel}` : `🚀 ${actionLabel}`}
+              {buttonLabel}
             </Button>
             {!isConnected && (
               <Text fontSize="10px" color="gray.700" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
                 Connect wallet to continue
-              </Text>
-            )}
-            {hasInsufficientBalance && (
-              <Text fontSize="10px" color="#f87171" textAlign="center" fontFamily="'Space Grotesk', sans-serif">
-                Insufficient balance to cover the fee on {chain.name}
               </Text>
             )}
             {isGlobalLoading && !isLoading && (

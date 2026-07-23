@@ -232,7 +232,9 @@ const TWITTER_LINKS: Record<number, string> = {
 
 const DEFAULT_TWITTER_LINK = 'https://x.com/gm_agent_xyz';
 // Bridge — same site, different page. Shown on every card regardless of balance.
-const BRIDGE_URL = 'https://gm-agent.xyz/bridge';
+// Internal route (React Router), not an external URL — navigated to with useNavigate
+// instead of a full page reload via <a href>.
+const BRIDGE_PATH = '/bridge';
 // Faucet links — only shown on testnet cards. Replace with your preferred faucet
 // if you'd rather point users somewhere else.
 const FAUCET_LINKS: Record<number, string> = {
@@ -1173,6 +1175,7 @@ const ActionCard = ({
   const isGM = type === 'gm';
   const actionLabel = isGM ? `GM to ${chain.name}` : `Deploy to ${chain.name}`;
   const toast = useToast();
+  const navigate = useNavigate();
   // Loading text reflects the actual phase of the transaction (switching network,
   // waiting for wallet signature, or waiting for on-chain confirmation) instead of
   // a single generic label.
@@ -1298,34 +1301,57 @@ const ActionCard = ({
                   free space to the right of the icon, so it never touches the icon↔name spacing. */}
               <Box position="absolute" right={{ base: "-6px", md: "-4px" }} top="105%" transform="translateY(-50%)">
                 <Tooltip
-                  label={isTestnet ? `Get free testnet funds for ${chain.name}` : 'Bridge assets on the Agent Protocol'}
+                  label={isTestnet ? `Get free testnet funds for ${chain.name}` : 'Bridge assets on the Agent Protocol site'}
                   hasArrow
                   placement="top"
                 >
-                  <Link
-                    href={isTestnet ? (FAUCET_LINKS[chain.id] || '#') : BRIDGE_URL}
-                    isExternal
-                    _hover={{ textDecoration: 'none' }}
-                  >
-                    <Badge
-                      bg={isTestnet ? 'rgba(11,228,236,0.16)' : 'rgba(45,212,191,0.16)'}
-                      color={isTestnet ? '#0be4ec' : '#2dd4bf'}
-                      fontSize="10px" px={3} py={1.5} borderRadius="full"
-                      border={`1px solid ${isTestnet ? 'rgba(11,228,236,0.4)' : 'rgba(45,212,191,0.4)'}`}
-                      fontFamily="'Space Mono', monospace" letterSpacing="0.06em" fontWeight="900"
-                      textTransform="none"
-                      cursor="pointer"
-                      boxShadow={isTestnet ? '0 0 14px rgba(11,228,236,0.18)' : '0 0 14px rgba(45,212,191,0.2)'}
-                      _hover={{
-                        bg: isTestnet ? 'rgba(11,228,236,0.26)' : 'rgba(45,212,191,0.28)',
-                        borderColor: isTestnet ? 'rgba(11,228,236,0.7)' : 'rgba(45,212,191,0.7)',
-                        transform: 'scale(1.06)',
-                      }}
-                      transition="all 0.2s"
+                  {isTestnet ? (
+                    <Link
+                      href={FAUCET_LINKS[chain.id] || '#'}
+                      isExternal
+                      _hover={{ textDecoration: 'none' }}
                     >
-                      {isTestnet ? 'Faucet' : 'Bridge'}
-                    </Badge>
-                  </Link>
+                      <Badge
+                        bg="rgba(11,228,236,0.16)"
+                        color="#0be4ec"
+                        fontSize="10px" px={3} py={1.5} borderRadius="full"
+                        border="1px solid rgba(11,228,236,0.4)"
+                        fontFamily="'Space Mono', monospace" letterSpacing="0.06em" fontWeight="900"
+                        textTransform="none"
+                        cursor="pointer"
+                        boxShadow="0 0 14px rgba(11,228,236,0.18)"
+                        _hover={{
+                          bg: 'rgba(11,228,236,0.26)',
+                          borderColor: 'rgba(11,228,236,0.7)',
+                          transform: 'scale(1.06)',
+                        }}
+                        transition="all 0.2s"
+                      >
+                        Faucet
+                      </Badge>
+                    </Link>
+                  ) : (
+                    <Box onClick={() => navigate(BRIDGE_PATH)} display="inline-block" _hover={{ textDecoration: 'none' }}>
+                      <Badge
+                        bg="rgba(45,212,191,0.16)"
+                        color="#2dd4bf"
+                        fontSize="10px" px={3} py={1.5} borderRadius="full"
+                        border="1px solid rgba(45,212,191,0.4)"
+                        fontFamily="'Space Mono', monospace" letterSpacing="0.06em" fontWeight="900"
+                        textTransform="none"
+                        cursor="pointer"
+                        boxShadow="0 0 14px rgba(45,212,191,0.2)"
+                        _hover={{
+                          bg: 'rgba(45,212,191,0.28)',
+                          borderColor: 'rgba(45,212,191,0.7)',
+                          transform: 'scale(1.06)',
+                        }}
+                        transition="all 0.2s"
+                      >
+                        Bridge
+                      </Badge>
+                    </Box>
+                  )}
                 </Tooltip>
               </Box>
             </Flex>

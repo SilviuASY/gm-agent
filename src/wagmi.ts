@@ -839,6 +839,17 @@ export const giwaChain = {
   iconUrl: '/giwa.png',
 } as const
 
+export const injectiveChain = {
+  id: 1776,
+  name: 'Injective',
+  nativeCurrency: { name: 'Injective', symbol: 'INJ', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://sentry.evm-rpc.injective.network'] },
+    public: { http: ['https://sentry.evm-rpc.injective.network'] },
+  },
+  iconUrl: '/injective.png',
+} as const
+
 // ============= Configurația principală =============
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',
@@ -921,7 +932,8 @@ export const config = getDefaultConfig({
     tronChain,
     liteforgeChain,
     ecochainChain,
-    giwaChain
+    giwaChain,
+    injectiveChain
   ],
   transports: {
     [soneiumChain.id]: http(),
@@ -1002,5 +1014,6 @@ export const config = getDefaultConfig({
     [liteforgeChain.id]: http(),
     [ecochainChain.id]: http(),
     [giwaChain.id]: http(),
+    [injectiveChain.id]: http(),
   },
 })

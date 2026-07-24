@@ -1794,6 +1794,26 @@ export default function GMPage() {
     contracts: globalContracts,
     query: { enabled: true, staleTime: 20000 },
   });
+  // ============= Auto-retry for chains whose fee read failed (RPC down, etc.) =============
+  // Fees are fetched exactly once on page load — never re-fetched after an action (see
+  // handleAction). The only reason to fetch again automatically is if some individual
+  // chain(s) in the batch came back as an RPC error: those cards show the ⚠️ Retry
+  // affordance and, in the background, we quietly retry the whole (still single, still
+  // fast) multicall every ~2.5s until every chain has a value. Chains that already
+  // loaded successfully just keep showing their fee while this happens — nothing resets
+  // to a loading state for them.
+  const hasFailedFeeReads = useMemo(() => {
+    if (!globalResults) return false;
+    return globalResults.some((r) => r.status !== 'success');
+  }, [globalResults]);
+  useEffect(() => {
+    if (!hasFailedFeeReads) return;
+    const retryTimer = setTimeout(() => {
+      refetchGlobal();
+    }, 2500);
+    return () => clearTimeout(retryTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasFailedFeeReads, globalResults]);
   // ============= Native balances per chain (for the "insufficient balance" check) =============
   // Native balance reads aren't ERC contract calls, so they ride along as a lightweight
   // per-chain loop (chains.length is fixed, so the hook count stays stable across renders).
@@ -2019,8 +2039,12 @@ export default function GMPage() {
       // Mark today as active for this chain in the local streak tracker — counts for
       // either GM or Deploy, whichever happened first that day.
       recordStreakActivity(chain.id);
-      // Refresh the fee multicall plus this chain's balance now that the tx is confirmed.
-      refetchGlobal();
+      // NOTE: fees are intentionally NOT refetched here. They're read once on page
+      // load (see the multicall + auto-retry effect below) and should stay stable —
+      // re-fetching after every action used to briefly flip fee cards back into a
+      // loading/skeleton state, which is exactly what caused reverts for users who
+      // fired off a GM on another chain/tab right after one confirmed. Only the
+      // balance for this chain is refreshed, since that's what actually changed.
       getBalance(chain.id)?.refetch();
     } catch (error: any) {
       const details = getErrorDetails(error, type);

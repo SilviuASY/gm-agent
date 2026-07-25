@@ -28,7 +28,6 @@ import { ChevronLeftIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { LiFiWidget, useAvailableChains, useWidgetEvents, WidgetEvent } from "@lifi/widget";
-import { useSyncWagmiConfig } from "@lifi/wallet-management";
 import {
   useMemo,
   useEffect,
@@ -588,8 +587,6 @@ export default function Bridge() {
     return [...wagmiChains, ...others];
   }, [wagmiChains, availableChainsRaw]);
 
-  // Sync wagmi config with LiFi
-  useSyncWagmiConfig(config, [], combinedChains);
 
   // List of supported chains for bridging
   const supportedChainIds = useMemo(

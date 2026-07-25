@@ -817,7 +817,7 @@ export default function DeployB20Page() {
                 <VStack spacing={4} align="stretch">
                   <HStack justify="space-between" align="center">
                     <Heading fontSize="lg" fontWeight="800" color="white" fontFamily="'Space Grotesk', sans-serif">
-                      Create your token
+                      Create your B20 token
                     </Heading>
                     <Badge bg={`${PINK}18`} color={PINK} fontSize="9px" px={2.5} py={1} borderRadius="full" border={`1px solid ${PINK}35`} fontFamily="'Space Mono', monospace">
                       ~2 SEC

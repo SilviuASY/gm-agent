@@ -46,7 +46,7 @@ import { useNavigate } from "react-router-dom";
 import { baseChain, config as wagmiConfig } from "../wagmi";
 
 // ============= Contract =============
-const B20_LAUNCHER_ADDRESS = "0xdda53907fd1b17a116452e893f5bc9dff2601de5" as const;
+const B20_LAUNCHER_ADDRESS = "0xD028565dd459a8117E4982842cCFFdB69011a507" as const;
 const BASE_CHAIN_ID = baseChain.id;
 const EXPLORER_ADDRESS_URL = "https://base.blockscout.com/address/";
 
@@ -655,6 +655,7 @@ export default function DeployB20Page() {
         toast({ title: "Token Created", description: "Check the recent tokens list below for the new address.", status: "success", duration: 6000, isClosable: true, position: "top-right" });
       }
 
+      // Refresh salt after successful deployment to avoid "TokenAlreadyExists" error
       setSalt(randomSalt());
       refetchContractReads();
       refetchBalance();
@@ -668,7 +669,7 @@ export default function DeployB20Page() {
     }
   };
 
-  const buttonLabel = isFeatureActive === false ? "Not live on Base yet" : hasInsufficientBalance ? "Insufficient balance" : "Launch My Token 🚀";
+  const buttonLabel = isFeatureActive === false ? "Not live on Base yet" : hasInsufficientBalance ? "Insufficient balance" : "Launch B20 Token 🚀";
 
   return (
     <>
@@ -740,7 +741,7 @@ export default function DeployB20Page() {
                         {totalCreated !== undefined ? totalCreated.toString() : "···"}
                       </Text>
                       <Text fontSize={{ base: "sm", md: "md" }} color="gray.300" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">
-                        tokens launched, one transaction each
+                        B20 Token-Standard launched, one transaction each
                       </Text>
                     </HStack>
                   </Box>
@@ -822,7 +823,7 @@ export default function DeployB20Page() {
 
                   <FormControl>
                     <FormLabel fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">Name</FormLabel>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Token" maxLength={64}
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="B20 Token" maxLength={64}
                       bg="rgba(255,255,255,0.03)" border="1px solid rgba(255,255,255,0.1)" borderRadius="lg" color="white"
                       _placeholder={{ color: "gray.600" }} _hover={{ borderColor: `${GOLD}50` }}
                       _focus={{ borderColor: GOLD, boxShadow: `0 0 20px ${GOLD}25` }}
@@ -831,7 +832,7 @@ export default function DeployB20Page() {
 
                   <FormControl>
                     <FormLabel fontSize="xs" color="gray.400" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">Symbol</FormLabel>
-                    <Input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="MYT" maxLength={11}
+                    <Input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="B20" maxLength={11}
                       bg="rgba(255,255,255,0.03)" border="1px solid rgba(255,255,255,0.1)" borderRadius="lg" color="white"
                       _placeholder={{ color: "gray.600" }} _hover={{ borderColor: `${PINK}50` }}
                       _focus={{ borderColor: PINK, boxShadow: `0 0 20px ${PINK}25` }}

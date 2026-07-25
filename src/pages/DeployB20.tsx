@@ -48,7 +48,7 @@ import { baseChain, config as wagmiConfig } from "../wagmi";
 // ============= Contract =============
 const B20_LAUNCHER_ADDRESS = "0xD028565dd459a8117E4982842cCFFdB69011a507" as const;
 const BASE_CHAIN_ID = baseChain.id;
-const EXPLORER_ADDRESS_URL = "https://base.blockscout.com/address/";
+const EXPLORER_ADDRESS_URL = "https://basescan.org/address/";
 
 const TOKEN_RECORD_COMPONENTS = [
   { name: "token", type: "address" },

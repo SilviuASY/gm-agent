@@ -221,11 +221,6 @@ const getErrorDetails = (error: any): { title: string; description: string } | n
 const MotionBox = motion(Box);
 
 // ============= Design system =============
-// A deliberately different accent story from the rest of the site (which is teal-led):
-// this page's whole job is to make launching a token feel like an event worth having —
-// molten gold (the "mint"), ember pink (ignition/energy), ultraviolet (the tech/chain
-// layer underneath). Same dark base + type family as the rest of the site for
-// continuity; the color story is the one bold choice reserved for this page.
 const GOLD = "#f5a623";
 const PINK = "#ff5d8f";
 const VIOLET = "#8b5cf6";
@@ -246,6 +241,23 @@ const pageStyles = `
   @keyframes hashReveal { from { opacity: 0; letter-spacing: 0.4em; } to { opacity: 1; letter-spacing: 0.07em; } }
   @keyframes ignitionPulse { 0%, 100% { box-shadow: 0 0 40px rgba(245,166,35,0.35), 0 0 0px rgba(255,93,143,0); } 50% { box-shadow: 0 0 65px rgba(245,166,35,0.55), 0 0 30px rgba(255,93,143,0.35); } }
   .wallet-connect-btn button, .wallet-connect-btn button * { white-space: nowrap !important; }
+  .recent-tokens-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(245,166,35,0.3) transparent;
+  }
+  .recent-tokens-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .recent-tokens-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .recent-tokens-scroll::-webkit-scrollbar-thumb {
+    background: rgba(245,166,35,0.3);
+    border-radius: 10px;
+  }
+  .recent-tokens-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(245,166,35,0.5);
+  }
 `;
 
 // ============= Stat Card =============
@@ -317,8 +329,8 @@ const TokenCreatedModal = ({
               <Box position="relative" w="88px" h="88px">
                 <Box position="absolute" inset={0} borderRadius="full" border={`1px solid ${GOLD}45`} style={{ animation: "rotateRing 5s linear infinite" }} />
                 <Box position="absolute" inset="8px" borderRadius="full" border={`1px dashed ${PINK}30`} style={{ animation: "rotateRing 8s linear infinite reverse" }} />
-                <Flex position="absolute" inset="14px" borderRadius="full" bgGradient={LAUNCH_GRADIENT} align="center" justify="center" fontSize="30px" boxShadow={`0 0 30px ${LAUNCH_GLOW}`}>
-                  🚀
+                <Flex position="absolute" inset="14px" borderRadius="full" bgGradient={LAUNCH_GRADIENT} align="center" justify="center" boxShadow={`0 0 30px ${LAUNCH_GLOW}`}>
+                  <Image src="/b20icon.png" alt="B20 Icon" boxSize="40px" objectFit="contain" />
                 </Flex>
               </Box>
               <VStack spacing={1.5}>
@@ -512,9 +524,6 @@ export default function DeployB20Page() {
   const [switchAttempted, setSwitchAttempted] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
-  // Prompt a network switch automatically, once, the moment we see the wallet is
-  // connected but not on Base. If the user dismisses it, the banner below still
-  // offers a manual "Switch to Base" button.
   useEffect(() => {
     if (isConnected && !isOnBase && !switchAttempted) {
       setSwitchAttempted(true);
@@ -538,7 +547,7 @@ export default function DeployB20Page() {
     contracts: [
       { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "creationFee" },
       { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "totalTokensCreated" },
-      { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "getRecentTokens", args: [8n] },
+      { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "getRecentTokens", args: [50n] },
       { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "isAssetFeatureActive" },
       {
         address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "creationCountOf",
@@ -595,11 +604,6 @@ export default function DeployB20Page() {
 
       const rawSupplyCap = uncapped ? 0n : parseUnits(supplyInput || "0", decimals);
 
-      // Wallets can't reliably estimate gas for a call that touches the B20 precompile
-      // (their simulators don't model Base's native precompiles), so they either warn
-      // "likely to fail" on a perfectly valid tx, or fall back to a bogus gas estimate
-      // that exceeds Base's per-tx gas cap. Setting a fixed, generous manual limit
-      // sidesteps both problems.
       const MANUAL_GAS_LIMIT = 1_500_000n;
 
       let txHash: `0x${string}`;
@@ -655,7 +659,6 @@ export default function DeployB20Page() {
         toast({ title: "Token Created", description: "Check the recent tokens list below for the new address.", status: "success", duration: 6000, isClosable: true, position: "top-right" });
       }
 
-      // Refresh salt after successful deployment to avoid "TokenAlreadyExists" error
       setSalt(randomSalt());
       refetchContractReads();
       refetchBalance();
@@ -716,7 +719,7 @@ export default function DeployB20Page() {
             </Box>
           </Flex>
 
-          {/* Hero proof strip — the page's thesis: scale + speed, before anything else */}
+          {/* Hero proof strip */}
           <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} mb={{ base: 6, md: 8 }}>
             <Box
               position="relative" overflow="hidden" borderRadius="2xl" p={{ base: 5, md: 7 }}
@@ -803,7 +806,7 @@ export default function DeployB20Page() {
             <StatCard index={3} iconSrc="/base.png" label="Network" value="Base" description="Native B20 precompile" color={MINT} />
           </SimpleGrid>
 
-          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 5, md: 6 }} alignItems="start">
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 5, md: 6 }} alignItems="stretch">
             {/* Create form */}
             <Box
               bg="rgba(10,7,18,0.93)" backdropFilter="blur(28px)" borderRadius="2xl" border="1px solid" borderColor={`${GOLD}30`}
@@ -919,30 +922,45 @@ export default function DeployB20Page() {
               </Box>
             </Box>
 
-            {/* Recent tokens */}
+            {/* Recent tokens - with scroll */}
             <Box
               bg="rgba(10,7,18,0.93)" backdropFilter="blur(28px)" borderRadius="2xl" border="1px solid" borderColor={`${VIOLET}30`}
               overflow="hidden" position="relative"
+              display="flex"
+              flexDirection="column"
             >
               <Box position="absolute" top={0} left={0} right={0} h="2px" bgGradient={LAUNCH_GRADIENT} backgroundSize="200% 100%" style={{ animation: "shimmerBorder 3.5s infinite" }} />
-              <Box p={{ base: 5, md: 6 }}>
-                <HStack justify="space-between" mb={4}>
+              <Box p={{ base: 5, md: 6 }} flex="1" display="flex" flexDirection="column" maxHeight="600px">
+                <HStack justify="space-between" mb={4} flexShrink={0}>
                   <Heading fontSize="lg" fontWeight="800" color="white" fontFamily="'Space Grotesk', sans-serif">
                     Recently launched
                   </Heading>
-                  <Box w="7px" h="7px" borderRadius="full" bg={MINT} boxShadow={`0 0 8px ${MINT}`} style={{ animation: "pulseGlow 2s ease-in-out infinite" }} />
+                  <HStack spacing={2}>
+                    <Box w="7px" h="7px" borderRadius="full" bg={MINT} boxShadow={`0 0 8px ${MINT}`} style={{ animation: "pulseGlow 2s ease-in-out infinite" }} />
+                    <Text fontSize="10px" color="gray.500" fontFamily="'Space Mono', monospace">
+                      {recentTokens.length} shown
+                    </Text>
+                  </HStack>
                 </HStack>
-                {recentTokens.length === 0 ? (
-                  <Text fontSize="sm" color="gray.600" fontFamily="'Space Grotesk', sans-serif" textAlign="center" py={10}>
-                    No tokens created yet — be the first.
-                  </Text>
-                ) : (
-                  <VStack spacing={2.5} align="stretch">
-                    {recentTokens.map((record, i) => (
-                      <RecentTokenRow key={`${record.token}-${record.createdAt.toString()}`} record={record} index={i} />
-                    ))}
-                  </VStack>
-                )}
+                <Box 
+                  flex="1" 
+                  overflowY="auto" 
+                  className="recent-tokens-scroll"
+                  pr={1}
+                  minH="0"
+                >
+                  {recentTokens.length === 0 ? (
+                    <Text fontSize="sm" color="gray.600" fontFamily="'Space Grotesk', sans-serif" textAlign="center" py={10}>
+                      No tokens created yet — be the first.
+                    </Text>
+                  ) : (
+                    <VStack spacing={2.5} align="stretch" pb={1}>
+                      {recentTokens.map((record, i) => (
+                        <RecentTokenRow key={`${record.token}-${record.createdAt.toString()}`} record={record} index={i} />
+                      ))}
+                    </VStack>
+                  )}
+                </Box>
               </Box>
             </Box>
           </SimpleGrid>

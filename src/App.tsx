@@ -37,7 +37,7 @@ import {
 import { useEffect, useState, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
-import { ChevronDownIcon } from "@chakra-ui/icons";
+import { ChevronDownIcon, HamburgerIcon } from "@chakra-ui/icons";
 
 import {
   soneiumChain as soneium,
@@ -148,7 +148,6 @@ const pointerBounce = keyframes`
   50% { transform: translateY(-12px) scale(1.05); }
 `;
 
-
 const floatUp = keyframes`
   0%, 100% { transform: translateY(0); opacity: 0.9; }
   50% { transform: translateY(-6px); opacity: 1; }
@@ -157,6 +156,16 @@ const floatUp = keyframes`
 const shimmerText = keyframes`
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
+`;
+
+const fadeInDown = keyframes`
+  from { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+`;
+
+const borderFlow = keyframes`
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
 `;
 
 // Resolve a chain key from a numeric chain id
@@ -248,15 +257,54 @@ export default function App() {
   const publicClient = usePublicClient();
   const navigate = useNavigate();
 
-  // Tools Dropdown
+  // Tools Dropdown (desktop)
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on click outside
+  // Activity Dropdown (desktop)
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
+  const activityRef = useRef<HTMLDivElement>(null);
+
+  // Unified menu (mobile)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Fixed viewport position for the mobile menu sheet, computed once when it
+  // opens (from the trigger button's position). Using `position: fixed` +
+  // a locked body scroll means the sheet is anchored to the *screen*, not
+  // to a scrollable ancestor — so it can never drift sideways/up/down while
+  // the page scrolls underneath it.
+  const [mobileMenuTop, setMobileMenuTop] = useState(120);
+
+  useEffect(() => {
+    if (isMobileMenuOpen && mobileMenuRef.current) {
+      const rect = mobileMenuRef.current.getBoundingClientRect();
+      setMobileMenuTop(rect.bottom + 10);
+    }
+  }, [isMobileMenuOpen]);
+
+  // Lock background scroll while the mobile menu sheet is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [isMobileMenuOpen]);
+
+  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
         setIsToolsOpen(false);
+      }
+      if (activityRef.current && !activityRef.current.contains(event.target as Node)) {
+        setIsActivityOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -663,6 +711,208 @@ export default function App() {
     switchChain?.({ chainId: DEFAULT_SWITCH_CHAIN });
   };
 
+  // ===================================================================
+  // ===== FUTURISTIC WEB3 NAVBAR STYLES (Tools / Activity / links) =====
+  // ===================================================================
+
+  // Outer ring wrapper — an animated gradient "border" using the chain's
+  // own accent colors (padding-box trick: gradient bg + inner solid bg)
+  const navBarRingStyle = {
+    borderRadius: "full",
+    p: "1.5px",
+    bgGradient: chainAccent.gradient,
+    backgroundSize: "300% 100%",
+    animation: `${borderFlow} 7s linear infinite`,
+    position: "relative" as const,
+    zIndex: 30,
+  };
+
+  // Inner pill-shaped container that holds every nav item (desktop)
+  const navBarContainerStyle = {
+    bg: "rgba(6, 6, 14, 0.94)",
+    backdropFilter: "blur(16px)",
+    borderRadius: "full",
+    p: "4px",
+    position: "relative" as const,
+  };
+
+  // Individual nav item — monospace, uppercase. Hover now hits hard: full
+  // saturated accent color, glow shadow, and a lift/press micro-animation
+  // instead of the previous barely-there tint.
+  const navItemStyle = (accent: string) => ({
+    variant: "ghost",
+    size: "sm",
+    fontFamily: "mono",
+    fontWeight: "700",
+    fontSize: "11.5px",
+    h: "34px",
+    px: "16px",
+    borderRadius: "full",
+    color: "gray.400",
+    bg: "transparent",
+    letterSpacing: "0.09em",
+    textTransform: "uppercase" as const,
+    _hover: {
+      color: "white",
+      bg: `${accent}2e`,
+      boxShadow: `0 0 24px ${accent}70, 0 0 0 1px ${accent}55, inset 0 0 14px ${accent}25`,
+      textShadow: `0 0 16px ${accent}`,
+      transform: "scale(1.07)",
+    },
+    _active: {
+      bg: `${accent}45`,
+      transform: "scale(0.94)",
+      boxShadow: `0 0 12px ${accent}60`,
+    },
+    transformOrigin: "center",
+    transition: "all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)",
+    _focus: { boxShadow: "none" },
+  });
+
+  // Thin glowing gradient divider between nav items
+  const NavDivider = () => (
+    <Box
+      w="1px"
+      h="20px"
+      mx="3px"
+      flexShrink={0}
+      bgGradient={`linear(to-b, transparent, ${chainAccent.primary}70, transparent)`}
+    />
+  );
+
+  // Shared dropdown panel container (desktop) — glassy card with a glowing
+  // accent border and an animated gradient scan-line on top, matching the
+  // rest of the site's card language. Positioning + entrance animation are
+  // baked into one keyframe (translate + fade) so the panel can never
+  // "pop" on the right before snapping to center.
+  const dropdownPanelStyle = {
+    position: "absolute" as const,
+    top: "calc(100% + 12px)",
+    left: "50%",
+    bg: "rgba(7, 7, 15, 0.97)",
+    backdropFilter: "blur(24px)",
+    borderRadius: "2xl",
+    boxShadow: `0 24px 60px rgba(0,0,0,0.6), 0 0 40px ${chainAccent.primary}18, 0 0 0 1px ${chainAccent.primary}2e`,
+    overflow: "hidden",
+    zIndex: 500,
+    border: "1px solid",
+    borderColor: `${chainAccent.primary}35`,
+    transformOrigin: "top center",
+    animation: `${fadeInDown} 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+  };
+
+  // Animated gradient scan-line rendered at the top of every dropdown panel
+  const DropdownScanline = () => (
+    <Box
+      h="2px"
+      bgGradient={chainAccent.gradient}
+      backgroundSize="300% 100%"
+      animation={`${shimmer} 3s ease infinite`}
+    />
+  );
+
+  // A single row inside a dropdown / menu panel
+  const DropdownRow = ({
+    title,
+    desc,
+    onClick,
+    href,
+    accent = chainAccent.primary,
+  }: {
+    title: string;
+    desc?: string;
+    onClick?: () => void;
+    href?: string;
+    accent?: string;
+  }) => {
+    const content = (
+      <HStack
+        align="center"
+        spacing={3}
+        px={5}
+        py={3}
+        cursor="pointer"
+        role="group"
+        position="relative"
+        transition="all 0.18s cubic-bezier(0.4, 0, 0.2, 1)"
+        _hover={{ bg: `${accent}22`, transform: "translateX(3px)", boxShadow: `inset 0 0 20px ${accent}18` }}
+      >
+        <Box
+          w="2px"
+          h="24px"
+          borderRadius="full"
+          bg="transparent"
+          _groupHover={{ bg: accent, boxShadow: `0 0 12px ${accent}, 0 0 4px ${accent}` }}
+          transition="all 0.18s ease"
+          flexShrink={0}
+        />
+        <VStack align="start" spacing={0.5} flex={1}>
+          <Text
+            fontSize="sm"
+            color="gray.100"
+            fontWeight="600"
+            letterSpacing="0.01em"
+            _groupHover={{ color: "white", textShadow: `0 0 10px ${accent}90` }}
+            transition="all 0.18s ease"
+          >
+            {title}
+          </Text>
+          {desc && (
+            <Text fontSize="xs" color="gray.500" fontWeight="400">
+              {desc}
+            </Text>
+          )}
+        </VStack>
+        <Text
+          fontSize="xs"
+          fontFamily="mono"
+          color={accent}
+          opacity={0}
+          transform="translateX(-4px)"
+          _groupHover={{ opacity: 1, transform: "translateX(0px)" }}
+          transition="all 0.15s ease"
+          flexShrink={0}
+        >
+          →
+        </Text>
+      </HStack>
+    );
+
+    if (href) {
+      return (
+        <Box as="a" href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} display="block">
+          {content}
+        </Box>
+      );
+    }
+    return (
+      <Box onClick={onClick} display="block">
+        {content}
+      </Box>
+    );
+  };
+
+  const dropdownDivider = <Box h="1px" bg="rgba(255,255,255,0.05)" mx={4} />;
+
+  // Tiny monospace section tag used inside the mobile unified menu
+  // (e.g. "// TOOLS") for a terminal / cyber feel
+  const MenuSectionLabel = ({ children }: { children: string }) => (
+    <Text
+      px={5}
+      pt={3}
+      pb={1}
+      fontSize="10px"
+      fontFamily="mono"
+      color={chainAccent.primary}
+      opacity={0.75}
+      textTransform="uppercase"
+      letterSpacing="0.12em"
+      fontWeight="700"
+    >
+      {`// ${children}`}
+    </Text>
+  );
+
   return (
     <Box
       minH="100vh"
@@ -743,427 +993,249 @@ export default function App() {
             </HStack>
           </VStack>
 
-          {/* Desktop: actions aligned right */}
+          {/* Desktop: unified professional nav bar + connect button */}
           <HStack
-            spacing={4}
+            spacing={3}
             display={{ base: "none", md: "flex" }}
             animation={`${slideInRight} 0.6s ease-out`}
             position="relative"
             alignItems="center"
           >
-            {/* TOOLS DROPDOWN - Desktop */}
-            <Box ref={toolsRef} position="relative">
-              <Button
-                onClick={() => setIsToolsOpen(!isToolsOpen)}
-                bg="white"
-                color="gray.800"
-                size="sm"
-                borderRadius="full"
-                px={4}
-                py={1.5}
-                h="40px"
-                fontWeight="700"
-                letterSpacing="0.01em"
-                fontSize="sm"
-                border="1px solid rgba(0,0,0,0.08)"
-                boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                _hover={{
-                  bg: "gray.50",
-                  transform: "translateY(-2px) scale(1.02)",
-                  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                  borderColor: "rgba(59,130,246,0.3)",
-                }}
-                _active={{
-                  transform: "translateY(0px) scale(0.98)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                rightIcon={
-                  <ChevronDownIcon
-                    boxSize={4}
-                    transition="transform 0.3s"
-                    transform={isToolsOpen ? "rotate(180deg)" : "rotate(0deg)"}
-                  />
-                }
-              >
-                <Text as="span" mr={1}>🛠️</Text>
-                Tools
+            <Box {...navBarRingStyle}>
+            <HStack {...navBarContainerStyle} spacing="0px" position="relative">
+              {/* TOOLS DROPDOWN */}
+              <Box ref={toolsRef} position="relative">
+                <Button
+                  {...navItemStyle("#60a5fa")}
+                  rightIcon={
+                    <ChevronDownIcon
+                      boxSize={4}
+                      transition="transform 0.25s"
+                      transform={isToolsOpen ? "rotate(180deg)" : "rotate(0deg)"}
+                      color="gray.500"
+                    />
+                  }
+                  onClick={() => {
+                    setIsToolsOpen(!isToolsOpen);
+                    setIsActivityOpen(false);
+                  }}
+                >
+                  Tools
+                </Button>
+
+                {isToolsOpen && (
+                  <Box {...dropdownPanelStyle} minW="220px">
+                    <DropdownScanline />
+                    <VStack spacing={0} align="stretch" py={1}>
+                      <DropdownRow
+                        title="Revoke Approval"
+                        desc="Manage token approvals"
+                        accent="#f87171"
+                        onClick={() => {
+                          navigate("/revoke");
+                          setIsToolsOpen(false);
+                        }}
+                      />
+                      {dropdownDivider}
+                      <DropdownRow
+                        title="Docs"
+                        desc="Protocol documentation"
+                        accent="#60a5fa"
+                        href="https://docs.gm-agent.xyz"
+                        onClick={() => setIsToolsOpen(false)}
+                      />
+                    </VStack>
+                  </Box>
+                )}
+              </Box>
+
+              <NavDivider />
+
+              {/* ACTIVITY DROPDOWN */}
+              <Box ref={activityRef} position="relative">
+                <Button
+                  {...navItemStyle("#a78bfa")}
+                  rightIcon={
+                    <ChevronDownIcon
+                      boxSize={4}
+                      transition="transform 0.25s"
+                      transform={isActivityOpen ? "rotate(180deg)" : "rotate(0deg)"}
+                      color="gray.500"
+                    />
+                  }
+                  onClick={() => {
+                    setIsActivityOpen(!isActivityOpen);
+                    setIsToolsOpen(false);
+                  }}
+                >
+                  Activity
+                </Button>
+
+                {isActivityOpen && (
+                  <Box {...dropdownPanelStyle} minW="240px">
+                    <DropdownScanline />
+                    <VStack spacing={0} align="stretch" py={1}>
+                      <DropdownRow
+                        title="Score 12 · Agent Badge"
+                        desc="ERC-8004 Agent reputation"
+                        accent="#a855f7"
+                        onClick={() => {
+                          navigate("/agent-reputation");
+                          setIsActivityOpen(false);
+                        }}
+                      />
+                      {dropdownDivider}
+                      <DropdownRow
+                        title="Score 10 · Pulse Cards"
+                        desc="Activity completion cards"
+                        accent="#ec4899"
+                        onClick={() => {
+                          navigate("/pulse-cards");
+                          setIsActivityOpen(false);
+                        }}
+                      />
+                    </VStack>
+                  </Box>
+                )}
+              </Box>
+
+              <NavDivider />
+
+              {/* Launch B20 */}
+              <Button {...navItemStyle("#fbbf24")} onClick={() => navigate("/launch-b20")}>
+                Launch B20
               </Button>
 
-              {/* Dropdown Menu - Desktop */}
-              {isToolsOpen && (
-                <Box
-                  position="absolute"
-                  top="calc(100% + 8px)"
-                  right="-50px"
-                  bg="white"
-                  borderRadius="2xl"
-                  boxShadow="0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)"
-                  minW="220px"
-                  overflow="hidden"
-                  zIndex={100}
-                >
-                  <VStack spacing={0} align="stretch">
-                    <Button
-                      onClick={() => {
-                        navigate("/agent-reputation");
-                        setIsToolsOpen(false);
-                      }}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(139,92,246,0.06)", color: "#8b5cf6" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">💿</Text>}
-                    >
-                      Score 12 Agent Badge
-                    </Button>
-                    <Box h="1px" bg="gray.100" />
-                    <Button
-                      onClick={() => {
-                        navigate("/pulse-cards");
-                        setIsToolsOpen(false);
-                      }}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(168,85,247,0.06)", color: "#a855f7" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">💿</Text>}
-                    >
-                      Score 10 · Pulse Cards
-                    </Button>
-                    <Box h="1px" bg="gray.100" />
-                    <Button
-                      onClick={() => {
-                        navigate("/gmorning");
-                        setIsToolsOpen(false);
-                      }}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(45,212,191,0.06)", color: "#2dd4bf" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🌅</Text>}
-                    >
-                      GMorning · GM & Deploy
-                    </Button>
-                    <Box h="1px" bg="gray.100" />
-                    <Button
-                      onClick={() => {
-                        navigate("/bridge");
-                        setIsToolsOpen(false);
-                      }}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(59,130,246,0.06)", color: "#3b82f6" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🌉</Text>}
-                    >
-                      Cross-Chain Bridge
-                    </Button>
-                    <Box h="1px" bg="gray.100" />
-                    <Button
-                      onClick={() => {
-                        navigate("/launch-b20");
-                        setIsToolsOpen(false);
-                      }}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(251,191,36,0.06)", color: "#0ccce6" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🚀</Text>}
-                    >
-                      Launch B20
-                    </Button>
-                    <Box h="1px" bg="gray.100" />
-                    <Button
-                      onClick={() => {
-                        navigate("/revoke");
-                        setIsToolsOpen(false);
-                      }}
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(239,68,68,0.06)", color: "#ef4444" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">🛡️</Text>}
-                    >
-                      Revoke Approval
-                    </Button>
-                    <Box h="1px" bg="gray.100" />
-                    <Button
-                      as="a"
-                      href="https://docs.gm-agent.xyz"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="ghost"
-                      justifyContent="flex-start"
-                      borderRadius="0"
-                      px={4}
-                      py={3}
-                      h="44px"
-                      fontWeight="600"
-                      fontSize="sm"
-                      color="gray.700"
-                      _hover={{ bg: "rgba(59,130,246,0.06)", color: "#3b82f6" }}
-                      transition="all 0.2s"
-                      leftIcon={<Text fontSize="16px">📚</Text>}
-                      onClick={() => setIsToolsOpen(false)}
-                    >
-                      Docs
-                    </Button>
-                  </VStack>
-                </Box>
-              )}
-            </Box>
+              <NavDivider />
 
-            {/* ===== ACTIVITY REPUTATION BUTTON ===== */}
-            <Box position="relative" display="inline-block">
-              <Tooltip
-                label="Complete activities to boost your reputation score"
-                hasArrow
-                placement="bottom"
-                bg="rgba(0,0,0,0.85)"
-                color="white"
-                fontSize="xs"
-                fontWeight="normal"
-                px={4}
-                py={2.5}
-                borderRadius="lg"
-                border="1px solid rgba(59,130,246,0.3)"
-                boxShadow="0 0 30px rgba(0,0,0,0.5)"
-              >
-                <Button
-                  onClick={() => navigate("/activity-reputation")}
-                  bg="white"
-                  color="gray.800"
-                  size="sm"
-                  borderRadius="full"
-                  px={4}
-                  py={1.5}
-                  h="40px"
-                  fontWeight="700"
-                  letterSpacing="0.01em"
-                  fontSize="sm"
-                  border="1px solid rgba(0,0,0,0.08)"
-                  boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                  _hover={{
-                    bg: "gray.50",
-                    transform: "translateY(-2px) scale(1.02)",
-                    boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                    borderColor: "rgba(59,130,246,0.3)",
-                  }}
-                  _active={{
-                    transform: "translateY(0px) scale(0.98)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  }}
-                  transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                  leftIcon={
-                    <Box as="span" fontSize="14px">
-                      🏆
-                    </Box>
-                  }
-                  rightIcon={
-                    <Box
-                      as="span"
-                      fontSize="12px"
-                      transition="transform 0.3s"
-                      _groupHover={{ transform: "translateX(3px)" }}
-                    >
-                      →
-                    </Box>
-                  }
-                >
-                  Activity Reputation
+              {/* Bridge */}
+              <Button {...navItemStyle("#3b82f6")} onClick={() => navigate("/bridge")}>
+                Bridge
+              </Button>
+
+              <NavDivider />
+
+              {/* GMorning */}
+              <Button {...navItemStyle("#2dd4bf")} onClick={() => navigate("/gmorning")}>
+                GMorning
+              </Button>
+
+              <NavDivider />
+
+              {/* ===== REPUTATION with pointer ===== */}
+              <Box position="relative" display="inline-block">
+                <Button {...navItemStyle("#f472b6")} onClick={() => navigate("/activity-reputation")}>
+                  Reputation
                 </Button>
-              </Tooltip>
 
-              {/* ===== ANIMATED POINTER - SUB BUTON, ARATĂ ÎN SUS ===== */}
-              {showActivityPointer && (
-                <Box
-                  position="absolute"
-                  bottom="-180px"
-                  left="50%"
-                  transform="translateX(-50%)"
-                  zIndex={50}
-                  pointerEvents="none"
-                >
+                {showActivityPointer && (
                   <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                    animation={`${pointerBounce} 2.2s ease-in-out infinite`}
+                    position="absolute"
+                    bottom="-176px"
+                    left="50%"
+                    transform="translateX(-50%)"
+                    zIndex={50}
+                    pointerEvents="none"
                   >
-                    {/* Inele pulsante - SUB buton */}
-                    <Box position="relative" width="50px" height="50px" mb="-8px">
-                      <svg width="50" height="50" viewBox="0 0 50 50" style={{ position: 'absolute', top: 0, left: 0 }}>
-                        <circle cx="25" cy="25" r="12" fill="none" stroke="rgba(251, 191, 36, 0.5)" strokeWidth="2.5">
-                          <animate
-                            attributeName="r"
-                            from="12"
-                            to="35"
-                            dur="2s"
-                            repeatCount="indefinite"
-                          />
-                          <animate
-                            attributeName="opacity"
-                            from="0.8"
-                            to="0"
-                            dur="2s"
-                            repeatCount="indefinite"
-                          />
-                        </circle>
-                        <circle cx="25" cy="25" r="12" fill="none" stroke="rgba(251, 191, 36, 0.3)" strokeWidth="2">
-                          <animate
-                            attributeName="r"
-                            from="12"
-                            to="30"
-                            dur="2.5s"
-                            begin="0.5s"
-                            repeatCount="indefinite"
-                          />
-                          <animate
-                            attributeName="opacity"
-                            from="0.6"
-                            to="0"
-                            dur="2.5s"
-                            begin="0.5s"
-                            repeatCount="indefinite"
-                          />
-                        </circle>
-                      </svg>
-                      
-                      {/* Deget arătând în SUS spre buton */}
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      animation={`${pointerBounce} 2.2s ease-in-out infinite`}
+                    >
+                      <Box position="relative" width="50px" height="50px" mb="-8px">
+                        <svg width="50" height="50" viewBox="0 0 50 50" style={{ position: 'absolute', top: 0, left: 0 }}>
+                          <circle cx="25" cy="25" r="12" fill="none" stroke="rgba(251, 191, 36, 0.5)" strokeWidth="2.5">
+                            <animate attributeName="r" from="12" to="35" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="25" cy="25" r="12" fill="none" stroke="rgba(251, 191, 36, 0.3)" strokeWidth="2">
+                            <animate attributeName="r" from="12" to="30" dur="2.5s" begin="0.5s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" from="0.6" to="0" dur="2.5s" begin="0.5s" repeatCount="indefinite" />
+                          </circle>
+                        </svg>
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left="50%"
+                          transform="translate(-50%, -50%)"
+                          fontSize="28px"
+                          lineHeight="1"
+                          filter="drop-shadow(0 4px 15px rgba(251, 191, 36, 0.5))"
+                          sx={{ textShadow: "0 0 20px rgba(251, 191, 36, 0.4)" }}
+                        >
+                          ☝️
+                        </Box>
+                      </Box>
+
                       <Box
-                        position="absolute"
-                        top="50%"
-                        left="50%"
-                        transform="translate(-50%, -50%)"
-                        fontSize="28px"
-                        lineHeight="1"
-                        filter="drop-shadow(0 4px 15px rgba(251, 191, 36, 0.5))"
-                        sx={{
-                          textShadow: "0 0 20px rgba(251, 191, 36, 0.4)"
-                        }}
+                        bg="rgba(0, 0, 0, 0.88)"
+                        backdropFilter="blur(16px)"
+                        borderRadius="xl"
+                        px={5}
+                        py={3}
+                        border="1px solid rgba(251, 191, 36, 0.15)"
+                        boxShadow="0 0 40px rgba(251, 191, 36, 0.06), inset 0 0 40px rgba(251, 191, 36, 0.02)"
+                        maxW="280px"
+                        animation={`${floatUp} 3s ease-in-out infinite`}
+                        position="relative"
+                        mt="2px"
                       >
-                        ☝️
+                        <Box
+                          position="absolute"
+                          top="-8px"
+                          left="50%"
+                          transform="translateX(-50%)"
+                          width="0"
+                          height="0"
+                          borderLeft="8px solid transparent"
+                          borderRight="8px solid transparent"
+                          borderBottom="8px solid rgba(0, 0, 0, 0.88)"
+                        />
+
+                        <VStack spacing={1} align="center">
+                          <HStack spacing={2}>
+                            <Text fontSize="14px">⭐</Text>
+                            <Text
+                              fontSize="11px"
+                              fontWeight="800"
+                              bgGradient="linear(135deg, #fbbf24, #f59e0b, #fbbf24)"
+                              bgClip="text"
+                              textTransform="uppercase"
+                              letterSpacing="0.08em"
+                              backgroundSize="200% auto"
+                              animation={`${shimmerText} 3s linear infinite`}
+                            >
+                              Season 12 Score
+                            </Text>
+                            <Badge
+                              bg="rgba(251, 191, 36, 0.15)"
+                              color="#fbbf24"
+                              fontSize="8px"
+                              px={2}
+                              py={0.5}
+                              borderRadius="full"
+                              border="1px solid rgba(251, 191, 36, 0.2)"
+                            >
+                              Soneium
+                            </Badge>
+                          </HStack>
+                          <Text fontSize="11px" color="gray.300" fontWeight="400" lineHeight="1.4" textAlign="center">
+                            Complete tasks to earn points &amp; badges
+                          </Text>
+                          <Text fontSize="9px" color="#fbbf24" fontWeight="600" letterSpacing="0.05em" opacity={0.8} mt="2px">
+                            ☝️ Click the button above
+                          </Text>
+                        </VStack>
                       </Box>
                     </Box>
-
-                    {/* Balon de text sub deget */}
-                    <Box
-                      bg="rgba(0, 0, 0, 0.88)"
-                      backdropFilter="blur(16px)"
-                      borderRadius="2xl"
-                      px={5}
-                      py={3}
-                      border="1px solid rgba(251, 191, 36, 0.2)"
-                      boxShadow="0 0 40px rgba(251, 191, 36, 0.08), inset 0 0 40px rgba(251, 191, 36, 0.02)"
-                      maxW="280px"
-                      animation={`${floatUp} 3s ease-in-out infinite`}
-                      position="relative"
-                      mt="2px"
-                    >
-                      {/* Triunghi mic care arată în sus spre deget */}
-                      <Box
-                        position="absolute"
-                        top="-8px"
-                        left="50%"
-                        transform="translateX(-50%)"
-                        width="0"
-                        height="0"
-                        borderLeft="8px solid transparent"
-                        borderRight="8px solid transparent"
-                        borderBottom="8px solid rgba(0, 0, 0, 0.88)"
-                      />
-                      
-                      <VStack spacing={1} align="center">
-                        <HStack spacing={2}>
-                          <Text fontSize="14px">⭐</Text>
-                          <Text
-                            fontSize="11px"
-                            fontWeight="800"
-                            bgGradient="linear(135deg, #fbbf24, #f59e0b, #fbbf24)"
-                            bgClip="text"
-                            textTransform="uppercase"
-                            letterSpacing="0.08em"
-                            backgroundSize="200% auto"
-                            animation={`${shimmerText} 3s linear infinite`}
-                          >
-                            Season 12 Score
-                          </Text>
-                          <Badge
-                            bg="rgba(251, 191, 36, 0.15)"
-                            color="#fbbf24"
-                            fontSize="8px"
-                            px={2}
-                            py={0.5}
-                            borderRadius="full"
-                            border="1px solid rgba(251, 191, 36, 0.2)"
-                          >
-                            Soneium
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="11px" color="gray.300" fontWeight="400" lineHeight="1.4" textAlign="center">
-                          Complete tasks to earn points &amp; badges
-                        </Text>
-                        <Text
-                          fontSize="9px"
-                          color="#fbbf24"
-                          fontWeight="600"
-                          letterSpacing="0.05em"
-                          opacity={0.8}
-                          mt="2px"
-                        >
-                          ☝️ Click the button above
-                        </Text>
-                      </VStack>
-                    </Box>
                   </Box>
-                </Box>
-              )}
+                )}
+              </Box>
+            </HStack>
             </Box>
 
-            <Box transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
+            <Box position="relative" zIndex={1} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
               <ConnectButton
                 chainStatus="full"
                 accountStatus="full"
@@ -1172,7 +1244,7 @@ export default function App() {
             </Box>
           </HStack>
 
-          {/* Mobile: stacked, connect button first */}
+          {/* Mobile: connect button + single professional menu */}
           <VStack
             spacing={3}
             display={{ base: "flex", md: "none" }}
@@ -1180,6 +1252,8 @@ export default function App() {
             animation={`${slideInRight} 0.6s ease-out`}
           >
             <Box
+              position="relative"
+              zIndex={1}
               transition="transform 0.3s"
               _hover={{ transform: "scale(1.02)" }}
               width="full"
@@ -1193,402 +1267,256 @@ export default function App() {
               />
             </Box>
 
-            <HStack spacing={2} width="full" justify="center" flexWrap="wrap" position="relative">
-              {/* TOOLS DROPDOWN - Mobile */}
-              <Box position="relative" zIndex={999}>
+            <Box ref={mobileMenuRef} position="relative" zIndex={30} width="full" display="flex" justifyContent="center">
+              <Box
+                borderRadius="full"
+                p="1.5px"
+                bgGradient={chainAccent.gradient}
+                backgroundSize="300% 100%"
+                animation={`${borderFlow} 7s linear infinite`}
+              >
                 <Button
-                  onClick={() => setIsToolsOpen(!isToolsOpen)}
-                  bg="white"
-                  color="gray.800"
-                  size="md"
-                  borderRadius="full"
-                  px={5}
-                  h="46px"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  variant="ghost"
+                  size="sm"
+                  fontFamily="mono"
                   fontWeight="700"
-                  letterSpacing="0.01em"
-                  fontSize="sm"
-                  border="1px solid rgba(0,0,0,0.08)"
-                  boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                  _hover={{
-                    bg: "gray.50",
-                    transform: "translateY(-2px) scale(1.02)",
-                    boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                    borderColor: "rgba(59,130,246,0.3)",
-                  }}
-                  _active={{
-                    transform: "translateY(0px) scale(0.98)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  }}
-                  transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                  fontSize="12px"
+                  letterSpacing="0.12em"
+                  textTransform="uppercase"
+                  h="38px"
+                  px="20px"
+                  borderRadius="full"
+                  color="gray.100"
+                  bg="rgba(6,6,14,0.95)"
+                  leftIcon={<HamburgerIcon boxSize={3.5} color={chainAccent.primary} />}
                   rightIcon={
                     <ChevronDownIcon
                       boxSize={4}
-                      transition="transform 0.3s"
-                      transform={isToolsOpen ? "rotate(180deg)" : "rotate(0deg)"}
+                      transition="transform 0.25s"
+                      transform={isMobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)"}
+                      color="gray.500"
                     />
                   }
+                  _hover={{ bg: "rgba(6,6,14,0.8)", textShadow: `0 0 12px ${chainAccent.primary}80` }}
+                  _active={{ transform: "scale(0.98)" }}
+                  transition="all 0.2s"
+                  _focus={{ boxShadow: "none" }}
                 >
-                  <Text as="span" mr={1}>🛠️</Text>
-                  Tools
+                  Menu
                 </Button>
-
-                {/* Dropdown Menu - Mobile */}
-                {isToolsOpen && (
-                  <Box
-                    position="absolute"
-                    top="calc(100% + 8px)"
-                    right="-10"
-                    bg="white"
-                    borderRadius="2xl"
-                    boxShadow="0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)"
-                    minW="220px"
-                    overflow="hidden"
-                    zIndex={1000}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    onTouchStart={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <VStack spacing={0} align="stretch">
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/agent-reputation");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/agent-reputation");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(139,92,246,0.08)", color: "#8b5cf6" }}
-                        _active={{ bg: "rgba(139,92,246,0.12)" }}
-                        leftIcon={<Text fontSize="16px">💿</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(139,92,246,0.12)" }}
-                      >
-                        Score 12 · Agent Badge
-                      </Button>
-                      <Box h="1px" bg="gray.100" />
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/pulse-cards");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/pulse-cards");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(168,85,247,0.08)", color: "#a855f7" }}
-                        _active={{ bg: "rgba(168,85,247,0.12)" }}
-                        leftIcon={<Text fontSize="16px">💿</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(168,85,247,0.12)" }}
-                      >
-                        Score 10 · Pulse Cards
-                      </Button>
-                      <Box h="1px" bg="gray.100" />
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/gmorning");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/gmorning");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(45,212,191,0.08)", color: "#2dd4bf" }}
-                        _active={{ bg: "rgba(45,212,191,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🌅</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(45,212,191,0.12)" }}
-                      >
-                        GMorning · GM & Deploy
-                      </Button>
-                      <Box h="1px" bg="gray.100" />
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/bridge");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/bridge");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(59,130,246,0.08)", color: "#3b82f6" }}
-                        _active={{ bg: "rgba(59,130,246,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🌉</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(59,130,246,0.12)" }}
-                      >
-                        Cross-Chain Bridge
-                      </Button>
-                      <Box h="1px" bg="gray.100" />
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/launch-b20");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/launch-b20");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(251,191,36,0.08)", color: "#0ccce6" }}
-                        _active={{ bg: "rgba(251,191,36,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🚀</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(251,191,36,0.12)" }}
-                      >
-                        Launch B20
-                      </Button>
-                      <Box h="1px" bg="gray.100" />
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/revoke");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/revoke");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(239,68,68,0.08)", color: "#ef4444" }}
-                        _active={{ bg: "rgba(239,68,68,0.12)" }}
-                        leftIcon={<Text fontSize="16px">🛡️</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(239,68,68,0.12)" }}
-                      >
-                        Revoke Approval
-                      </Button>
-                      <Box h="1px" bg="gray.100" />
-                      <Button
-                        onClick={() => {
-                          setIsToolsOpen(false);
-                          navigate("/docs");
-                        }}
-                        onTouchStart={() => {
-                          setTimeout(() => {
-                            setIsToolsOpen(false);
-                            navigate("/docs");
-                          }, 50);
-                        }}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        borderRadius="0"
-                        px={4}
-                        py={3.5}
-                        h="48px"
-                        fontWeight="600"
-                        fontSize="sm"
-                        color="gray.700"
-                        _hover={{ bg: "rgba(59,130,246,0.08)", color: "#3b82f6" }}
-                        _active={{ bg: "rgba(59,130,246,0.12)" }}
-                        leftIcon={<Text fontSize="16px">📚</Text>}
-                        width="100%"
-                        _focus={{ bg: "rgba(59,130,246,0.12)" }}
-                      >
-                        Docs
-                      </Button>
-                    </VStack>
-                  </Box>
-                )}
               </Box>
 
-              {/* ===== MOBILE: Activity Reputation Button ===== */}
-              <Box position="relative" display="inline-block">
-                <Tooltip
-                  label="Complete activities to boost your reputation score"
-                  hasArrow
-                  placement="top"
-                  bg="rgba(0,0,0,0.85)"
-                  color="white"
-                  fontSize="xs"
-                  fontWeight="normal"
-                  px={4}
-                  py={2.5}
-                  borderRadius="lg"
-                  border="1px solid rgba(59,130,246,0.3)"
+              {/* Pointer nudging users toward the menu (Reputation lives inside it) */}
+              {showActivityPointer && (
+                <Box
+                  position="absolute"
+                  bottom="-108px"
+                  left="50%"
+                  transform="translateX(-50%)"
+                  zIndex={50}
+                  pointerEvents="none"
                 >
-                  <Button
-                    onClick={() => navigate("/activity-reputation")}
-                    bg="white"
-                    color="gray.800"
-                    size="md"
-                    borderRadius="full"
-                    px={6}
-                    h="46px"
-                    fontWeight="700"
-                    letterSpacing="0.01em"
-                    fontSize="sm"
-                    border="1px solid rgba(0,0,0,0.08)"
-                    boxShadow="0 2px 8px rgba(0,0,0,0.06)"
-                    _hover={{
-                      bg: "gray.50",
-                      transform: "translateY(-2px) scale(1.02)",
-                      boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-                      borderColor: "rgba(59,130,246,0.3)",
-                    }}
-                    _active={{
-                      transform: "translateY(0px) scale(0.98)",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    }}
-                    transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                    leftIcon={<Box as="span" fontSize="14px">🏆</Box>}
-                  >
-                    Activity
-                  </Button>
-                </Tooltip>
-
-                {/* ===== MOBILE ANIMATED POINTER - SUB BUTON ===== */}
-                {showActivityPointer && (
                   <Box
-                    position="absolute"
-                    bottom="-100px"
-                    left="75%"
-                    transform="translateX(-50%)"
-                    zIndex={50}
-                    pointerEvents="none"
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    animation={`${pointerBounce} 2.2s ease-in-out infinite`}
                   >
-                    <Box
-                      display="flex"
-                      flexDirection="column"
-                      alignItems="center"
-                      animation={`${pointerBounce} 2.2s ease-in-out infinite`}
-                    >
-                      <Box position="relative" width="35px" height="35px" mb="-5px">
-                        <svg width="35" height="35" viewBox="0 0 35 35" style={{ position: 'absolute', top: 0, left: 0 }}>
-                          <circle cx="17.5" cy="17.5" r="9" fill="none" stroke="rgba(251, 191, 36, 0.4)" strokeWidth="2">
-                            <animate attributeName="r" from="9" to="25" dur="2s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" from="0.7" to="0" dur="2s" repeatCount="indefinite" />
-                          </circle>
-                        </svg>
-                        <Box
-                          position="absolute"
-                          top="50%"
-                          left="50%"
-                          transform="translate(-50%, -50%)"
-                          fontSize="20px"
-                          lineHeight="1"
-                          filter="drop-shadow(0 3px 10px rgba(251, 191, 36, 0.4))"
-                        >
-                          ☝️
-                        </Box>
-                      </Box>
-
+                    <Box position="relative" width="35px" height="35px" mb="-5px">
+                      <svg width="35" height="35" viewBox="0 0 35 35" style={{ position: 'absolute', top: 0, left: 0 }}>
+                        <circle cx="17.5" cy="17.5" r="9" fill="none" stroke="rgba(251, 191, 36, 0.4)" strokeWidth="2">
+                          <animate attributeName="r" from="9" to="25" dur="2s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" from="0.7" to="0" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                      </svg>
                       <Box
-                        bg="rgba(0, 0, 0, 0.88)"
-                        backdropFilter="blur(16px)"
-                        borderRadius="xl"
-                        px={3}
-                        py={2}
-                        border="1px solid rgba(251, 191, 36, 0.15)"
-                        boxShadow="0 0 20px rgba(251, 191, 36, 0.06)"
-                        maxW="180px"
-                        animation={`${floatUp} 3s ease-in-out infinite`}
-                        mt="2px"
+                        position="absolute"
+                        top="50%"
+                        left="50%"
+                        transform="translate(-50%, -50%)"
+                        fontSize="20px"
+                        lineHeight="1"
+                        filter="drop-shadow(0 3px 10px rgba(251, 191, 36, 0.4))"
                       >
-                        <VStack spacing={0.5} align="center">
-                          <HStack spacing={1.5}>
-                            <Text fontSize="10px">⭐</Text>
-                            <Text
-                              fontSize="8px"
-                              fontWeight="800"
-                              bgGradient="linear(135deg, #fbbf24, #f59e0b)"
-                              bgClip="text"
-                              textTransform="uppercase"
-                              letterSpacing="0.06em"
-                            >
-                              Season 12
-                            </Text>
-                            <Badge
-                              bg="rgba(251, 191, 36, 0.12)"
-                              color="#fbbf24"
-                              fontSize="6px"
-                              px={1.5}
-                              py={0.5}
-                              borderRadius="full"
-                            >
-                              Soneium
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="8px" color="gray.300" lineHeight="1.2" textAlign="center">
-                            Tasks → Points &amp; Badges
-                          </Text>
-                          <Text fontSize="7px" color="#fbbf24" fontWeight="600" opacity={0.7}>
-                            ☝️ Tap above
-                          </Text>
-                        </VStack>
+                        ☝️
                       </Box>
                     </Box>
+
+                    <Box
+                      bg="rgba(0, 0, 0, 0.88)"
+                      backdropFilter="blur(16px)"
+                      borderRadius="lg"
+                      px={3}
+                      py={2}
+                      border="1px solid rgba(251, 191, 36, 0.15)"
+                      boxShadow="0 0 20px rgba(251, 191, 36, 0.06)"
+                      maxW="190px"
+                      animation={`${floatUp} 3s ease-in-out infinite`}
+                      mt="2px"
+                    >
+                      <VStack spacing={0.5} align="center">
+                        <HStack spacing={1.5}>
+                          <Text fontSize="10px">⭐</Text>
+                          <Text
+                            fontSize="8px"
+                            fontWeight="800"
+                            bgGradient="linear(135deg, #fbbf24, #f59e0b)"
+                            bgClip="text"
+                            textTransform="uppercase"
+                            letterSpacing="0.06em"
+                          >
+                            Season 12
+                          </Text>
+                          <Badge
+                            bg="rgba(251, 191, 36, 0.12)"
+                            color="#fbbf24"
+                            fontSize="6px"
+                            px={1.5}
+                            py={0.5}
+                            borderRadius="full"
+                          >
+                            Soneium
+                          </Badge>
+                        </HStack>
+                        <Text fontSize="8px" color="gray.300" lineHeight="1.2" textAlign="center">
+                          Check Reputation in the menu
+                        </Text>
+                      </VStack>
+                    </Box>
                   </Box>
-                )}
-              </Box>
-            </HStack>
+                </Box>
+              )}
+
+              {isMobileMenuOpen && (
+                <>
+                  {/* Backdrop — fixed to the viewport, closes the sheet on tap */}
+                  <Box
+                    position="fixed"
+                    top={0}
+                    left={0}
+                    right={0}
+                    bottom={0}
+                    bg="rgba(3, 3, 8, 0.6)"
+                    backdropFilter="blur(3px)"
+                    zIndex={999}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    transition="opacity 0.2s ease"
+                  />
+
+                  {/* Sheet — fixed to the viewport at a position computed once on
+                      open, so it can never drift horizontally or vertically while
+                      the page scrolls behind it. Only its own content scrolls,
+                      and only vertically. */}
+                  <Box
+                    position="fixed"
+                    top={`${mobileMenuTop}px`}
+                    left="50%"
+                    bg="rgba(7, 7, 15, 0.98)"
+                    backdropFilter="blur(24px)"
+                    borderRadius="2xl"
+                    boxShadow={`0 24px 60px rgba(0,0,0,0.65), 0 0 40px ${chainAccent.primary}18, 0 0 0 1px ${chainAccent.primary}30`}
+                    border="1px solid"
+                    borderColor={`${chainAccent.primary}35`}
+                    w="min(92vw, 340px)"
+                    maxW="calc(100vw - 24px)"
+                    overflow="hidden"
+                    zIndex={1000}
+                    transformOrigin="top center"
+                    animation={`${fadeInDown} 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownScanline />
+                    <VStack
+                      spacing={0}
+                      align="stretch"
+                      py={2}
+                      maxH="min(64vh, 480px)"
+                      overflowY="auto"
+                      overflowX="hidden"
+                      sx={{ WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}
+                    >
+                      <MenuSectionLabel>Activity</MenuSectionLabel>
+                      <DropdownRow
+                        title="Score 12 · Agent Badge"
+                        desc="ERC-8004 Agent reputation"
+                        accent="#a855f7"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/agent-reputation");
+                        }}
+                      />
+                      <DropdownRow
+                        title="Score 10 · Pulse Cards"
+                        desc="Activity completion cards"
+                        accent="#ec4899"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/pulse-cards");
+                        }}
+                      />
+                      <DropdownRow
+                        title="Reputation"
+                        desc="View your full on-chain reputation"
+                        accent="#f472b6"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/activity-reputation");
+                        }}
+                      />
+
+                      {dropdownDivider}
+
+                      <MenuSectionLabel>Explore</MenuSectionLabel>
+                      <DropdownRow
+                        title="Launch B20"
+                        accent="#fbbf24"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/launch-b20");
+                        }}
+                      />
+                      <DropdownRow
+                        title="Bridge"
+                        accent="#3b82f6"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/bridge");
+                        }}
+                      />
+                      <DropdownRow
+                        title="GMorning"
+                        accent="#2dd4bf"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/gmorning");
+                        }}
+                      />
+
+                      {dropdownDivider}
+
+                      <MenuSectionLabel>Tools</MenuSectionLabel>
+                      <DropdownRow
+                        title="Revoke Approval"
+                        desc="Manage token approvals"
+                        accent="#f87171"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/revoke");
+                        }}
+                      />
+                      <DropdownRow
+                        title="Docs"
+                        desc="Protocol documentation"
+                        accent="#60a5fa"
+                        href="https://docs.gm-agent.xyz"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      />
+                    </VStack>
+                  </Box>
+                </>
+              )}
+            </Box>
           </VStack>
         </Flex>
 

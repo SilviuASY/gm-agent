@@ -41,14 +41,43 @@ import { ChevronLeftIcon, CheckCircleIcon, ExternalLinkIcon, RepeatIcon, Warning
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { decodeEventLog, parseUnits } from "viem";
+import { baseSepolia } from "viem/chains";
 import { useFixScroll } from "../hooks/useFixScroll";
 import { useNavigate } from "react-router-dom";
 import { baseChain, config as wagmiConfig } from "../wagmi";
 
-// ============= Contract =============
-const B20_LAUNCHER_ADDRESS = "0xD028565dd459a8117E4982842cCFFdB69011a507" as const;
-const BASE_CHAIN_ID = baseChain.id;
-const EXPLORER_ADDRESS_URL = "https://basescan.org/address/";
+// ============= Contract / Multi-chain config =============
+// Same B20Launcher contract, deployed separately on each network (different fee,
+// configured independently via setConfig on each). Base Mainnet is the default;
+// the user can switch to Base Sepolia via the network toggle below.
+type SupportedChainId = (typeof wagmiConfig)["chains"][number]["id"];
+const BASE_MAINNET_ID = baseChain.id as SupportedChainId; // 8453
+const BASE_SEPOLIA_ID = baseSepolia.id as SupportedChainId; // 84532
+
+const LAUNCHER_ADDRESSES: Record<number, `0x${string}`> = {
+  [BASE_MAINNET_ID]: "0xD028565dd459a8117E4982842cCFFdB69011a507",
+  [BASE_SEPOLIA_ID]: "0xd0072f84693cD1Fa77D6b1Ae3441ae453C923b61",
+};
+
+const EXPLORER_ADDRESS_URLS: Record<number, string> = {
+  [BASE_MAINNET_ID]: "https://basescan.org/address/",
+  [BASE_SEPOLIA_ID]: "https://sepolia.basescan.org/address/",
+};
+
+const CHAIN_LABELS: Record<number, string> = {
+  [BASE_MAINNET_ID]: "Base Mainnet",
+  [BASE_SEPOLIA_ID]: "Base Sepolia",
+};
+
+const CHAIN_SHORT_LABELS: Record<number, string> = {
+  [BASE_MAINNET_ID]: "Base",
+  [BASE_SEPOLIA_ID]: "Base Sepolia",
+};
+
+const CHAIN_TOGGLE_LABELS: Record<number, string> = {
+  [BASE_MAINNET_ID]: "Mainnet",
+  [BASE_SEPOLIA_ID]: "Sepolia",
+};
 
 const TOKEN_RECORD_COMPONENTS = [
   { name: "token", type: "address" },
@@ -122,6 +151,7 @@ const B20_LAUNCHER_ABI = [
   { type: "error", name: "NotConfigured", inputs: [] },
   { type: "error", name: "FeatureNotActivatedYet", inputs: [] },
   { type: "error", name: "FactoryCallFailed", inputs: [] },
+  { type: "error", name: "ContractPaused", inputs: [] },
   // ---- Errors bubbled up from the native B20 Factory precompile ----
   { type: "error", name: "NonPayable", inputs: [] },
   { type: "error", name: "TokenAlreadyExists", inputs: [{ name: "token", type: "address" }] },
@@ -194,7 +224,7 @@ const getErrorDetails = (error: any): { title: string; description: string } | n
     return { title: "Not Configured Yet", description: "The launcher's treasury/fee hasn't been set up yet. Try again shortly." };
   }
   if (msg.includes("featurenotactivatedyet") || msg.includes("featurenotactivated")) {
-    return { title: "B20 Asset Not Live Yet", description: "This variant isn't activated on Base yet. Try again once Base turns it on." };
+    return { title: "B20 Asset Not Live Yet", description: "This variant isn't activated on this network yet. Try again once Base turns it on." };
   }
   if (msg.includes("unsupportedversion")) {
     return { title: "Encoding Mismatch", description: "The launcher contract sent a params format the factory didn't recognize. This needs a contract fix." };
@@ -208,11 +238,17 @@ const getErrorDetails = (error: any): { title: string; description: string } | n
   if (msg.includes("accesscontrolunauthorizedaccount")) {
     return { title: "Role Setup Failed", description: "Granting your mint role on the new token failed unexpectedly. Please try again." };
   }
+  if (msg.includes("contractpaused")) {
+    return { title: "Launcher Paused", description: "Token creation is temporarily paused on this launcher. Please check back later." };
+  }
   if (isChainMismatchError(error)) {
-    return { title: "Network Switch Issue", description: "Your wallet didn't fully switch to Base in time. Please wait a moment and try again." };
+    return { title: "Network Switch Issue", description: "Your wallet didn't fully switch networks in time. Please wait a moment and try again." };
   }
   if (msg.includes("timeout") || msg.includes("failed to fetch") || msg.includes("network error") || msg.includes("429")) {
     return { title: "Network Congested", description: "The RPC endpoint seems busy right now. Please wait a few seconds and try again." };
+  }
+  if (msg.includes("could not be found") || msg.includes("may not be processed")) {
+    return null;
   }
   return { title: "Creation Failed", description: raw.split("\n")[0] || "Something went wrong. Please try again." };
 };
@@ -300,10 +336,10 @@ const StatCard = ({ label, value, icon, iconSrc, description, index, color }: { 
 
 // ============= Success Modal =============
 const TokenCreatedModal = ({
-  isOpen, onClose, tokenAddress, name, symbol,
-}: { isOpen: boolean; onClose: () => void; tokenAddress: string | null; name: string; symbol: string }) => {
+  isOpen, onClose, tokenAddress, name, symbol, explorerBaseUrl,
+}: { isOpen: boolean; onClose: () => void; tokenAddress: string | null; name: string; symbol: string; explorerBaseUrl: string }) => {
   if (!tokenAddress) return null;
-  const explorerUrl = `${EXPLORER_ADDRESS_URL}${tokenAddress}`;
+  const explorerUrl = `${explorerBaseUrl}${tokenAddress}`;
   const toast = useToast();
   const copyAddress = async () => {
     try {
@@ -360,7 +396,7 @@ const TokenCreatedModal = ({
                   rightIcon={<ExternalLinkIcon boxSize={3.5} />}
                   _hover={{ opacity: 0.9, transform: "translateY(-2px)", boxShadow: `0 12px 40px ${LAUNCH_GLOW}` }}
                   _active={{ transform: "scale(0.97)" }} transition="all 0.22s" fontFamily="'Space Grotesk', sans-serif">
-                  View on Basescan
+                  View on Explorer
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" color="gray.600" onClick={onClose} _hover={{ color: "white", bg: "rgba(255,255,255,0.04)" }} borderRadius="full" fontFamily="'Space Grotesk', sans-serif">
@@ -376,12 +412,12 @@ const TokenCreatedModal = ({
 
 // ============= Recent Token Row =============
 const RECENT_ROW_COLORS = [GOLD, PINK, VIOLET, MINT];
-const RecentTokenRow = ({ record, index }: { record: TokenRecord; index: number }) => {
+const RecentTokenRow = ({ record, index, explorerBaseUrl }: { record: TokenRecord; index: number; explorerBaseUrl: string }) => {
   const date = new Date(Number(record.createdAt) * 1000);
   const dateLabel = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const color = RECENT_ROW_COLORS[index % RECENT_ROW_COLORS.length];
   return (
-    <Link href={`${EXPLORER_ADDRESS_URL}${record.token}`} isExternal _hover={{ textDecoration: "none" }}>
+    <Link href={`${explorerBaseUrl}${record.token}`} isExternal _hover={{ textDecoration: "none" }}>
       <Flex
         justify="space-between" align="center" px={4} py={3} borderRadius="lg"
         bg="rgba(255,255,255,0.02)" border="1px solid rgba(255,255,255,0.06)"
@@ -518,26 +554,41 @@ export default function DeployB20Page() {
   const [isCreating, setIsCreating] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
 
+  // Network selector — defaults to Base Mainnet. Same contract, deployed separately
+  // on each network with its own fee (read live from whichever is selected).
+  const [selectedChainId, setSelectedChainId] = useState<SupportedChainId>(BASE_MAINNET_ID);
+  const launcherAddress = LAUNCHER_ADDRESSES[selectedChainId];
+  const explorerAddressUrl = EXPLORER_ADDRESS_URLS[selectedChainId];
+
   const { isOpen: isSuccessOpen, onOpen: openSuccess, onClose: closeSuccess } = useDisclosure();
 
-  const isOnBase = chainId === BASE_CHAIN_ID;
+  const isOnSelectedChain = chainId === selectedChainId;
   const [switchAttempted, setSwitchAttempted] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
+  // Reset the auto-switch-prompt guard whenever the user picks a different network in
+  // the toggle, so switching to Sepolia (or back to Mainnet) prompts the wallet again.
   useEffect(() => {
-    if (isConnected && !isOnBase && !switchAttempted) {
-      setSwitchAttempted(true);
-      switchChain?.({ chainId: BASE_CHAIN_ID });
-    }
-    if (isOnBase) setSwitchAttempted(false);
-  }, [isConnected, isOnBase, switchAttempted, switchChain]);
+    setSwitchAttempted(false);
+  }, [selectedChainId]);
 
-  const handleSwitchToBase = async () => {
+  // Prompt a network switch automatically, once, the moment we see the wallet is
+  // connected but not on the currently selected network. If the user dismisses it, the
+  // banner below still offers a manual "Switch" button.
+  useEffect(() => {
+    if (isConnected && !isOnSelectedChain && !switchAttempted) {
+      setSwitchAttempted(true);
+      switchChain?.({ chainId: selectedChainId });
+    }
+    if (isOnSelectedChain) setSwitchAttempted(false);
+  }, [isConnected, isOnSelectedChain, selectedChainId, switchAttempted, switchChain]);
+
+  const handleSwitchNetwork = async () => {
     setIsSwitching(true);
     try {
-      await switchChain?.({ chainId: BASE_CHAIN_ID });
+      await switchChain?.({ chainId: selectedChainId });
     } catch {
-      toast({ title: "Network Switch Failed", description: "Please switch to Base manually from your wallet.", status: "error", duration: 4000, isClosable: true, position: "top-right" });
+      toast({ title: "Network Switch Failed", description: "Please switch networks manually from your wallet.", status: "error", duration: 4000, isClosable: true, position: "top-right" });
     } finally {
       setIsSwitching(false);
     }
@@ -545,13 +596,13 @@ export default function DeployB20Page() {
 
   const { data: contractReads, refetch: refetchContractReads } = useReadContracts({
     contracts: [
-      { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "creationFee" },
-      { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "totalTokensCreated" },
-      { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "getRecentTokens", args: [50n] },
-      { address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "isAssetFeatureActive" },
+      { address: launcherAddress, abi: B20_LAUNCHER_ABI, functionName: "creationFee", chainId: selectedChainId },
+      { address: launcherAddress, abi: B20_LAUNCHER_ABI, functionName: "totalTokensCreated", chainId: selectedChainId },
+      { address: launcherAddress, abi: B20_LAUNCHER_ABI, functionName: "getRecentTokens", args: [50n], chainId: selectedChainId },
+      { address: launcherAddress, abi: B20_LAUNCHER_ABI, functionName: "isAssetFeatureActive", chainId: selectedChainId },
       {
-        address: B20_LAUNCHER_ADDRESS, abi: B20_LAUNCHER_ABI, functionName: "creationCountOf",
-        args: address ? [address] : undefined,
+        address: launcherAddress, abi: B20_LAUNCHER_ABI, functionName: "creationCountOf",
+        args: address ? [address] : undefined, chainId: selectedChainId,
       },
     ],
     query: { enabled: true, staleTime: 20000 },
@@ -565,7 +616,7 @@ export default function DeployB20Page() {
 
   const { data: nativeBalance, refetch: refetchBalance } = useBalance({
     address,
-    chainId: BASE_CHAIN_ID,
+    chainId: selectedChainId,
     query: { enabled: !!address && isConnected, staleTime: 15000 },
   });
 
@@ -586,17 +637,17 @@ export default function DeployB20Page() {
 
     setIsCreating(true);
     try {
-      if (getAccount(wagmiConfig).chainId !== BASE_CHAIN_ID) {
+      if (getAccount(wagmiConfig).chainId !== selectedChainId) {
         try {
-          await switchChain?.({ chainId: BASE_CHAIN_ID });
+          await switchChain?.({ chainId: selectedChainId });
         } catch {
-          toast({ title: "Network Switch Failed", description: "Please switch to Base manually.", status: "error", duration: 4000, isClosable: true, position: "top-right" });
+          toast({ title: "Network Switch Failed", description: "Please switch networks manually.", status: "error", duration: 4000, isClosable: true, position: "top-right" });
           setIsCreating(false);
           return;
         }
-        const switched = await ensureWalletOnChain(BASE_CHAIN_ID);
+        const switched = await ensureWalletOnChain(selectedChainId);
         if (!switched) {
-          toast({ title: "Network Switch Failed", description: "Please switch to Base manually and try again.", status: "error", duration: 4000, isClosable: true, position: "top-right" });
+          toast({ title: "Network Switch Failed", description: "Please switch networks manually and try again.", status: "error", duration: 4000, isClosable: true, position: "top-right" });
           setIsCreating(false);
           return;
         }
@@ -604,30 +655,35 @@ export default function DeployB20Page() {
 
       const rawSupplyCap = uncapped ? 0n : parseUnits(supplyInput || "0", decimals);
 
+      // Wallets can't reliably estimate gas for a call that touches the B20 precompile
+      // (their simulators don't model Base's native precompiles), so they either warn
+      // "likely to fail" on a perfectly valid tx, or fall back to a bogus gas estimate
+      // that exceeds Base's per-tx gas cap. Setting a fixed, generous manual limit
+      // sidesteps both problems.
       const MANUAL_GAS_LIMIT = 1_500_000n;
 
       let txHash: `0x${string}`;
       try {
         txHash = await writeContractAsync({
-          address: B20_LAUNCHER_ADDRESS,
+          address: launcherAddress,
           abi: B20_LAUNCHER_ABI,
           functionName: "createToken",
           args: [name.trim(), symbol.trim(), decimals, rawSupplyCap, salt],
           value: creationFee,
-          chainId: BASE_CHAIN_ID,
+          chainId: selectedChainId,
           gas: MANUAL_GAS_LIMIT,
         });
       } catch (writeError: any) {
         if (isChainMismatchError(writeError)) {
-          const resynced = await ensureWalletOnChain(BASE_CHAIN_ID, 6000);
+          const resynced = await ensureWalletOnChain(selectedChainId, 6000);
           if (!resynced) throw writeError;
           txHash = await writeContractAsync({
-            address: B20_LAUNCHER_ADDRESS,
+            address: launcherAddress,
             abi: B20_LAUNCHER_ABI,
             functionName: "createToken",
             args: [name.trim(), symbol.trim(), decimals, rawSupplyCap, salt],
             value: creationFee,
-            chainId: BASE_CHAIN_ID,
+            chainId: selectedChainId,
             gas: MANUAL_GAS_LIMIT,
           });
         } else {
@@ -635,19 +691,32 @@ export default function DeployB20Page() {
         }
       }
 
-      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: BASE_CHAIN_ID });
+      // NOTE: on public RPCs the node that answers the receipt lookup can lag a moment
+      // behind the one that actually accepted the tx — the transaction may already be
+      // mined even if this call needs a couple of retries to see it. wagmi/viem retry
+      // internally for a while; if it still can't find it, we don't treat that as a
+      // hard failure (see getErrorDetails' "could not be found" case below), since the
+      // tx itself very likely succeeded.
+      let receipt: Awaited<ReturnType<typeof waitForTransactionReceipt>> | null = null;
+      try {
+        receipt = await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: selectedChainId });
+      } catch (receiptError) {
+        console.warn("Could not fetch receipt (tx was likely still mined):", receiptError);
+      }
 
       let newToken: string | null = null;
-      for (const log of receipt.logs) {
-        if (log.address.toLowerCase() !== B20_LAUNCHER_ADDRESS.toLowerCase()) continue;
-        try {
-          const decoded = decodeEventLog({ abi: B20_LAUNCHER_ABI, data: log.data, topics: log.topics });
-          if (decoded.eventName === "TokenCreated") {
-            newToken = (decoded.args as any).token as string;
-            break;
+      if (receipt) {
+        for (const log of receipt.logs) {
+          if (log.address.toLowerCase() !== launcherAddress.toLowerCase()) continue;
+          try {
+            const decoded = decodeEventLog({ abi: B20_LAUNCHER_ABI, data: log.data, topics: log.topics });
+            if (decoded.eventName === "TokenCreated") {
+              newToken = (decoded.args as any).token as string;
+              break;
+            }
+          } catch {
+            /* not our event, skip */
           }
-        } catch {
-          /* not our event, skip */
         }
       }
 
@@ -656,7 +725,13 @@ export default function DeployB20Page() {
         openSuccess();
         confetti({ particleCount: 190, spread: 75, origin: { y: 0.55 }, colors: [GOLD, PINK, VIOLET, MINT] });
       } else {
-        toast({ title: "Token Created", description: "Check the recent tokens list below for the new address.", status: "success", duration: 6000, isClosable: true, position: "top-right" });
+        toast({
+          title: "Transaction Sent",
+          description: receipt
+            ? "Check the recent tokens list below for the new address."
+            : "Your wallet confirmed the transaction. It should appear in the recent tokens list below shortly.",
+          status: "success", duration: 6000, isClosable: true, position: "top-right",
+        });
       }
 
       setSalt(randomSalt());
@@ -672,12 +747,12 @@ export default function DeployB20Page() {
     }
   };
 
-  const buttonLabel = isFeatureActive === false ? "Not live on Base yet" : hasInsufficientBalance ? "Insufficient balance" : "Launch B20 Token 🚀";
+  const buttonLabel = isFeatureActive === false ? "Not live on this network yet" : hasInsufficientBalance ? "Insufficient balance" : "Launch B20 Token 🚀";
 
   return (
     <>
       <style>{pageStyles}</style>
-      <TokenCreatedModal isOpen={isSuccessOpen} onClose={closeSuccess} tokenAddress={createdToken} name={name} symbol={symbol} />
+      <TokenCreatedModal isOpen={isSuccessOpen} onClose={closeSuccess} tokenAddress={createdToken} name={name} symbol={symbol} explorerBaseUrl={explorerAddressUrl} />
       <Box minH="100vh" bg="#050308" position="relative" fontFamily="'Space Grotesk', sans-serif">
         <Box position="fixed" top="-12%" left="-10%" w="700px" h="700px" borderRadius="full"
           bg={`radial-gradient(circle, ${GOLD}22 0%, transparent 65%)`} filter="blur(95px)"
@@ -691,33 +766,104 @@ export default function DeployB20Page() {
 
         <Container maxW="1200px" position="relative" zIndex={1} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 8 }}>
           {/* Header */}
-          <Flex justify="space-between" align="center" mb={{ base: 6, md: 8 }} direction={{ base: "column", md: "row" }} gap={{ base: 3, md: 0 }}>
-            <HStack spacing={4}>
-              <Button onClick={() => navigate("/")} variant="ghost" size={{ base: "sm", md: "md" }} leftIcon={<ChevronLeftIcon />}
-                color="gray.500" _hover={{ color: "white", bg: `${GOLD}14`, borderColor: `${GOLD}35` }}
-                borderRadius="xl" border="1px solid rgba(255,255,255,0.07)" fontFamily="'Space Grotesk', sans-serif" fontWeight="500" transition="all 0.2s">
-                Back
-              </Button>
-              <Box h="36px" w="1px" bg="rgba(255,255,255,0.05)" display={{ base: "none", md: "block" }} />
-              <VStack align="start" spacing={0.5}>
-                <HStack spacing={3} align="center">
-                  <Box w="7px" h="7px" borderRadius="full" bg={MINT} boxShadow={`0 0 8px ${MINT}`} style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }} />
-                  <Heading fontSize={{ base: "xl", md: "2xl", lg: "3xl" }} fontWeight="800" bgGradient={LAUNCH_GRADIENT} bgClip="text" letterSpacing="-0.03em" fontFamily="'Space Grotesk', sans-serif">
-                    Deploy B20
-                  </Heading>
-                  <Badge bg={`${GOLD}18`} color={GOLD} fontSize="9px" px={2} py={0.5} borderRadius="full" border={`1px solid ${GOLD}40`} fontFamily="'Space Mono', monospace">
-                    Base
-                  </Badge>
-                </HStack>
-                <Text color="gray.400" fontSize={{ base: "10px", md: "11px" }} letterSpacing="0.2em" fontFamily="'Space Mono', monospace" textTransform="uppercase">
-                  Native Token Standard · Fully Configured On-Chain
-                </Text>
-              </VStack>
+          <Box position="relative" mb={{ base: 6, md: 8 }}>
+            <Flex justify="space-between" align="center" direction={{ base: "column", md: "row" }} gap={{ base: 3, md: 0 }}>
+              <HStack spacing={4}>
+                <Button onClick={() => navigate("/")} variant="ghost" size={{ base: "sm", md: "md" }} leftIcon={<ChevronLeftIcon />}
+                  color="gray.500" _hover={{ color: "white", bg: `${GOLD}14`, borderColor: `${GOLD}35` }}
+                  borderRadius="xl" border="1px solid rgba(255,255,255,0.07)" fontFamily="'Space Grotesk', sans-serif" fontWeight="500" transition="all 0.2s">
+                  Back
+                </Button>
+                <Box h="36px" w="1px" bg="rgba(255,255,255,0.05)" display={{ base: "none", md: "block" }} />
+                <VStack align="start" spacing={0.5}>
+                  <HStack spacing={3} align="center">
+                    <Box w="7px" h="7px" borderRadius="full" bg={MINT} boxShadow={`0 0 8px ${MINT}`} style={{ animation: "pulseGlow 2.5s ease-in-out infinite" }} />
+                    <Heading fontSize={{ base: "xl", md: "2xl", lg: "3xl" }} fontWeight="800" bgGradient={LAUNCH_GRADIENT} bgClip="text" letterSpacing="-0.03em" fontFamily="'Space Grotesk', sans-serif">
+                      Deploy B20
+                    </Heading>
+                    <Badge bg={`${GOLD}18`} color={GOLD} fontSize="9px" px={2} py={0.5} borderRadius="full" border={`1px solid ${GOLD}40`} fontFamily="'Space Mono', monospace">
+                      {CHAIN_SHORT_LABELS[selectedChainId]}
+                    </Badge>
+                  </HStack>
+                  <Text color="gray.400" fontSize={{ base: "10px", md: "11px" }} letterSpacing="0.2em" fontFamily="'Space Mono', monospace" textTransform="uppercase">
+                    Native Token Standard
+                  </Text>
+                </VStack>
+              </HStack>
+
+              {/* Mobile only: normal-flow toggle, stacked under the header on its own row —
+                  width shifts here don't matter since everything is centered/full-width. */}
+              <HStack
+                spacing={1} bg="rgba(255,255,255,0.03)" border="1px solid rgba(255,255,255,0.1)"
+                borderRadius="full" p="4px" display={{ base: "flex", md: "none" }}
+              >
+                {[BASE_MAINNET_ID, BASE_SEPOLIA_ID].map((id) => {
+                  const active = selectedChainId === id;
+                  return (
+                    <Button
+                      key={id}
+                      onClick={() => setSelectedChainId(id)}
+                      borderRadius="full" fontFamily="'Space Grotesk', sans-serif" fontWeight="700" fontSize="sm" px={5} h="38px"
+                      bgGradient={active ? LAUNCH_GRADIENT : undefined}
+                      bg={active ? undefined : "transparent"}
+                      color={active ? "white" : "gray.400"}
+                      boxShadow={active ? `0 0 22px ${LAUNCH_GLOW}` : "none"}
+                      _hover={active ? { opacity: 0.92 } : { bg: "rgba(255,255,255,0.08)", color: "white" }}
+                      transition="all 0.2s"
+                    >
+                      {CHAIN_TOGGLE_LABELS[id]}
+                    </Button>
+                  );
+                })}
+              </HStack>
+
+              <Box
+                className="wallet-connect-btn" _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s"
+              >
+                <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: false }} />
+              </Box>
+            </Flex>
+
+            {/* Desktop only: toggle pulled completely out of flex flow via absolute
+                positioning, anchored at a fixed offset from the right edge. Because it no
+                longer shares flex space with the wallet button, RainbowKit's button
+                growing/shrinking (e.g. "Base" vs "Base Sepolia" network name) can never
+                push or shift it — its position is truly fixed. */}
+            <HStack
+              spacing={1} bg="rgba(255,255,255,0.03)" border="1px solid rgba(255,255,255,0.1)"
+              borderRadius="full" p="4px" display={{ base: "none", md: "flex" }}
+              position="absolute" top="0" right="400px"
+            >
+              {[BASE_MAINNET_ID, BASE_SEPOLIA_ID].map((id) => {
+                const active = selectedChainId === id;
+                return (
+                  <Tooltip
+                    key={id}
+                    hasArrow
+                    label={id === BASE_MAINNET_ID ? "Deploy real tokens on Base Mainnet" : "Deploy test tokens on Base Sepolia (testnet, no real value)"}
+                  >
+                    <Button
+                      onClick={() => setSelectedChainId(id)}
+                      borderRadius="full"
+                      fontFamily="'Space Grotesk', sans-serif"
+                      fontWeight="700"
+                      fontSize="sm"
+                      px={5}
+                      h="38px"
+                      bgGradient={active ? LAUNCH_GRADIENT : undefined}
+                      bg={active ? undefined : "transparent"}
+                      color={active ? "white" : "gray.400"}
+                      boxShadow={active ? `0 0 22px ${LAUNCH_GLOW}` : "none"}
+                      _hover={active ? { opacity: 0.92 } : { bg: "rgba(255,255,255,0.08)", color: "white" }}
+                      transition="all 0.2s"
+                    >
+                      {CHAIN_TOGGLE_LABELS[id]}
+                    </Button>
+                  </Tooltip>
+                );
+              })}
             </HStack>
-            <Box className="wallet-connect-btn" _hover={{ transform: "scale(1.02)" }} transition="transform 0.2s">
-              <ConnectButton chainStatus="full" accountStatus="full" showBalance={{ smallScreen: false, largeScreen: false }} />
-            </Box>
-          </Flex>
+          </Box>
 
           {/* Hero proof strip */}
           <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} mb={{ base: 6, md: 8 }}>
@@ -737,7 +883,7 @@ export default function DeployB20Page() {
                   </Flex>
                   <Box>
                     <Text fontSize={{ base: "10px", md: "11px" }} color="gray.400" textTransform="uppercase" letterSpacing="0.2em" fontFamily="'Space Mono', monospace" fontWeight="700" mb={1}>
-                      Live on Base
+                      Live on {CHAIN_LABELS[selectedChainId]}
                     </Text>
                     <HStack align="baseline" spacing={2} flexWrap="wrap">
                       <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="800" bgGradient={LAUNCH_GRADIENT} bgClip="text" fontFamily="'Space Grotesk', sans-serif" letterSpacing="-0.02em">
@@ -767,14 +913,14 @@ export default function DeployB20Page() {
                 <HStack spacing={2}>
                   <Icon as={WarningIcon} color="#f87171" boxSize={4} />
                   <Text fontSize="sm" color="#f87171" fontFamily="'Space Grotesk', sans-serif">
-                    B20 Asset tokens aren't activated on Base yet — creation is disabled until Base turns this on.
+                    B20 Asset tokens aren't activated on {CHAIN_LABELS[selectedChainId]} yet — creation is disabled until Base turns this on.
                   </Text>
                 </HStack>
               </Box>
             </MotionBox>
           )}
 
-          {!isOnBase && isConnected && (
+          {!isOnSelectedChain && isConnected && (
             <MotionBox initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} mb={5}>
               <Flex
                 justify="space-between" align="center" wrap="wrap" gap={3}
@@ -783,16 +929,16 @@ export default function DeployB20Page() {
                 <HStack spacing={2}>
                   <Icon as={WarningIcon} color="#f97316" boxSize={4} />
                   <Text fontSize="sm" color="#f97316" fontFamily="'Space Grotesk', sans-serif">
-                    Wrong network — B20 tokens only exist on Base.
+                    Wrong network — switch your wallet to {CHAIN_LABELS[selectedChainId]}.
                   </Text>
                 </HStack>
                 <Button
-                  onClick={handleSwitchToBase} isLoading={isSwitching} loadingText="Switching…" size="sm"
+                  onClick={handleSwitchNetwork} isLoading={isSwitching} loadingText="Switching…" size="sm"
                   bg="rgba(249,115,22,0.18)" color="#f97316" border="1px solid rgba(249,115,22,0.45)" borderRadius="lg"
                   fontWeight="700" fontFamily="'Space Grotesk', sans-serif"
                   _hover={{ bg: "rgba(249,115,22,0.28)" }}
                 >
-                  Switch to Base
+                  Switch to {CHAIN_LABELS[selectedChainId]}
                 </Button>
               </Flex>
             </MotionBox>
@@ -803,7 +949,7 @@ export default function DeployB20Page() {
             <StatCard index={0} icon="🪙" label="Tokens Launched" value={totalCreated !== undefined ? totalCreated.toString() : "..."} description="Total on this launcher" color={GOLD} />
             <StatCard index={1} icon="👤" label="Your Tokens" value={yourCount !== undefined ? yourCount.toString() : isConnected ? "..." : "0"} description="Created by you" color={VIOLET} />
             <StatCard index={2} icon="⚡" label="Creation Fee" value={feeLoading ? "..." : `${feeFormatted}`} description="ETH per token" color={PINK} />
-            <StatCard index={3} iconSrc="/base.png" label="Network" value="Base" description="Native B20 precompile" color={MINT} />
+            <StatCard index={3} iconSrc="/base.png" label="Network" value={CHAIN_SHORT_LABELS[selectedChainId]} description="Native B20 precompile" color={MINT} />
           </SimpleGrid>
 
           <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 5, md: 6 }} alignItems="stretch">
@@ -942,9 +1088,9 @@ export default function DeployB20Page() {
                     </Text>
                   </HStack>
                 </HStack>
-                <Box 
-                  flex="1" 
-                  overflowY="auto" 
+                <Box
+                  flex="1"
+                  overflowY="auto"
                   className="recent-tokens-scroll"
                   pr={1}
                   minH="0"
@@ -956,7 +1102,7 @@ export default function DeployB20Page() {
                   ) : (
                     <VStack spacing={2.5} align="stretch" pb={1}>
                       {recentTokens.map((record, i) => (
-                        <RecentTokenRow key={`${record.token}-${record.createdAt.toString()}`} record={record} index={i} />
+                        <RecentTokenRow key={`${record.token}-${record.createdAt.toString()}`} record={record} index={i} explorerBaseUrl={explorerAddressUrl} />
                       ))}
                     </VStack>
                   )}

@@ -34,6 +34,7 @@ import {
   omnihubABI,
   stargateABI,
   sakeABI,
+  copumpABI,
 } from "../constants/partnerABIs";
 
 // Returnează ABI-ul corect pentru fiecare acțiune
@@ -71,6 +72,7 @@ export const getPartnerABI = (actionId: number) => {
     case 29: return omnihubABI;
     case 30: return stargateABI;
     case 31: return sakeABI;
+    case 32: return copumpABI;
 
     default: throw new Error("Unknown action id");
   }
@@ -127,6 +129,8 @@ export const getPartnerArgs = (actionId: number, address?: `0x${string}`): any[]
       return [address || zeroAddress, 25000000000000n];
     case 31: // SakeFinance - depositETH
       return ["0x3C3987A310ee13F7B8cBBe21D97D4436ba5E4B5f" as `0x${string}`, address || zeroAddress, 0n];
+    case 32: // CoPump - buyToken
+      return ["0x58a7688aEA51b972DbEC7d9057242AdC98230873" as `0x${string}`, 7n, 2000n];
     default:
       return [];
   }

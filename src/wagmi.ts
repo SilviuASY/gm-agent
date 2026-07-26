@@ -702,7 +702,7 @@ export const blastChain = {
 
 export const baseSepoliaChain = {
   id: 84532,
-  name: 'Base Sepolia Testnet',
+  name: 'Base Sepolia',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://sepolia.base.org'] },

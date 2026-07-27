@@ -632,6 +632,10 @@ const TxSuccessModal = ({
   const explorerUrl = `${EXPLORER_URLS[tx.chainId] || '#'}${tx.hash}`;
   const shortHash = `${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}`;
   const isGM = tx.type === 'gm';
+  // Chain lookup so the modal icon can show the real network logo instead of the
+  // generic 🌅 / 🚀 emoji. Falls back to the emoji if the chain or its icon isn't
+  // available for any reason (e.g. a chain removed from the `chains` list later).
+  const chainInfo = chains.find((c) => c.id === tx.chainId);
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="sm">
       <ModalOverlay bg="rgba(0,0,0,0.8)" backdropFilter="blur(14px)" />
@@ -665,8 +669,18 @@ const TxSuccessModal = ({
               <Box position="relative" w="84px" h="84px">
                 <Box position="absolute" inset={0} borderRadius="full" border={`1px solid ${meta.color}30`} style={{ animation: 'rotateRing 5s linear infinite' }} />
                 <Box position="absolute" inset="8px" borderRadius="full" border={`1px dashed ${meta.color}18`} style={{ animation: 'rotateRing 8s linear infinite reverse' }} />
-                <Flex position="absolute" inset="16px" borderRadius="full" bg={`${meta.color}12`} border={`1px solid ${meta.color}25`} align="center" justify="center" fontSize="26px">
-                  {isGM ? '🌅' : '🚀'}
+                <Flex position="absolute" inset="16px" borderRadius="full" bg={`${meta.color}12`} border={`1px solid ${meta.color}25`} align="center" justify="center" overflow="hidden">
+                  {chainInfo?.iconUrl ? (
+                    <Image
+                      src={chainInfo.iconUrl}
+                      alt={chainInfo.name}
+                      boxSize="34px"
+                      borderRadius="full"
+                      fallbackSrc={`data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><text y='55%25' x='50%25' text-anchor='middle' dominant-baseline='middle' font-size='20'>${isGM ? '🌅' : '🚀'}</text></svg>`}
+                    />
+                  ) : (
+                    <Text fontSize="26px">{isGM ? '🌅' : '🚀'}</Text>
+                  )}
                 </Flex>
               </Box>
               {/* title */}
@@ -1934,7 +1948,7 @@ export default function GMPage() {
           icon: '⚡', 
           color: '#2dd4bf', 
           description: 'Varies by network', 
-          glowColor: 'rgba(45,212,191,0.3)' 
+glowColor: 'rgba(45,212,191,0.3)' 
         },
       ];
     }

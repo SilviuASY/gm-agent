@@ -39,7 +39,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/docs" element={<Docs />} />
                 <Route path="/bridge" element={<Bridge />} />
                 <Route path="/bridge/*" element={<Bridge />} />
-                <Route path="/bridge/*" element={<Bridge />} />
                 <Route path="/revoke/*" element={<Revoke />} />
                 <Route path="/launch-b20/*" element={<DeployB20 />} />
               </Routes>

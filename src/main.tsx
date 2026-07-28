@@ -35,7 +35,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/agent-reputation" element={<ActivityReputation />} />
                 <Route path="/gmorning/*" element={<GMPage />} />
                 <Route path="/gmorning" element={<GMPage />} />
-                <Route path="/gmorning/*" element={<GMPage />} />
                 <Route path="/pulse-cards" element={<BadgePage />} />
                 <Route path="/docs" element={<Docs />} />
                 <Route path="/bridge" element={<Bridge />} />

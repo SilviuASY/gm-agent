@@ -9,6 +9,7 @@
 // back to the browser with our own (permissive) CORS headers attached.
 
 const BASE_VERIFY_API = "https://verify.base.dev/v1/onchain_verifications";
+const UPSTREAM_TIMEOUT_MS = 8000;
 
 exports.handler = async (event) => {
   const corsHeaders = {
@@ -16,6 +17,8 @@ exports.handler = async (event) => {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
+
+  console.log("[verify-onchain] invoked", { method: event.httpMethod, path: event.path });
 
   // Preflight
   if (event.httpMethod === "OPTIONS") {
@@ -30,14 +33,20 @@ exports.handler = async (event) => {
     };
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+
   try {
     const upstream = await fetch(BASE_VERIFY_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: event.body ?? "{}",
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const text = await upstream.text();
+    console.log("[verify-onchain] upstream responded", { status: upstream.status });
 
     // Relay the exact status + body Base Verify returned (including its documented
     // 400/404 error shapes) so the frontend's error handling keeps working unchanged.
@@ -47,12 +56,23 @@ exports.handler = async (event) => {
       body: text,
     };
   } catch (err) {
+    clearTimeout(timeout);
+    const isTimeout = err && err.name === "AbortError";
+    console.error("[verify-onchain] proxy failed", {
+      isTimeout,
+      name: err && err.name,
+      message: err instanceof Error ? err.message : String(err),
+    });
     return {
-      statusCode: 502,
+      statusCode: isTimeout ? 504 : 502,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({
-        error: "proxy_failed",
-        message: err instanceof Error ? err.message : "Unknown error contacting Base Verify",
+        error: isTimeout ? "upstream_timeout" : "proxy_failed",
+        message: isTimeout
+          ? "Base Verify did not respond in time."
+          : err instanceof Error
+            ? err.message
+            : "Unknown error contacting Base Verify",
       }),
     };
   }

@@ -15,7 +15,6 @@ import Docs from './pages/docs'
 import Bridge from './pages/Bridge'
 import Revoke from './pages/Revoke'
 import DeployB20 from './pages/DeployB20'
-import VerifyPage from "./pages/Verify";
 
  // Pages
 
@@ -42,7 +41,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/bridge/*" element={<Bridge />} />
                 <Route path="/revoke/*" element={<Revoke />} />
                 <Route path="/launch-b20/*" element={<DeployB20 />} />
-                <Route path="/verify" element={<VerifyPage />} />
               </Routes>
             </BrowserRouter>
           </ChakraProvider>

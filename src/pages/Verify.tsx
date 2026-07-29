@@ -41,7 +41,11 @@ const VERIFY_CONTRACT_ADDRESS = "0xf5806DCC0d824a46a0b4EFddeb0555A541786264" as 
 const BASE_SEPOLIA_ID = baseSepolia.id; // 84532
 const EXPLORER_ADDRESS_URL = "https://sepolia.basescan.org/address/";
 const EXPLORER_TX_URL = "https://sepolia.basescan.org/tx/";
-const VERIFY_API_URL = "https://verify.base.dev/v1/onchain_verifications";
+// Calls our own Netlify Function (netlify/functions/verify-onchain.ts), which relays
+// this server-to-server to verify.base.dev — the API itself doesn't send CORS headers,
+// so a direct browser fetch to it always fails the preflight, regardless of how the
+// request is built. Locally, run `netlify dev` (not just `vite`) so this path is served.
+const VERIFY_API_URL = "/api/verify-onchain";
 const VERIFY_APP_URL = "https://verify.base.dev";
 
 const CONDITION_COMPONENTS = [

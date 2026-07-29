@@ -11,7 +11,7 @@
 const BASE_VERIFY_API = "https://verify.base.dev/v1/onchain_verifications";
 const UPSTREAM_TIMEOUT_MS = 8000;
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",

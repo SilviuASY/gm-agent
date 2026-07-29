@@ -437,6 +437,9 @@ export default function VerifyPage() {
 
       setStep("signing");
       const nonce = generateSiweNonce();
+      // Base Verify requires the SIWE message itself to carry a short-lived
+      // expirationTime (separate from the verification's own expiration returned
+      // later by the API) — omitting it fails with "expiration time is required".
       const message = createSiweMessage({
         domain: window.location.host,
         address,
@@ -445,6 +448,7 @@ export default function VerifyPage() {
         version: "1",
         chainId: BASE_SEPOLIA_ID,
         nonce,
+        expirationTime: new Date(Date.now() + 5 * 60 * 1000),
         resources: [`eip155:${BASE_SEPOLIA_ID}:${VERIFY_CONTRACT_ADDRESS}`],
       });
       const signature = await signMessageAsync({ message });

@@ -3,6 +3,15 @@
   publish = "dist"
   functions = "netlify/functions"
 
+# Base Verify proxy — must come BEFORE the generic /api/* catch-all below, so it isn't
+# swallowed by the routing into the "api" function. Netlify matches redirects top-down,
+# first match wins.
+[[redirects]]
+  from = "/api/verify-onchain"
+  to = "/.netlify/functions/verify-onchain"
+  status = 200
+  force = true
+
 # Redirecționează cererile /api/* către funcția serverless
 [[redirects]]
   from = "/api/*"

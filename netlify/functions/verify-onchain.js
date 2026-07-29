@@ -47,6 +47,9 @@ export const handler = async (event) => {
 
     const text = await upstream.text();
     console.log("[verify-onchain] upstream responded", { status: upstream.status });
+    if (upstream.status < 200 || upstream.status >= 300) {
+      console.log("[verify-onchain] upstream error body", text);
+    }
 
     // Relay the exact status + body Base Verify returned (including its documented
     // 400/404 error shapes) so the frontend's error handling keeps working unchanged.

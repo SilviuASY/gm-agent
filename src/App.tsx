@@ -153,11 +153,6 @@ const floatUp = keyframes`
   50% { transform: translateY(-6px); opacity: 1; }
 `;
 
-const shimmerText = keyframes`
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-`;
-
 const fadeInDown = keyframes`
   from { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
   to { opacity: 1; transform: translate(-50%, 0) scale(1); }
@@ -1122,127 +1117,23 @@ export default function App() {
 
               <NavDivider />
 
-              {/* ===== REPUTATION with pointer ===== */}
+              {/* ===== REPUTATION ===== */}
               <Box position="relative" display="inline-block">
                 <Button {...navItemStyle("#f472b6")} onClick={() => navigate("/activity-reputation")}>
                   Reputation
                 </Button>
-
-                {showActivityPointer && (
-                  <Box
-                    position="absolute"
-                    bottom="-176px"
-                    left="50%"
-                    transform="translateX(-50%)"
-                    zIndex={50}
-                    pointerEvents="none"
-                  >
-                    <Box
-                      display="flex"
-                      flexDirection="column"
-                      alignItems="center"
-                      animation={`${pointerBounce} 2.2s ease-in-out infinite`}
-                    >
-                      <Box position="relative" width="50px" height="50px" mb="-8px">
-                        <svg width="50" height="50" viewBox="0 0 50 50" style={{ position: 'absolute', top: 0, left: 0 }}>
-                          <circle cx="25" cy="25" r="12" fill="none" stroke="rgba(251, 191, 36, 0.5)" strokeWidth="2.5">
-                            <animate attributeName="r" from="12" to="35" dur="2s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite" />
-                          </circle>
-                          <circle cx="25" cy="25" r="12" fill="none" stroke="rgba(251, 191, 36, 0.3)" strokeWidth="2">
-                            <animate attributeName="r" from="12" to="30" dur="2.5s" begin="0.5s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" from="0.6" to="0" dur="2.5s" begin="0.5s" repeatCount="indefinite" />
-                          </circle>
-                        </svg>
-                        <Box
-                          position="absolute"
-                          top="50%"
-                          left="50%"
-                          transform="translate(-50%, -50%)"
-                          fontSize="28px"
-                          lineHeight="1"
-                          filter="drop-shadow(0 4px 15px rgba(251, 191, 36, 0.5))"
-                          sx={{ textShadow: "0 0 20px rgba(251, 191, 36, 0.4)" }}
-                        >
-                          ☝️
-                        </Box>
-                      </Box>
-
-                      <Box
-                        bg="rgba(0, 0, 0, 0.88)"
-                        backdropFilter="blur(16px)"
-                        borderRadius="xl"
-                        px={5}
-                        py={3}
-                        border="1px solid rgba(251, 191, 36, 0.15)"
-                        boxShadow="0 0 40px rgba(251, 191, 36, 0.06), inset 0 0 40px rgba(251, 191, 36, 0.02)"
-                        maxW="280px"
-                        animation={`${floatUp} 3s ease-in-out infinite`}
-                        position="relative"
-                        mt="2px"
-                      >
-                        <Box
-                          position="absolute"
-                          top="-8px"
-                          left="50%"
-                          transform="translateX(-50%)"
-                          width="0"
-                          height="0"
-                          borderLeft="8px solid transparent"
-                          borderRight="8px solid transparent"
-                          borderBottom="8px solid rgba(0, 0, 0, 0.88)"
-                        />
-
-                        <VStack spacing={1} align="center">
-                          <HStack spacing={2}>
-                            <Text fontSize="14px">⭐</Text>
-                            <Text
-                              fontSize="11px"
-                              fontWeight="800"
-                              bgGradient="linear(135deg, #fbbf24, #f59e0b, #fbbf24)"
-                              bgClip="text"
-                              textTransform="uppercase"
-                              letterSpacing="0.08em"
-                              backgroundSize="200% auto"
-                              animation={`${shimmerText} 3s linear infinite`}
-                            >
-                              Season 12 Score
-                            </Text>
-                            <Badge
-                              bg="rgba(251, 191, 36, 0.15)"
-                              color="#fbbf24"
-                              fontSize="8px"
-                              px={2}
-                              py={0.5}
-                              borderRadius="full"
-                              border="1px solid rgba(251, 191, 36, 0.2)"
-                            >
-                              Soneium
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="11px" color="gray.300" fontWeight="400" lineHeight="1.4" textAlign="center">
-                            Complete tasks to earn points &amp; badges
-                          </Text>
-                          <Text fontSize="9px" color="#fbbf24" fontWeight="600" letterSpacing="0.05em" opacity={0.8} mt="2px">
-                            ☝️ Click the button above
-                          </Text>
-                        </VStack>
-                      </Box>
-                    </Box>
-                  </Box>
-                )}
               </Box>
             </HStack>
-            </Box>
+          </Box>
 
-            <Box position="relative" zIndex={1} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
-              <ConnectButton
-                chainStatus="full"
-                accountStatus="full"
-                showBalance={false}
-              />
-            </Box>
-          </HStack>
+          <Box position="relative" zIndex={1} transition="transform 0.3s" _hover={{ transform: "scale(1.02)" }}>
+            <ConnectButton
+              chainStatus="full"
+              accountStatus="full"
+              showBalance={false}
+            />
+          </Box>
+        </HStack>
 
           {/* Mobile: connect button + single professional menu */}
           <VStack

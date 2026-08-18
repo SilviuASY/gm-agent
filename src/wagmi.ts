@@ -127,7 +127,7 @@ export const bscChain = {
   name: 'BNB Chain',
   nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://binance-smart-chain-public.nodies.app'] },
+    default: { http: ['https://bsc.rpc.blxrbdn.com'] },
     public: { http: ['https://binance-smart-chain-public.nodies.app'] },
   },
   iconUrl: '/bnb.png',

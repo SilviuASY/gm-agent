@@ -850,6 +850,17 @@ export const injectiveChain = {
   iconUrl: '/injective.png',
 } as const
 
+export const kiiChain = {
+  id: 1783,
+  name: 'KiiChain',
+  nativeCurrency: { name: 'KiiChain', symbol: 'KII', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://json-rpc.kiivalidator.com'] },
+    public: { http: ['https://json-rpc.kiivalidator.com'] },
+  },
+  iconUrl: '/kiichain.png',
+} as const
+
 // ============= Configurația principală =============
 export const config = getDefaultConfig({
   appName: 'Agent GM Protocol',
@@ -933,7 +944,8 @@ export const config = getDefaultConfig({
     liteforgeChain,
     ecochainChain,
     giwaChain,
-    injectiveChain
+    injectiveChain,
+    kiiChain
   ],
   transports: {
     [soneiumChain.id]: http(),
@@ -1015,5 +1027,6 @@ export const config = getDefaultConfig({
     [ecochainChain.id]: http(),
     [giwaChain.id]: http(),
     [injectiveChain.id]: http(),
+    [kiiChain.id]: http(),
   },
 })

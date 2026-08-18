@@ -60,6 +60,7 @@ import {
   baseChain,
   unichainChain,
   robinhoodChain,
+  kiiChain,
   monadChain,
   megaethChain,
   bscChain,
@@ -117,7 +118,8 @@ const chains = [soneiumChain,
   optimismChain, 
   baseChain, 
   unichainChain, 
-  robinhoodChain, 
+  robinhoodChain,
+  kiiChain, 
   monadChain, 
   megaethChain,
   bscChain,
@@ -156,6 +158,7 @@ const EXPLORER_URLS: Record<number, string> = {
   [giwaChain.id]: 'https://sepolia-explorer.giwa.io/',
   [worldChain.id]: 'https://worldchain-mainnet.explorer.alchemy.com/',
   [modeChain.id]: 'https://explorer.mode.network/',
+  [kiiChain.id]: 'https://explorer.kiichain.io/',
   
 };
 const GM_CONTRACTS: Record<number, `0x${string}`> = {
@@ -180,6 +183,7 @@ const GM_CONTRACTS: Record<number, `0x${string}`> = {
   [giwaChain.id]: '0xc8Fa6657886B97b0D09De4A946c35A5aE10AdD48',
   [worldChain.id]: '0xEbb225CB1139497581870b15CF759EA79F0356CA',
   [modeChain.id]: '0x162f26083cA2B5405124fC532109b8b8B512951f',
+  [kiiChain.id]: '0x16ba558fF1590bD36A7ba1D324f8d771544bF8Ac',
 };
 
 const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
@@ -204,6 +208,7 @@ const DEPLOY_CONTRACTS: Record<number, `0x${string}`> = {
   [giwaChain.id]: '0x6573bc9090BbCae309d2A3D95fDAC05617914000',
   [worldChain.id]: '0xd7109d454872D72e80138B65676AA67613EdE1A6',
   [modeChain.id]: '0xd4501d4246aCE784698939a9220F203c3A2c6695',
+  [kiiChain.id]: '0x44c786a84204954cC0255649492492C5620160E2',
 };
 
 const TWITTER_LINKS: Record<number, string> = {
@@ -228,6 +233,7 @@ const TWITTER_LINKS: Record<number, string> = {
   [giwaChain.id]: 'https://x.com/GIWA_by_Upbit',
   [worldChain.id]: 'https://x.com/world_chain_',
   [modeChain.id]: 'https://x.com/modenetwork',
+  [kiiChain.id]: 'https://x.com/KiiChainio',
 };
 
 const DEFAULT_TWITTER_LINK = 'https://x.com/gm_agent_xyz';
@@ -344,6 +350,11 @@ const chainMetadata: Record<number, { color: string; gradient: string; glowColor
     color: '#b0ec09',
     gradient: 'linear(135deg, #84a707, #a5c908, #d3f705)',
     glowColor: 'rgba(168, 235, 11, 0.35)',
+  },
+  [kiiChain.id]: {
+    color: '#503d69',
+    gradient: 'linear(135deg, #2f233d, #654c81, #8c7ba8)',
+    glowColor: 'rgba(80, 59, 95, 0.35)',
   },
 };
 // ============= Multicall layout =============

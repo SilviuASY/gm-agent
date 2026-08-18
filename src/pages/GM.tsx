@@ -158,7 +158,7 @@ const EXPLORER_URLS: Record<number, string> = {
   [giwaChain.id]: 'https://sepolia-explorer.giwa.io/',
   [worldChain.id]: 'https://worldchain-mainnet.explorer.alchemy.com/',
   [modeChain.id]: 'https://explorer.mode.network/',
-  [kiiChain.id]: 'https://explorer.kiichain.io/',
+  [kiiChain.id]: 'https://explorer.kiichain.io/tx/eth/',
   
 };
 const GM_CONTRACTS: Record<number, `0x${string}`> = {

@@ -41,7 +41,7 @@ export const baseChain = {
   name: 'Base',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://base.lava.build'] },
+    default: { http: ['https://base-rpc.publicnode.com'] },
     public: { http: ['https://base-rpc.publicnode.com'] },
   },
   iconUrl: '/base.png',

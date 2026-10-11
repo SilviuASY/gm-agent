@@ -41,8 +41,8 @@ export const baseChain = {
   name: 'Base',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.baseazul.dev'] },
-    public: { http: ['https://base-rpc.publicnode.com'] },
+    default: { http: ['https://base.drpc.org'] },
+    public: { http: ['https://base.drpc.org'] },
   },
   iconUrl: '/base.png',
 } as const

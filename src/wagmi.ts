@@ -811,8 +811,8 @@ export const liteforgeChain = {
   name: 'LitVM Liteforge',
   nativeCurrency: { name: 'LitVM Liteforge', symbol: 'zkLTC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://liteforge.rpc.caldera.xyz/http'] },
-    public: { http: ['https://liteforge.rpc.caldera.xyz/http'] },
+    default: { http: ['https://rpc.testnet.liteforge.zeeve.net'] },
+    public: { http: ['https://rpc.testnet.liteforge.zeeve.net'] },
   },
   iconUrl: '/litvm.png',
 } as const
